@@ -14,17 +14,17 @@ class _LoginPageState extends State<LoginPage> {
   String _password = '';
 
   void _submit() {
-    if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
-      if (_email.isEmpty) {
-        debugPrint('Email is empty');
-      } else {
-        debugPrint('Logging in with Email: $_email, Password: $_password');
-      }
-      // For example, navigate to the dashboard after successful login
-      // Navigator.pushReplacementNamed(context, '/dashboard');
+  if (_formKey.currentState!.validate()) {
+    _formKey.currentState!.save();
+    if (_email.isEmpty) {
+      debugPrint('Email is empty');
+    } else {
+      debugPrint('Logging in with Email: $_email, Password: $_password');
+      // Navigate to the dashboard page after successful login
+      Navigator.pushReplacementNamed(context, '/dashboard');
     }
   }
+}
 
   @override
   Widget build(BuildContext context) {

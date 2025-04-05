@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'screens/login_page.dart';
 import 'screens/signup_page.dart';
-// Import additional screens when needed
+import 'screens/dashboard_page.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-
+  
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -19,9 +19,10 @@ class MyApp extends StatelessWidget {
       ),
       initialRoute: '/login',
       routes: {
-        '/login': (context) => LoginPage(),
-        '/signup': (context) => SignupPage(),
-        // Add other routes here (e.g., dashboard, archive, customization)
+        '/login': (context) => const LoginPage(),
+        '/signup': (context) => const SignupPage(),
+        '/dashboard': (context) => const DashboardPage(),
+        // Add other routes as needed
       },
       debugShowCheckedModeBanner: false,
     );
