@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 
 class SignupPage extends StatefulWidget {
@@ -32,22 +31,20 @@ class SignupPageState extends State<SignupPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Determine screen width and set container width responsively
     final screenWidth = MediaQuery.of(context).size.width;
-    final containerWidth = min(393.0, screenWidth * 0.9);
-
+    final screenHeight = MediaQuery.of(context).size.height;
+    // For phone devices (screen width < 600), use 90% of width, otherwise fixed width.
+    final containerWidth = screenWidth < 600 ? screenWidth * 0.9 : 393.0;
+    
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 18, 32, 47),
-      appBar: AppBar(
-        title: const Text("Sign Up"),
-        backgroundColor: Colors.black,
-      ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Center(
             child: Container(
               width: containerWidth,
-              // Remove fixed height so the content can grow and scroll if needed.
+              // Set container height to screenHeight so it fills the screen
+              height: screenHeight,
               padding: const EdgeInsets.all(16.0),
               decoration: const BoxDecoration(
                 color: Colors.white,
@@ -55,7 +52,7 @@ class SignupPageState extends State<SignupPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Progress indicator and Step text
+                  // Progress indicator and step text
                   Container(
                     width: double.infinity,
                     height: 4,
@@ -265,7 +262,7 @@ class SignupPageState extends State<SignupPage> {
                         ),
                         child: TextButton(
                           onPressed: () {
-                            Navigator.pop(context);
+                            Navigator.pushReplacementNamed(context, '/login');
                           },
                           child: const Text(
                             'Cancel',
