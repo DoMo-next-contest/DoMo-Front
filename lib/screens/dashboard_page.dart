@@ -57,6 +57,8 @@ class DashboardPageState extends State<DashboardPage> {
                           alt: '3D model of Cutie',
                           autoRotate: true,
                           cameraControls: true,
+                          disableZoom: true, // Disables zooming (pinch-to-zoom).
+                          disablePan: true,  // Disables panning (translation).
                           backgroundColor: Colors.transparent,
                         ),
                       ),
@@ -80,8 +82,6 @@ class DashboardPageState extends State<DashboardPage> {
                       ),
                     ),
                   ),
-                  
-
                   Positioned(
                     left: 0,
                     right: 0,
@@ -125,99 +125,115 @@ class DashboardPageState extends State<DashboardPage> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // '홈' button
                           Expanded(
-                            child: Container(
-                              height: double.infinity,
-                              clipBehavior: Clip.antiAlias,
-                              decoration: ShapeDecoration(
-                                shape: RoundedRectangleBorder(
-                                  side: BorderSide(
-                                    width: 1,
-                                    color: const Color(0xFFEEF0F4),
-                                  ),
-                                ),
-                              ),
-                              child: Stack(
-                                children: [
-                                  Positioned(
-                                    left: 26,
-                                    top: 8,
-                                    child: SizedBox(
-                                      width: 24,
-                                      height: 24,
-                                      child: Placeholder(), // Replace with your icon widget.
+                            child: InkWell(
+                              onTap: () {
+                                Navigator.pushNamed(context, '/dashboard'); // Change route as needed.
+                              },
+                              child: Container(
+                                height: double.infinity,
+                                clipBehavior: Clip.antiAlias,
+                                decoration: ShapeDecoration(
+                                  shape: RoundedRectangleBorder(
+                                    side: BorderSide(
+                                      width: 1,
+                                      color: const Color(0xFFEEF0F4),
                                     ),
                                   ),
-                                  Positioned(
-                                    left: -6,
-                                    top: 38,
-                                    child: SizedBox(
-                                      width: 88,
-                                      height: 14,
-                                      child: Text(
-                                        '홈',
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          color: const Color(0xFF545F70),
-                                          fontSize: 13,
-                                          fontFamily: 'Inter',
-                                          fontWeight: FontWeight.w600,
-                                          height: 1.08,
-                                          letterSpacing: -0.50,
+                                ),
+                                child: Stack(
+                                  children: [
+                                    Positioned(
+                                      left: 26,
+                                      top: 8,
+                                      child: SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: Image.asset(
+                                          '../../assets/cutie.png', // Replace with your actual home icon asset
+                                          fit: BoxFit.contain,
                                         ),
                                       ),
                                     ),
-                                  ),
-                                ],
+                                    Positioned(
+                                      left: -6,
+                                      top: 38,
+                                      child: SizedBox(
+                                        width: 88,
+                                        height: 14,
+                                        child: Text(
+                                          '홈',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            color: const Color(0xFF545F70),
+                                            fontSize: 13,
+                                            fontFamily: 'Inter',
+                                            fontWeight: FontWeight.w600,
+                                            height: 1.08,
+                                            letterSpacing: -0.50,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
-                          // '프로젝트' button
+                          // 'project' button
                           Expanded(
-                            child: Container(
-                              height: double.infinity,
-                              clipBehavior: Clip.antiAlias,
-                              decoration: ShapeDecoration(
-                                shape: RoundedRectangleBorder(
-                                  side: BorderSide(
-                                    width: 1,
-                                    color: const Color(0xFFEEF0F4),
-                                  ),
-                                ),
-                              ),
-                              child: Stack(
-                                children: [
-                                  Positioned(
-                                    left: 26,
-                                    top: 8,
-                                    child: SizedBox(
-                                      width: 24,
-                                      height: 24,
-                                      child: Placeholder(), // Replace with your icon widget.
+                            child: InkWell(
+                              onTap: () {
+                                Navigator.pushNamed(context, '/project'); // Change route as needed.
+                              },
+                              child: Container(
+                                height: double.infinity,
+                                clipBehavior: Clip.antiAlias,
+                                decoration: ShapeDecoration(
+                                  shape: RoundedRectangleBorder(
+                                    side: BorderSide(
+                                      width: 1,
+                                      color: const Color(0xFFEEF0F4),
                                     ),
                                   ),
-                                  Positioned(
-                                    left: -6,
-                                    top: 38,
-                                    child: SizedBox(
-                                      width: 88,
-                                      height: 14,
-                                      child: Text(
-                                        '프로젝트',
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          color: const Color(0xFF9AA5B6),
-                                          fontSize: 13,
-                                          fontFamily: 'Inter',
-                                          fontWeight: FontWeight.w400,
-                                          height: 1.08,
-                                          letterSpacing: -0.50,
+                                ),
+                                child: Stack(
+                                  children: [
+                                    Positioned(
+                                      left: 26,
+                                      top: 8,
+                                      child: SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        // Replace with your icon widget or image:
+                                        child: Image.asset(
+                                          '../../assets/cutie.png',
+                                          fit: BoxFit.contain,
                                         ),
                                       ),
                                     ),
-                                  ),
-                                ],
+                                    Positioned(
+                                      left: -6,
+                                      top: 38,
+                                      child: SizedBox(
+                                        width: 88,
+                                        height: 14,
+                                        child: Text(
+                                          '프로젝트',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            color: const Color(0xFF9AA5B6),
+                                            fontSize: 13,
+                                            fontFamily: 'Inter',
+                                            fontWeight: FontWeight.w400,
+                                            height: 1.08,
+                                            letterSpacing: -0.50,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:domo/models/task.dart';
+
 
 class AddPage extends StatefulWidget {
   const AddPage({super.key});
@@ -24,79 +26,73 @@ class AddPageState extends State<AddPage> {
   }
 
   Future<void> _selectDeadlineDate() async {
-    DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: _selectedDeadline ?? DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
-    );
-    if (pickedDate != null && pickedDate != _selectedDeadline) {
-      setState(() {
-        _selectedDeadline = pickedDate;
-        _dateController.text =
-            "${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}";
-      });
-    }
+  DateTime? pickedDate = await showDatePicker(
+    context: context,
+    initialDate: _selectedDeadline ?? DateTime.now(),
+    firstDate: DateTime(2000),
+    lastDate: DateTime(2101),
+  );
+
+  // Only update if a valid date is picked and it's different from the current selection
+  if (pickedDate != null && pickedDate != _selectedDeadline) {
+    setState(() {
+      _selectedDeadline = pickedDate;
+      _dateController.text =
+          "${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}";
+    });
   }
+}
+
 
   Future<void> _onGenerateSubtaskPressed() async {
-    // Check if any fields are empty.
-    if (_nameController.text.isEmpty ||
-        _dateController.text.isEmpty ||
-        _detailsController.text.isEmpty ||
-        _subtaskController.text.isEmpty) {
-      // Show alert dialog to notify user to fill all fields
-      await showDialog(
-        context: context,
-        builder: (BuildContext context) => AlertDialog(
-          title: const Text('Incomplete Fields'),
-          content: const Text('Please fill in all fields before generating a task.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      );
-    } else {
-      _saveInputs();
+  if (_nameController.text.isEmpty ||
+      _dateController.text.isEmpty ||
+      _detailsController.text.isEmpty ||
+      _subtaskController.text.isEmpty) {
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: const Text('Incomplete Fields'),
+        content: const Text('Please fill in all fields before generating a task.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  } else {
+    // Create a new Task.
+    final newTask = Task(
+      name: _nameController.text,
+      deadline: _selectedDeadline!, // ensure this is non-null by proper validation
+    );
 
-      // Show the task generated dialog.
-      await showDialog(
-        context: context,
-        builder: (BuildContext context) => AlertDialog(
-          title: const Text('Success'),
-          content: const Text('Task generated'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context); // Close the alert
-              },
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      );
+    // Add the task to the global list.
+    globalTaskList.add(newTask);
 
-      // Navigate back to Dashboard.
-      Navigator.pushReplacementNamed(context, '/dashboard');
-    }
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: const Text('Success'),
+        content: const Text('Task generated'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context); // Close the alert.
+            },
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+
+    // Navigate to the ProjectPage.
+    Navigator.pushReplacementNamed(context, '/project');
   }
+}
 
-  void _saveInputs() {
-    // Retrieve input values from the controllers.
-    String projectName = _nameController.text;
-    String deadline = _dateController.text;
-    String projectDetails = _detailsController.text;
-    String subtaskRequirements = _subtaskController.text;
-
-    // Debug print for demonstration.
-    debugPrint("Project Name: $projectName");
-    debugPrint("Deadline: $deadline");
-    debugPrint("Project Details: $projectDetails");
-    debugPrint("Subtask Requirements: $subtaskRequirements");
-  }
 
   @override
   Widget build(BuildContext context) {
