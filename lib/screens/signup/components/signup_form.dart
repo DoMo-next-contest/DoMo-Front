@@ -8,28 +8,28 @@ class SignUpForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-    String _name = '';
-    String _email = '';
-    String _password = '';
-    String _confirmPassword = '';
+    final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+    String name = '';
+    String email = '';
+    String password = '';
+    String confirmPassword = '';
 
-    void _onSubmit() {
-      if (_formKey.currentState!.validate()) {
-        _formKey.currentState!.save();
-        if (_password != _confirmPassword) {
+    void onSubmit() {
+      if (formKey.currentState!.validate()) {
+        formKey.currentState!.save();
+        if (password != confirmPassword) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Passwords do not match")),
           );
           return;
         }
-        debugPrint('Signing up with Name: $_name, Email: $_email, Password: $_password');
+        debugPrint('Signing up with Name: $name, Email: $email, Password: $password');
         // Navigate to the onboarding Step 2 page
         Navigator.pushReplacementNamed(context, '/onboardingStep2');
       }
     }
 
-    InputDecoration _buildInputDecoration(String hintText, IconData icon) {
+    InputDecoration buildInputDecoration(String hintText, IconData icon) {
       return InputDecoration(
         hintText: hintText,
         prefixIcon: Padding(
@@ -47,7 +47,7 @@ class SignUpForm extends StatelessWidget {
     }
 
     return Form(
-      key: _formKey,
+      key: formKey,
       child: Column(
         children: [
           // Name field
@@ -55,8 +55,8 @@ class SignUpForm extends StatelessWidget {
             keyboardType: TextInputType.name,
             textInputAction: TextInputAction.next,
             cursorColor: kPrimaryColor,
-            onSaved: (value) => _name = value!,
-            decoration: _buildInputDecoration("Your name", Icons.person),
+            onSaved: (value) => name = value!,
+            decoration: buildInputDecoration("Your name", Icons.person),
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return "Please enter your name";
@@ -70,8 +70,8 @@ class SignUpForm extends StatelessWidget {
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
             cursorColor: kPrimaryColor,
-            onSaved: (value) => _email = value!,
-            decoration: _buildInputDecoration("Your email", Icons.email),
+            onSaved: (value) => email = value!,
+            decoration: buildInputDecoration("Your email", Icons.email),
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return "Please enter your email";
@@ -88,8 +88,8 @@ class SignUpForm extends StatelessWidget {
             textInputAction: TextInputAction.next,
             obscureText: true,
             cursorColor: kPrimaryColor,
-            onSaved: (value) => _password = value!,
-            decoration: _buildInputDecoration("Your password", Icons.lock),
+            onSaved: (value) => password = value!,
+            decoration: buildInputDecoration("Your password", Icons.lock),
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return "Please enter your password";
@@ -106,8 +106,8 @@ class SignUpForm extends StatelessWidget {
             textInputAction: TextInputAction.done,
             obscureText: true,
             cursorColor: kPrimaryColor,
-            onSaved: (value) => _confirmPassword = value!,
-            decoration: _buildInputDecoration("Re-enter your password", Icons.lock_outline),
+            onSaved: (value) => confirmPassword = value!,
+            decoration: buildInputDecoration("Re-enter your password", Icons.lock_outline),
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return "Please confirm your password";
@@ -117,7 +117,7 @@ class SignUpForm extends StatelessWidget {
           ),
           const SizedBox(height: defaultPadding),
           ElevatedButton(
-            onPressed: _onSubmit,
+            onPressed: onSubmit,
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 100, vertical: 20),
             ),

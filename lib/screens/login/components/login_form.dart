@@ -10,12 +10,12 @@ class LoginForm extends StatelessWidget {
   final FormFieldSetter<String> onPasswordSaved;
 
   const LoginForm({
-    Key? key,
+    super.key,
     required this.formKey,
     required this.onSubmit,
     required this.onEmailSaved,
     required this.onPasswordSaved,
-  }) : super(key: key);
+  });
 
   InputDecoration _buildInputDecoration(String hintText, IconData icon) {
     return InputDecoration(
