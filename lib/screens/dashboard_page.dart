@@ -45,7 +45,7 @@ class DashboardPageState extends State<DashboardPage> {
                 children: [
                   // GLB Model with model_viewer_plus
                   Positioned(
-                    top: 160,
+                    top: 220,
                     left: 0,
                     right: 0,
                     child: Center(
@@ -66,7 +66,7 @@ class DashboardPageState extends State<DashboardPage> {
                   ),
                   // Greeting text positioned 160 pixels from the top.
                   const Positioned(
-                    top: 100,
+                    top: 150,
                     left: 0,
                     right: 0,
                     child: Text(
@@ -82,28 +82,127 @@ class DashboardPageState extends State<DashboardPage> {
                       ),
                     ),
                   ),
+
                   Positioned(
                     left: 0,
                     right: 0,
-                    bottom: 100,
+                    bottom: 150,
                     child: Container(
-                      padding: const EdgeInsets.only(left: 12.0),
-                      width: 320,
-                      height: 92,
-                      decoration: BoxDecoration(color: const Color(0xFFD9D9D9)),
-                      child: Text(
-                        '최근 프로젝트',
-                        textAlign: TextAlign.left,
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 18,
-                          fontFamily: 'Roboto',
-                          fontWeight: FontWeight.w700,
-                          height: 2.0,
+                      width: 100,
+                      height: 80,
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
+                      decoration: ShapeDecoration(
+                        color: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
                         ),
+                        shadows: [
+                          BoxShadow(
+                            color: Color(0x19000000),
+                            blurRadius: 16,
+                            offset: Offset(0, 2),
+                            spreadRadius: 0,
+                          )
+                        ],
+                      ),
+                      child: Column(
+                        //mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        spacing: 15,
+                        children: [
+                          Container(
+                            width: double.infinity,
+                            child: Row(
+                              //mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              spacing: 12,
+                              children: [
+                                SizedBox(
+                                  width: 110,
+                                  child: Text(
+                                    '최근 프로젝트명',
+                                    style: TextStyle(
+                                      color: const Color(0xFF21272A),
+                                      fontSize: 16,
+                                      fontFamily: 'Roboto',
+                                      fontWeight: FontWeight.w600,
+                                      height: 1.40,
+                                    ),
+                                  ),
+                                ),
+                                Container(
+                                  width: 41,
+                                  height: 16,
+                                  padding: const EdgeInsets.all(2), // Reduced padding
+                                  decoration: ShapeDecoration(
+                                    color: const Color(0xFFF2AC57),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    shadows: [
+                                      BoxShadow(
+                                        color: Color(0x19000000),
+                                        blurRadius: 16,
+                                        offset: Offset(0, 2),
+                                        spreadRadius: 0,
+                                      )
+                                    ],
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        '태그',
+                                        style: TextStyle(
+                                          color: Color(0xFFF5F5F5),
+                                          fontSize: 10,
+                                          fontFamily: 'Roboto',
+                                          fontWeight: FontWeight.w400,
+                                          height: 1,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            width: 300,
+                            height: 8,
+                            decoration: ShapeDecoration(
+                              color: const Color(0xFFC1C7CD),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: Stack(
+                              children: [
+                                Positioned(
+                                  left: 0,
+                                  top: 0,
+                                  child: Container(
+                                    width: 86.67,
+                                    height: 8,
+                                    decoration: ShapeDecoration(
+                                      color: const Color(0xFFAB4E18),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),                 
+                  ),
                   Positioned(
                     left: 0,
                     right: 0,
@@ -111,15 +210,6 @@ class DashboardPageState extends State<DashboardPage> {
                     child: Container(
                       width: 375,
                       height: 56,
-                      decoration: ShapeDecoration(
-                        color: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          side: BorderSide(
-                            width: 1,
-                            color: const Color(0xFFEEF0F4),
-                          ),
-                        ),
-                      ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -149,10 +239,11 @@ class DashboardPageState extends State<DashboardPage> {
                                       child: SizedBox(
                                         width: 24,
                                         height: 24,
-                                        child: Image.asset(
-                                          '../../assets/cutie.png', // Replace with your actual home icon asset
-                                          fit: BoxFit.contain,
-                                        ),
+                                        child: const Icon(
+                                        Icons.home,
+                                        size: 24, // Adjust size as needed
+                                        color: Colors.black, // Set color or remove if you need default
+                                      ),
                                       ),
                                     ),
                                     Positioned(
@@ -205,11 +296,11 @@ class DashboardPageState extends State<DashboardPage> {
                                       child: SizedBox(
                                         width: 24,
                                         height: 24,
-                                        // Replace with your icon widget or image:
-                                        child: Image.asset(
-                                          '../../assets/cutie.png',
-                                          fit: BoxFit.contain,
-                                        ),
+                                        child: const Icon(
+                                        Icons.format_list_bulleted,
+                                        size: 24, // Adjust size as needed
+                                        color: Colors.black, // Set color or remove if you need default
+                                      ),
                                       ),
                                     ),
                                     Positioned(
@@ -262,10 +353,11 @@ class DashboardPageState extends State<DashboardPage> {
                                       child: SizedBox(
                                         width: 24,
                                         height: 24,
-                                        child: Image.asset(
-                                          '../../assets/cutie.png', // replace with your icon image path
-                                          fit: BoxFit.contain,
-                                        ),
+                                        child: const Icon(
+                                        Icons.control_point,
+                                        size: 24, // Adjust size as needed
+                                        color: Colors.black, // Set color or remove if you need default
+                                      ),
                                       ),
                                     ),
                                     Positioned(
@@ -314,7 +406,11 @@ class DashboardPageState extends State<DashboardPage> {
                                     child: SizedBox(
                                       width: 24,
                                       height: 24,
-                                      child: Placeholder(), // Replace with your icon widget.
+                                      child: const Icon(
+                                        Icons.pets,
+                                        size: 24, // Adjust size as needed
+                                        color: Colors.black, // Set color or remove if you need default
+                                      ), // Replace with your icon widget.
                                     ),
                                   ),
                                   Positioned(
@@ -362,7 +458,11 @@ class DashboardPageState extends State<DashboardPage> {
                                     child: SizedBox(
                                       width: 24,
                                       height: 24,
-                                      child: Placeholder(), // Replace with your icon widget.
+                                      child: const Icon(
+                                        Icons.person_outline,
+                                        size: 24, // Adjust size as needed
+                                        color: Colors.black, // Set color or remove if you need default
+                                      ),
                                     ),
                                   ),
                                   Positioned(
