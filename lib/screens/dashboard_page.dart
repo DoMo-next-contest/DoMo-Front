@@ -38,7 +38,7 @@ class DashboardPageState extends State<DashboardPage> {
             child: Container(
               width: containerWidth,
               height: screenHeight,
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(8.0),
               decoration: const BoxDecoration(color: Colors.white),
               
               child: Stack(
@@ -84,11 +84,11 @@ class DashboardPageState extends State<DashboardPage> {
                   ),
 
                   Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 150,
+                    left: 30,
+                    right: 30,
+                    bottom: 140,
                     child: Container(
-                      width: 100,
+                      width: 300,
                       height: 80,
                       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
                       decoration: ShapeDecoration(
@@ -203,6 +203,8 @@ class DashboardPageState extends State<DashboardPage> {
                       ),
                     ),
                   ),
+
+
                   Positioned(
                     left: 0,
                     right: 0,
@@ -210,6 +212,15 @@ class DashboardPageState extends State<DashboardPage> {
                     child: Container(
                       width: 375,
                       height: 56,
+                      //padding: const EdgeInsets.all(8.0),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          top: BorderSide(
+                            color: Colors.grey[300]!, // Light gray color
+                            width: 1.0,              // Thickness of the line
+                          ),
+                        ),
+                      ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -222,15 +233,7 @@ class DashboardPageState extends State<DashboardPage> {
                               },
                               child: Container(
                                 height: double.infinity,
-                                clipBehavior: Clip.antiAlias,
-                                decoration: ShapeDecoration(
-                                  shape: RoundedRectangleBorder(
-                                    side: BorderSide(
-                                      width: 1,
-                                      color: const Color(0xFFEEF0F4),
-                                    ),
-                                  ),
-                                ),
+                                
                                 child: Stack(
                                   children: [
                                     Positioned(
@@ -279,15 +282,7 @@ class DashboardPageState extends State<DashboardPage> {
                               },
                               child: Container(
                                 height: double.infinity,
-                                clipBehavior: Clip.antiAlias,
-                                decoration: ShapeDecoration(
-                                  shape: RoundedRectangleBorder(
-                                    side: BorderSide(
-                                      width: 1,
-                                      color: const Color(0xFFEEF0F4),
-                                    ),
-                                  ),
-                                ),
+                                
                                 child: Stack(
                                   children: [
                                     Positioned(
@@ -299,7 +294,7 @@ class DashboardPageState extends State<DashboardPage> {
                                         child: const Icon(
                                         Icons.format_list_bulleted,
                                         size: 24, // Adjust size as needed
-                                        color: Colors.black, // Set color or remove if you need default
+                                        color: const Color(0xFF9AA5B6), // Set color or remove if you need default
                                       ),
                                       ),
                                     ),
@@ -336,15 +331,7 @@ class DashboardPageState extends State<DashboardPage> {
                               }, 
                               child: Container(
                                 height: double.infinity,
-                                clipBehavior: Clip.antiAlias,
-                                decoration: ShapeDecoration(
-                                  shape: RoundedRectangleBorder(
-                                    side: BorderSide(
-                                      width: 1,
-                                      color: const Color(0xFFEEF0F4),
-                                    ),
-                                  ),
-                                ),
+                                
                                 child: Stack(
                                   children: [
                                     Positioned(
@@ -356,7 +343,7 @@ class DashboardPageState extends State<DashboardPage> {
                                         child: const Icon(
                                         Icons.control_point,
                                         size: 24, // Adjust size as needed
-                                        color: Colors.black, // Set color or remove if you need default
+                                        color: const Color(0xFF9AA5B6), // Set color or remove if you need default
                                       ),
                                       ),
                                     ),
@@ -389,15 +376,7 @@ class DashboardPageState extends State<DashboardPage> {
                           Expanded(
                             child: Container(
                               height: double.infinity,
-                              clipBehavior: Clip.antiAlias,
-                              decoration: ShapeDecoration(
-                                shape: RoundedRectangleBorder(
-                                  side: BorderSide(
-                                    width: 1,
-                                    color: const Color(0xFFEEF0F4),
-                                  ),
-                                ),
-                              ),
+                              
                               child: Stack(
                                 children: [
                                   Positioned(
@@ -409,7 +388,7 @@ class DashboardPageState extends State<DashboardPage> {
                                       child: const Icon(
                                         Icons.pets,
                                         size: 24, // Adjust size as needed
-                                        color: Colors.black, // Set color or remove if you need default
+                                        color: const Color(0xFF9AA5B6), // Set color or remove if you need default
                                       ), // Replace with your icon widget.
                                     ),
                                   ),
@@ -441,15 +420,7 @@ class DashboardPageState extends State<DashboardPage> {
                           Expanded(
                             child: Container(
                               height: double.infinity,
-                              clipBehavior: Clip.antiAlias,
-                              decoration: ShapeDecoration(
-                                shape: RoundedRectangleBorder(
-                                  side: BorderSide(
-                                    width: 1,
-                                    color: const Color(0xFFEEF0F4),
-                                  ),
-                                ),
-                              ),
+                              
                               child: Stack(
                                 children: [
                                   Positioned(
@@ -461,7 +432,7 @@ class DashboardPageState extends State<DashboardPage> {
                                       child: const Icon(
                                         Icons.person_outline,
                                         size: 24, // Adjust size as needed
-                                        color: Colors.black, // Set color or remove if you need default
+                                        color: const Color(0xFF9AA5B6), // Set color or remove if you need default
                                       ),
                                     ),
                                   ),
