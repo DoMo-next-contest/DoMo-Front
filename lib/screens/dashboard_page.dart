@@ -53,7 +53,7 @@ class DashboardPageState extends State<DashboardPage> {
                         width: 250,
                         height: 250,
                         child: ModelViewer(
-                          src: 'assets/cutie.glb', // Use a direct asset path.
+                          src: 'assets/character.glb', // Use a direct asset path.
                           alt: '3D model of Cutie',
                           autoRotate: true,
                           cameraControls: true,
