@@ -111,7 +111,7 @@ class DashboardPageState extends State<DashboardPage> {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         spacing: 15,
                         children: [
-                          Container(
+                          SizedBox(
                             width: double.infinity,
                             child: Row(
                               //mainAxisSize: MainAxisSize.min,
@@ -231,7 +231,7 @@ class DashboardPageState extends State<DashboardPage> {
                               onTap: () {
                                 Navigator.pushNamed(context, '/dashboard'); // Change route as needed.
                               },
-                              child: Container(
+                              child: SizedBox(
                                 height: double.infinity,
                                 
                                 child: Stack(
@@ -280,7 +280,7 @@ class DashboardPageState extends State<DashboardPage> {
                               onTap: () {
                                 Navigator.pushNamed(context, '/project'); // Change route as needed.
                               },
-                              child: Container(
+                              child: SizedBox(
                                 height: double.infinity,
                                 
                                 child: Stack(
@@ -294,7 +294,7 @@ class DashboardPageState extends State<DashboardPage> {
                                         child: const Icon(
                                         Icons.format_list_bulleted,
                                         size: 24, // Adjust size as needed
-                                        color: const Color(0xFF9AA5B6), // Set color or remove if you need default
+                                        color: Color(0xFF9AA5B6), // Set color or remove if you need default
                                       ),
                                       ),
                                     ),
@@ -329,7 +329,7 @@ class DashboardPageState extends State<DashboardPage> {
                               onTap: () {
                                 Navigator.pushNamed(context, '/add'); // change route as needed
                               }, 
-                              child: Container(
+                              child: SizedBox(
                                 height: double.infinity,
                                 
                                 child: Stack(
@@ -343,7 +343,7 @@ class DashboardPageState extends State<DashboardPage> {
                                         child: const Icon(
                                         Icons.control_point,
                                         size: 24, // Adjust size as needed
-                                        color: const Color(0xFF9AA5B6), // Set color or remove if you need default
+                                        color: Color(0xFF9AA5B6), // Set color or remove if you need default
                                       ),
                                       ),
                                     ),
@@ -374,7 +374,7 @@ class DashboardPageState extends State<DashboardPage> {
                           ),
                           // '캐릭터' button
                           Expanded(
-                            child: Container(
+                            child: SizedBox(
                               height: double.infinity,
                               
                               child: Stack(
@@ -388,7 +388,7 @@ class DashboardPageState extends State<DashboardPage> {
                                       child: const Icon(
                                         Icons.pets,
                                         size: 24, // Adjust size as needed
-                                        color: const Color(0xFF9AA5B6), // Set color or remove if you need default
+                                        color: Color(0xFF9AA5B6), // Set color or remove if you need default
                                       ), // Replace with your icon widget.
                                     ),
                                   ),
@@ -418,7 +418,7 @@ class DashboardPageState extends State<DashboardPage> {
                           ),
                           // '프로필' button
                           Expanded(
-                            child: Container(
+                            child: SizedBox(
                               height: double.infinity,
                               
                               child: Stack(
@@ -432,7 +432,7 @@ class DashboardPageState extends State<DashboardPage> {
                                       child: const Icon(
                                         Icons.person_outline,
                                         size: 24, // Adjust size as needed
-                                        color: const Color(0xFF9AA5B6), // Set color or remove if you need default
+                                        color: Color(0xFF9AA5B6), // Set color or remove if you need default
                                       ),
                                     ),
                                   ),

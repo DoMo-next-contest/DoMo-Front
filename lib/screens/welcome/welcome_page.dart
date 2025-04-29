@@ -1,76 +1,96 @@
+// lib/screens/welcome/welcome_page.dart
+
 import 'package:flutter/material.dart';
-import 'package:domo/utils/responsive.dart';
-import 'package:domo/screens/welcome/components/background.dart';
-import 'package:domo/screens/welcome/components/login_signup_btn.dart';
-import 'package:domo/screens/welcome/components/welcome_image.dart';
-import 'package:domo/utils/constants.dart';
+import 'package:domo/widgets/custom_button.dart';
 
 class WelcomeScreen extends StatelessWidget {
-  const WelcomeScreen({super.key});
-
-  /// Builds a white, rounded card to hold the welcome content.
-  Widget _buildWelcomeCard({required double width, required double height}) {
-    return Container(
-      width: width,
-      height: height,
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-      decoration: BoxDecoration(
-        color: kCardColor,
-        borderRadius: BorderRadius.circular(kBorderRadius),
-        boxShadow: [
-          BoxShadow(
-            color: kCardShadow,
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      // Center the content inside the card
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
-          WelcomeImage(),
-          SizedBox(height: defaultPadding),
-          LoginAndSignupBtn(),
-        ],
-      ),
-    );
-  }
+  const WelcomeScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    // Determine width; for mobile, use 90% of screen width; otherwise, fixed 393 px.
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
-    final containerWidth = screenWidth < 600 ? screenWidth * 0.9 : 393.0;
-    
-    // Set a fixed height for the welcome card (adjust as needed).
-    
-    return Background(
-      child: SafeArea(
-        child: Responsive(
-          mobile: Center(
-            child: _buildWelcomeCard(
-              width: containerWidth,
-              height: screenHeight,
-            ),
-          ),
-          tablet: Center(
-            child: _buildWelcomeCard(
-              width: 393.0,
-              height: screenHeight,
-            ),
-          ),
-          desktop: LayoutBuilder(
-            builder: (context, constraints) {
-              return Center(
-                child: _buildWelcomeCard(
-                  width: 393.0,
-                  height: constraints.maxHeight,
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Center(
+        child: Container(
+          width: 393,
+          height: 852,
+          clipBehavior: Clip.antiAlias,
+          decoration: const BoxDecoration(color: Colors.white),
+          child: Stack(
+            children: [
+              Positioned(
+                left: 29,
+                top: 0,
+                child: SizedBox(
+                  width: 335,
+                  height: 852,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const SizedBox(height: 200),
+
+                      // 1) 메인 타이틀
+                      const Text(
+                        'Domo에 오신 것을 환영합니다',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 24,
+                          fontFamily: 'Roboto',
+                          fontWeight: FontWeight.w700,
+                          height: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+
+                      // 2) 서브타이틀
+                      const Text(
+                        '앱을 시작하려면 로그인하거나 가입하세요.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Color(0xFF1E1E1E),
+                          fontSize: 16,
+                          fontFamily: 'Roboto',
+                          fontWeight: FontWeight.w400,
+                          height: 1.4,
+                        ),
+                      ),
+
+                      const Spacer(),
+
+                      // 3) 버튼 Column
+                      Column(
+                        children: [
+                          SizedBox(
+                            width: double.infinity,
+                            height: 56,
+                            child: CustomButton(
+                              text: '로그인',
+                              type: ButtonType.secondary,
+                              onPressed: () =>
+                                  Navigator.pushNamed(context, '/login'),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 56,
+                            child: CustomButton(
+                              text: '회원가입',
+                              type: ButtonType.primary,
+                              onPressed: () =>
+                                  Navigator.pushNamed(context, '/signup'),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 40),
+                    ],
+                  ),
                 ),
-              );
-            },
+              ),
+            ],
           ),
         ),
       ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:domo/utils/mobile_frame.dart';
 import 'screens/welcome/welcome_page.dart';
 import 'screens/login/login_page.dart';
 import 'screens/signup/signup_page.dart';
@@ -6,6 +7,7 @@ import 'screens/dashboard_page.dart';
 import 'screens/add_page.dart';
 import 'screens/project_page.dart';
 import 'screens/task_page.dart';
+import 'screens/onboarding/signup_step1.dart';
 import 'screens/onboarding/onboarding_step2.dart';
 import 'screens/onboarding/onboarding_step3.dart';
 import 'screens/onboarding/onboarding_step4.dart';
@@ -21,14 +23,23 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'DoMo App',
-      theme: ThemeData(
-        primarySwatch: Colors.green,
-      ),
-      initialRoute: '/dashboard', // Set the initial route to the welcome page
+      theme: ThemeData(primarySwatch: Colors.green),
+      debugShowCheckedModeBanner: false,
+
+      builder: (context, child) {
+        return Container(
+          color: Colors.grey.shade200,
+          child: Center(
+            child: MobileFrame(child: child!),
+          ),
+        );
+      },
+
+      initialRoute: '/',
       routes: {
         '/': (context) => const WelcomeScreen(),
         '/login': (context) => const LoginPage(),
-        '/signup': (context) => const SignupPage(),
+        '/signup': (context) => const SignupStep1(),
         '/dashboard': (context) => const DashboardPage(),
         '/add': (context) => const AddPage(),
         '/project': (context) => const ProjectPage(),
@@ -37,7 +48,6 @@ class MyApp extends StatelessWidget {
         '/onboardingStep3': (context) => const OnboardingStep3(),
         '/onboardingStep4': (context) => const OnboardingStep4(),
       },
-      debugShowCheckedModeBanner: false,
     );
   }
 }
