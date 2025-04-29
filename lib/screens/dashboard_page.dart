@@ -31,7 +31,7 @@ class DashboardPageState extends State<DashboardPage> {
 
 
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 18, 32, 47),
+      backgroundColor: Colors.grey.shade200,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Center(
@@ -245,7 +245,7 @@ class DashboardPageState extends State<DashboardPage> {
                                         child: const Icon(
                                         Icons.home,
                                         size: 24, // Adjust size as needed
-                                        color: Colors.black, // Set color or remove if you need default
+                                        color: const Color(0xFFBF622C), // Set color or remove if you need default
                                       ),
                                       ),
                                     ),
@@ -259,7 +259,7 @@ class DashboardPageState extends State<DashboardPage> {
                                           '홈',
                                           textAlign: TextAlign.center,
                                           style: TextStyle(
-                                            color: const Color(0xFF545F70),
+                                            color: const Color(0xFFBF622C),
                                             fontSize: 13,
                                             fontFamily: 'Inter',
                                             fontWeight: FontWeight.w600,

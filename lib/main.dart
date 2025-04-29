@@ -24,7 +24,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.green,
       ),
-      initialRoute: '/dashboard', // Set the initial route to the welcome page
+      initialRoute: '/project', // Set the initial route to the welcome page
       routes: {
         '/': (context) => const WelcomeScreen(),
         '/login': (context) => const LoginPage(),
