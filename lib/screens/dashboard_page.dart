@@ -33,12 +33,11 @@ class DashboardPageState extends State<DashboardPage> {
     return Scaffold(
       backgroundColor: Colors.grey.shade200,
       body: SafeArea(
-        child: SingleChildScrollView(
           child: Center(
             child: Container(
               width: containerWidth,
               height: screenHeight,
-              padding: const EdgeInsets.all(8.0),
+              padding: const EdgeInsets.all(16.0),
               decoration: const BoxDecoration(color: Colors.white),
               
               child: Stack(
@@ -50,8 +49,8 @@ class DashboardPageState extends State<DashboardPage> {
                     right: 0,
                     child: Center(
                       child: SizedBox(
-                        width: 250,
-                        height: 250,
+                        width: 300,
+                        height: 300,
                         child: ModelViewer(
                           src: 'assets/character.glb', // Use a direct asset path.
                           alt: '3D model of Cutie',
@@ -469,7 +468,6 @@ class DashboardPageState extends State<DashboardPage> {
             ),
           ),
         ),
-      )
     );
   }
 }

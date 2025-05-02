@@ -9,228 +9,238 @@ class ProjectPage extends StatefulWidget {
   ProjectPageState createState() => ProjectPageState();
 }
 
-Widget _buildChip(String label, bool selected) {
-  return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-    decoration: ShapeDecoration(
-      color: selected ? const Color(0xFFF2AC57) : const Color(0x331D1B20),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      shadows: const [ BoxShadow(color: Color(0x19000000), blurRadius: 16, offset: Offset(0,2)) ],
-    ),
-    child: Text(
-      label,
-      style: TextStyle(
-        color: selected ? const Color(0xFFF5F5F5) : const Color(0xFF757575),
-        fontSize: 14,
-        height: 1,
-      ),
-    ),
-  );
-}
-
 class ProjectPageState extends State<ProjectPage> {
+  // Categories for filtering
+  final List<String> categories = ['업무', '학업', '일상', '운동', '자기계발'];
+  final Set<String> selectedCategories = {'업무', '학업', '일상', '운동', '자기계발'}; // default selected
+
+  Widget _buildChip(String label) {
+    final bool isOn = selectedCategories.contains(label);
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          if (isOn) selectedCategories.remove(label);
+          else selectedCategories.add(label);
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: ShapeDecoration(
+          color: isOn ? const Color(0xFFF2AC57) : const Color(0x331D1B20),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isOn ? const Color(0xFFF5F5F5) : const Color(0xFF757575),
+            fontSize: 14,
+            height: 1,
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
     final containerWidth = screenWidth < 600 ? screenWidth * 0.9 : 393.0;
 
-    // Sort tasks by deadline using the global list.
-    globalTaskList.sort((a, b) => a.deadline.compareTo(b.deadline));
+    // Filter and sort tasks
+    final filtered = globalTaskList
+        .where((t) => selectedCategories.contains(t.category))
+        .toList()
+      ..sort((a, b) => a.deadline.compareTo(b.deadline));
 
     return Scaffold(
       backgroundColor: Colors.grey.shade200,
       body: SafeArea(
-          child: Center(
-            child: Container(
-              width: containerWidth,
-              height: screenHeight,
-              padding: const EdgeInsets.all(16.0),
-              decoration: const BoxDecoration(color: Colors.white),
-              child: Stack(
-                children: [
-                  // Title.
-                  const Positioned(
-                    left: 20,
-                    top: 20,
-                    child: Text(
-                      '프로젝트 목록',
-                      style: TextStyle(
-                        color: Color(0xFF1E1E1E),
-                        fontSize: 24,
-                        fontFamily: 'Inter',
-                        fontWeight: FontWeight.w700,
-                        height: 1.00,
-                        letterSpacing: -0.64,
+        child: Center(
+          child: Container(
+            width: containerWidth,
+            height: screenHeight,
+            padding: const EdgeInsets.all(16.0),
+            decoration: const BoxDecoration(color: Colors.white),
+            child: Stack(
+              children: [
+                // Title
+                const Positioned(
+                  left: 20,
+                  top: 20,
+                  child: Text(
+                    '프로젝트 목록',
+                    style: TextStyle(
+                      color: Color(0xFF1E1E1E),
+                      fontSize: 24,
+                      fontFamily: 'Inter',
+                      fontWeight: FontWeight.w700,
+                      height: 1.00,
+                      letterSpacing: -0.64,
+                    ),
+                  ),
+                ),
+
+                // Filter chips
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  top: 80,
+                  child: SizedBox(
+                    height: 30,
+                    child: ScrollConfiguration(
+                      behavior: ScrollConfiguration.of(context).copyWith(
+                        dragDevices: {
+                          PointerDeviceKind.touch,
+                          PointerDeviceKind.mouse,
+                        },
+                      ),
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: categories.length,
+                        separatorBuilder: (_, __) => const SizedBox(width: 10),
+                        itemBuilder: (context, i) => _buildChip(categories[i]),
                       ),
                     ),
                   ),
+                ),
 
-                  Positioned(
-                    left: 0, right: 0, top: 70,
-                    child: SizedBox(
-                      height: 56,
-                      child: ScrollConfiguration(
-                        behavior: ScrollConfiguration.of(context).copyWith(
-                          dragDevices: {
-                            PointerDeviceKind.touch,
-                            PointerDeviceKind.mouse,   // ← enable mouse drags
-                          },
-                        ),
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          physics: BouncingScrollPhysics(),
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Row(
-                            children: [
-                              _buildChip('업무', true),
-                              const SizedBox(width: 10),
-                              _buildChip('학업', true),
-                              const SizedBox(width: 10),
-                              _buildChip('일상', false),
-                              const SizedBox(width: 10),
-                              _buildChip('운동', false),
-                              const SizedBox(width: 10),
-                              _buildChip('자기계발', false),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  Positioned(
-                    top: 130,
-                    left: 0,
-                    right: 0,
-                    bottom: 80,
-                    child: ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: globalTaskList.length,
-                      itemBuilder: (context, index) {
-                        final task = globalTaskList[index];
-                        final daysLeft = task.deadline.difference(DateTime.now()).inDays;
-                        final progress = task.progress; // 0.0 to 1.0
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8.0),
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(16),
-                            onTap: () => Navigator.pushNamed(
+                // Task list
+                Positioned(
+                  top: 120,
+                  left: 0,
+                  right: 0,
+                  bottom: 82,
+                  child: ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: filtered.length,
+                    itemBuilder: (context, index) {
+                      final task = filtered[index];
+                      final daysLeft = task.deadline.difference(DateTime.now()).inDays;
+                      final progress = task.progress;
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16.0),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(16),
+                          onTap: () async {
+                            await Navigator.pushNamed(
                               context,
                               '/task',
                               arguments: task.name,
-                            ),
-                            child: Container(
-                              width: double.infinity,
-                              height: 89,
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-                              decoration: ShapeDecoration(
-                                color: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                shadows: [
-                                  BoxShadow(
-                                    color: Color(0x19000000),
-                                    blurRadius: 16,
-                                    offset: Offset(0, 2),
-                                  ),
-                                ],
+                            );
+                            // when we return, rebuild so progress circles update
+                            setState(() {});
+                          },
+                          child: Container(
+                            width: double.infinity,
+                            height: 90,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+                            decoration: ShapeDecoration(
+                              color: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
                               ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          task.name,
-                                          style: const TextStyle(
-                                            color: Color(0xFF121212),
-                                            fontSize: 14,
-                                            fontFamily: 'Inter',
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                          decoration: ShapeDecoration(
-                                            color: const Color(0xBFF2AC57),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(16),
-                                            ),
-                                            shadows: [
-                                              BoxShadow(
-                                                color: Color(0x19000000),
-                                                blurRadius: 16,
-                                                offset: Offset(0, 2),
-                                              ),
-                                            ],
-                                          ),
-                                          child: const Text(
-                                            '업무',
-                                            style: TextStyle(
-                                              color: Color(0xFFF5F5F5),
-                                              fontSize: 12,
-                                              fontFamily: 'Roboto',
-                                              fontWeight: FontWeight.w400,
-                                              height: 1,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Column(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              shadows: const [
+                                BoxShadow(
+                                  color: Color(0x19000000),
+                                  blurRadius: 16,
+                                  offset: Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
+                                      Text(
+                                        task.name,
+                                        style: const TextStyle(
+                                          color: Color(0xFF121212),
+                                          fontSize: 14,
+                                          fontFamily: 'Inter',
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 12),
                                       Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                         decoration: ShapeDecoration(
-                                          color: const Color(0x331D1B20),
+                                          color: const Color(0xBFF2AC57),
                                           shape: RoundedRectangleBorder(
                                             borderRadius: BorderRadius.circular(16),
                                           ),
+                                          shadows: [
+                                            BoxShadow(
+                                              color: Color(0x19000000),
+                                              blurRadius: 16,
+                                              offset: Offset(0, 2),
+                                            ),
+                                          ],
                                         ),
                                         child: Text(
-                                          '${daysLeft}d',
+                                          task.category,
                                           style: const TextStyle(
-                                            color: Color(0xFF121212),
-                                            fontSize: 11,
+                                            color: Color(0xFFF5F5F5),
+                                            fontSize: 12,
                                             fontFamily: 'Roboto',
-                                            fontWeight: FontWeight.w500,
+                                            fontWeight: FontWeight.w400,
                                             height: 1,
                                           ),
                                         ),
                                       ),
-                                      SizedBox(
-                                        width: 30,
-                                        height: 30,
-                                        child: CircularProgressIndicator(
-                                          value: progress,
-                                          strokeWidth: 4,
-                                          backgroundColor: Color(0x33F2AC57),
-                                          valueColor: AlwaysStoppedAnimation(Color(0xFFF2AC57)),
-                                        ),
-                                      ),
                                     ],
                                   ),
-                                ],
-                              ),
+                                ),
+                                Column(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: ShapeDecoration(
+                                        color: const Color(0x331D1B20),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(16),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        '${daysLeft}d',
+                                        style: const TextStyle(
+                                          color: Color(0xFF121212),
+                                          fontSize: 11,
+                                          fontFamily: 'Roboto',
+                                          fontWeight: FontWeight.w500,
+                                          height: 1,
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      width: 30,
+                                      height: 30,
+                                      child: CircularProgressIndicator(
+                                        value: progress,
+                                        strokeWidth: 4,
+                                        backgroundColor: Color(0x33F2AC57),
+                                        valueColor: AlwaysStoppedAnimation(Color(0xFFF2AC57)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
                           ),
-                        );
-                      },
-                    ),
+                        ),
+                      );
+                    },
                   ),
+                ),
 
-
-
-                  // Bottom Navigation Bar.
+                // Bottom Navigation Bar.
 
                   Positioned(
                     left: 0,
@@ -491,11 +501,11 @@ class ProjectPageState extends State<ProjectPage> {
                       ),
                     )
                   ),
-                ],
-              ),
+              ],
             ),
           ),
         ),
+      ),
     );
   }
 }

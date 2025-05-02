@@ -69,6 +69,9 @@ class AddPageState extends State<AddPage> {
     final newTask = Task(
       name: _nameController.text,
       deadline: _selectedDeadline!, // ensure this is non-null by proper validation
+      category: '기타',
+      subtasks: [],    // no subtasks yet
+
     );
 
     // Add the task to the global list.
@@ -125,7 +128,6 @@ Widget _buildChip(String label, bool selected) {
     return Scaffold(
       backgroundColor: Colors.grey.shade200,
       body: SafeArea(
-        child: SingleChildScrollView(
           child: Center(
             child: Container(
               width: containerWidth,
@@ -755,7 +757,6 @@ Widget _buildChip(String label, bool selected) {
             ),
           ),
         ),
-      ),
     );
   }
 }

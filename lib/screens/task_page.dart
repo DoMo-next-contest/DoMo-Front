@@ -3,25 +3,6 @@ import 'package:domo/models/task.dart';
 import 'dart:ui' show PointerDeviceKind;
 
 
-Widget _buildChip(String label, bool selected) {
-  return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-    decoration: ShapeDecoration(
-      color: selected ? const Color(0xFFF2AC57) : const Color(0x331D1B20),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      shadows: const [ BoxShadow(color: Color(0x19000000), blurRadius: 16, offset: Offset(0,2)) ],
-    ),
-    child: Text(
-      label,
-      style: TextStyle(
-        color: selected ? const Color(0xFFF5F5F5) : const Color(0xFF757575),
-        fontSize: 14,
-        height: 1,
-      ),
-    ),
-  );
-}
-
 class TaskPage extends StatefulWidget {
   const TaskPage({super.key});
 
@@ -32,23 +13,33 @@ class TaskPage extends StatefulWidget {
 class TaskPageState extends State<TaskPage> {
   late String taskName;
   late Task currentTask;
+  bool _isEditing = false;   
 
-  // Controller for adding a new subtask.
+  // add this:
+  late String selectedCategory;
+
   final TextEditingController _subtaskController = TextEditingController();
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Retrieve the task name passed via route arguments.
+
     final String? passedTaskName =
         ModalRoute.of(context)?.settings.arguments as String?;
     taskName = passedTaskName ?? 'Unknown Task';
 
-    // Find the Task object from the global list.
     currentTask = globalTaskList.firstWhere(
       (t) => t.name == taskName,
-      orElse: () => Task(name: taskName, deadline: DateTime.now(), subtasks: []),
+      orElse: () => Task(
+        name: taskName,
+        deadline: DateTime.now(),
+        subtasks: [],
+        category: selectedCategory ?? '기타',
+      ),
     );
+
+    // initialize the single‐category here:
+    selectedCategory = currentTask.category;
   }
 
   @override
@@ -77,13 +68,36 @@ class TaskPageState extends State<TaskPage> {
               children: [
                 // Close button to return to Dashboard.
                 Positioned(
-                  right: 5,
-                  top: 13.5,
-                  child: IconButton(
-                    icon: const Icon(Icons.close, color: Colors.black),
-                    onPressed: () {
-                      Navigator.pushReplacementNamed(context, '/project');
-                    },
+                  left: 0,
+                  right: 0,
+                  top: 0,
+                  child: Container(
+                    width: 375,
+                    height: 72,
+                    clipBehavior: Clip.antiAlias,
+                    decoration: const BoxDecoration(color: Colors.white),
+                    child: Stack(
+                      children: [
+                        // back arrow on left
+                        Positioned(
+                          left: 16,
+                          top: 16,
+                          child: IconButton(
+                            icon: const Icon(Icons.arrow_back, color: Colors.black),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                        ),
+                        // edit button on right
+                        Positioned(
+                          right: 16,
+                          top: 16,
+                          child: IconButton(
+                            icon: Icon(_isEditing ? Icons.check : Icons.edit),
+                            onPressed: () => setState(() => _isEditing = !_isEditing),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 // Task Title.
@@ -103,10 +117,33 @@ class TaskPageState extends State<TaskPage> {
                   ),
                 ),
 
+                Positioned(
+                  right: 20,
+                  top: 80,               // adjust as needed
+                  child: Container(
+                    height: 30,            // same height as your chips
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: ShapeDecoration(
+                      color: const Color(0xFFF2AC57),                           // “on” color
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                    child: Center(
+                      child: Text(
+                        currentTask.category,                                   // dynamic label
+                        style: const TextStyle(
+                          color: Color(0xFFF5F5F5),                             // “on” text color
+                          fontSize: 14,
+                          height: 1,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
 
                 // 2) 날짜 표시 박스 (읽기 전용)
                 Positioned(
-                  top: 180,
+                  top: 140,
                   left: 16,
                   right: 16,
                   child: Container(
@@ -152,192 +189,189 @@ class TaskPageState extends State<TaskPage> {
 
                 // Main content: Subtasks list and new subtask input.
 
-                Positioned(
-                    left: 0, right: 0, top: 110,
-                    child: SizedBox(
-                      height: 56,
-                      child: ScrollConfiguration(
-                        behavior: ScrollConfiguration.of(context).copyWith(
-                          dragDevices: {
-                            PointerDeviceKind.touch,
-                            PointerDeviceKind.mouse,   // ← enable mouse drags
-                          },
-                        ),
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          physics: BouncingScrollPhysics(),
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Row(
-                            children: [
-                              _buildChip('업무', true),
-                              const SizedBox(width: 10),
-                              _buildChip('학업', true),
-                              const SizedBox(width: 10),
-                              _buildChip('일상', false),
-                              const SizedBox(width: 10),
-                              _buildChip('운동', false),
-                              const SizedBox(width: 10),
-                              _buildChip('자기계발', false),
-                            ],
+              Positioned(
+                            top: 200,
+                            left: 0,
+                            right: 0,
+                            bottom: 150,
+                            child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header...
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                        child: Text(
+                          '학위작업',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w400,
+                            color: Color(0xFF1E1E1E),
                           ),
                         ),
                       ),
-                    ),
+
+                      // This Expanded + ReorderableListView is scrollable
+                      Expanded(
+                        child: ReorderableListView.builder(
+                          buildDefaultDragHandles: false,
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          itemCount: currentTask.subtasks.length + 1,
+                          onReorder: (oldIndex, newIndex) {
+                            setState(() {
+                              final maxIndex = currentTask.subtasks.length;
+                              if (newIndex > maxIndex) newIndex = maxIndex;
+                              if (oldIndex < maxIndex) {
+                                if (newIndex > oldIndex) newIndex -= 1;
+                                final moved = currentTask.subtasks.removeAt(oldIndex);
+                                currentTask.subtasks.insert(newIndex, moved);
+                              }
+                            });
+                          },
+                          itemBuilder: (context, index) {
+                            if (index < currentTask.subtasks.length) {
+                              final sub = currentTask.subtasks[index];
+                              return Padding(
+                                key: ValueKey(sub.title),
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: Container(
+                                  // … your styling …
+                                  child: Row(
+                                    children: [
+                                      if (_isEditing)
+                                        ReorderableDragStartListener(
+                                          index: index,
+                                          child: const Icon(Icons.drag_handle, size: 24),
+                                        ),
+                                      if (!_isEditing)
+                                        Checkbox(
+                                          value: sub.isDone,
+                                          onChanged: (c) => setState(() => sub.isDone = c!),
+                                        ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          sub.title,
+                                          style: TextStyle(
+                                            decoration: sub.isDone
+                                                ? TextDecoration.lineThrough
+                                                : TextDecoration.none,
+                                            // …other style…
+                                          ),
+                                        ),
+                                      ),
+                                      if (_isEditing)
+                                        IconButton(
+                                          icon: const Icon(Icons.delete, size: 24),
+                                          onPressed: () =>
+                                              setState(() => currentTask.subtasks.removeAt(index)),
+                                        ),
+                                      if (!_isEditing)
+                                        IconButton(
+                                          icon: const Icon(Icons.play_arrow_rounded, size: 24),
+                                          onPressed: () {
+                                            // TODO: play this subtask
+                                          },
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }
+
+                            // Add‑new‑subtask row (also scrolls)
+                            return Padding(
+                              key: const ValueKey('add-subtask'),
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: TextField(
+                                      controller: _subtaskController,
+                                      decoration: const InputDecoration(
+                                        hintText: '새로운 하위작업 직접 추가하기',
+                                        border: OutlineInputBorder(),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  IconButton(
+                                    icon: const Icon(Icons.add),
+                                    onPressed: () {
+                                      final text = _subtaskController.text.trim();
+                                      if (text.isNotEmpty) {
+                                        setState(() {
+                                          currentTask.subtasks.add(Subtask(title: text));
+                                          _subtaskController.clear();
+                                        });
+                                      }
+                                    },
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
                   ),
+              ),
+
+
 
               Positioned(
-  top: 240,
   left: 0,
   right: 0,
-  bottom: 0,
-  child: Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      // Header
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-        child: Text(
-          '학위작업',
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w400,
-            color: Color(0xFF1E1E1E),
+  bottom: 80,
+  child: Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 10.0),
+    child: Row(
+      children: [
+        // “프로젝트 삭제하기” (outline style)
+        Expanded(
+          child: Material(
+            color: Colors.white,
+            elevation: 4,
+            shadowColor: Colors.black26,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: const BorderSide(color: Color(0xFFC78E48)),
+            ),
+            child: TextButton(
+              onPressed: () { /* TODO: 삭제 로직 */ },
+              style: TextButton.styleFrom(
+                minimumSize: const Size.fromHeight(48),    // ← forces 48px height
+                foregroundColor: const Color(0xFFC78E48),
+                textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              ),
+              child: const Text('프로젝트 삭제하기'),
+            ),
           ),
         ),
-      ),
-
-      // Reorderable list with add row
-      Expanded(
-        child: ReorderableListView.builder(
-          buildDefaultDragHandles: false,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          itemCount: currentTask.subtasks.length + 1,
-          onReorder: (oldIndex, newIndex) {
-            setState(() {
-              final maxIndex = currentTask.subtasks.length;
-              if (newIndex > maxIndex) newIndex = maxIndex;
-              if (oldIndex < maxIndex) {
-                if (newIndex > oldIndex) newIndex -= 1;
-                final moved = currentTask.subtasks.removeAt(oldIndex);
-                currentTask.subtasks.insert(newIndex, moved);
-              }
-            });
-          },
-          itemBuilder: (context, index) {
-  if (index < currentTask.subtasks.length) {
-    final sub = currentTask.subtasks[index];
-    return Padding(
-      key: ValueKey(sub.title),
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Container(
-        width: double.infinity,
-        height: 60,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-        decoration: ShapeDecoration(
-          color: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+        const SizedBox(width: 10),
+        // “프로젝트 완료하기” (filled style)
+        Expanded(
+          child: Material(
+            color: const Color(0xFFC78E48),
+            elevation: 4,
+            shadowColor: Colors.black26,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: TextButton(
+              onPressed: () { /* TODO: 완료 로직 */ },
+              style: TextButton.styleFrom(
+                minimumSize: const Size.fromHeight(48),   // ← forces 48px height
+                foregroundColor: Colors.white,
+                textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              ),
+              child: const Text('프로젝트 완료하기'),
+            ),
           ),
-          shadows: const [
-            BoxShadow(
-              color: Color(0x19000000),
-              blurRadius: 16,
-              offset: Offset(0, 2),
-            ),
-          ],
         ),
-        child: Row(
-          children: [
-            // 1) Drag handle
-            ReorderableDragStartListener(
-              index: index,
-              child: const Icon(Icons.drag_handle, size: 24),
-            ),
-
-            const SizedBox(width: 8),
-
-            // 2) Checkbox
-            Checkbox(
-              value: sub.isDone,
-              onChanged: (checked) => setState(() {
-                sub.isDone = checked!;
-              }),
-            ),
-
-            const SizedBox(width: 8),
-
-            // 3) Title text, strikethrough when done
-            Expanded(
-              child: Text(
-                sub.title,
-                style: TextStyle(
-                  color: const Color(0xFF121212),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  decoration: sub.isDone
-                      ? TextDecoration.lineThrough
-                      : TextDecoration.none,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-
-            // 4) Delete button
-            IconButton(
-              icon: const Icon(Icons.delete, size: 24),
-              onPressed: () => setState(() {
-                currentTask.subtasks.removeAt(index);
-              }),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-            // Add new subtask row
-            return Padding(
-              key: const ValueKey('add-subtask'),
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _subtaskController,
-                      decoration: const InputDecoration(
-                        hintText: '새로운 하위작업 직접 추가하기',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    icon: const Icon(Icons.add),
-                    onPressed: () {
-                      final text = _subtaskController.text.trim();
-                      if (text.isNotEmpty) {
-                        setState(() {
-                          currentTask.subtasks.add(Subtask(title: text));
-                          _subtaskController.clear();
-                        });
-                      }
-                    },
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
-      ),
-    ],
+      ],
+    ),
   ),
 ),
-
-
-
-                
-
 
                 // Bottom Navigation Bar.
 
