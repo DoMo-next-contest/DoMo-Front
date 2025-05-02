@@ -11,8 +11,9 @@ class ProjectPage extends StatefulWidget {
 
 class ProjectPageState extends State<ProjectPage> {
   // Categories for filtering
-  final List<String> categories = ['업무', '학업', '일상', '운동', '자기계발'];
-  final Set<String> selectedCategories = {'업무', '학업', '일상', '운동', '자기계발'}; // default selected
+  List<String> get categories => Task.allCategories;
+
+  Set<String> selectedCategories = {'업무', '학업', '일상', '운동', '자기계발' ,'기타'}; // default selected
 
   Widget _buildChip(String label) {
     final bool isOn = selectedCategories.contains(label);
