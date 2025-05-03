@@ -20,8 +20,11 @@ class ProjectPageState extends State<ProjectPage> {
     return GestureDetector(
       onTap: () {
         setState(() {
-          if (isOn) selectedCategories.remove(label);
-          else selectedCategories.add(label);
+          if (isOn) {
+            selectedCategories.remove(label);
+          } else {
+            selectedCategories.add(label);
+          }
         });
       },
       child: Container(
@@ -269,7 +272,7 @@ class ProjectPageState extends State<ProjectPage> {
                               onTap: () {
                                 Navigator.pushNamed(context, '/dashboard'); // Change route as needed.
                               },
-                              child: Container(
+                              child: SizedBox(
                                 height: double.infinity,
                                 
                                 child: Stack(
@@ -318,7 +321,7 @@ class ProjectPageState extends State<ProjectPage> {
                               onTap: () {
                                 Navigator.pushNamed(context, '/project'); // Change route as needed.
                               },
-                              child: Container(
+                              child: SizedBox(
                                 height: double.infinity,
                                 
                                 child: Stack(
@@ -332,7 +335,7 @@ class ProjectPageState extends State<ProjectPage> {
                                         child: const Icon(
                                         Icons.format_list_bulleted,
                                         size: 24, // Adjust size as needed
-                                        color: const Color(0xFFBF622C), // Changed to black
+                                        color: Color(0xFFBF622C), // Changed to black
                                       ),
                                       ),
                                     ),
@@ -367,7 +370,7 @@ class ProjectPageState extends State<ProjectPage> {
                               onTap: () {
                                 Navigator.pushNamed(context, '/add'); // change route as needed
                               }, 
-                              child: Container(
+                              child: SizedBox(
                                 height: double.infinity,
                                 
                                 child: Stack(
@@ -381,7 +384,7 @@ class ProjectPageState extends State<ProjectPage> {
                                         child: const Icon(
                                         Icons.control_point,
                                         size: 24, // Adjust size as needed
-                                        color: const Color(0xFF9AA5B6), // Set color or remove if you need default
+                                        color: Color(0xFF9AA5B6), // Set color or remove if you need default
                                       ),
                                       ),
                                     ),
@@ -412,7 +415,7 @@ class ProjectPageState extends State<ProjectPage> {
                           ),
                           // '캐릭터' button
                           Expanded(
-                            child: Container(
+                            child: SizedBox(
                               height: double.infinity,
                               
                               child: Stack(
@@ -426,7 +429,7 @@ class ProjectPageState extends State<ProjectPage> {
                                       child: const Icon(
                                         Icons.pets,
                                         size: 24, // Adjust size as needed
-                                        color: const Color(0xFF9AA5B6), // Set color or remove if you need default
+                                        color: Color(0xFF9AA5B6), // Set color or remove if you need default
                                       ), // Replace with your icon widget.
                                     ),
                                   ),
@@ -456,7 +459,7 @@ class ProjectPageState extends State<ProjectPage> {
                           ),
                           // '프로필' button
                           Expanded(
-                            child: Container(
+                            child: SizedBox(
                               height: double.infinity,
                               
                               child: Stack(
@@ -470,7 +473,7 @@ class ProjectPageState extends State<ProjectPage> {
                                       child: const Icon(
                                         Icons.person_outline,
                                         size: 24, // Adjust size as needed
-                                        color: const Color(0xFF9AA5B6), // Set color or remove if you need default
+                                        color: Color(0xFF9AA5B6), // Set color or remove if you need default
                                       ),
                                     ),
                                   ),

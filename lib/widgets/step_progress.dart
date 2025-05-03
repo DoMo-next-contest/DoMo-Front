@@ -9,14 +9,14 @@ class StepProgress extends StatelessWidget {
   final double topPadding;
 
   const StepProgress({
-    Key? key,
+    super.key,
     required this.currentStep,
     required this.totalSteps,
     this.width = 335,
     this.height = 5,
     this.labelWidth = 335,
     this.topPadding = 55,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

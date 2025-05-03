@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:domo/utils/mobile_frame.dart';
 import 'screens/welcome/welcome_page.dart';
 import 'screens/login/login_page.dart';
-import 'screens/signup/signup_page.dart';
 import 'screens/dashboard_page.dart';
 import 'screens/add_page.dart';
 import 'screens/project_page.dart';

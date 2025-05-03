@@ -17,8 +17,8 @@ class TaskPageState extends State<TaskPage> {
   late Task currentTask;
   bool _isEditing = false;   
 
-  Map<Subtask, Timer?> _timers = {};
-  Map<Subtask, DateTime> _startTimes = {};
+  final Map<Subtask, Timer?> _timers = {};
+  final Map<Subtask, DateTime> _startTimes = {};
 
   String _twoDigits(int n) => n.toString().padLeft(2, '0');
 
@@ -121,7 +121,7 @@ class TaskPageState extends State<TaskPage> {
                     Navigator.pop(context);
                   },
                 );
-              }).toList(),
+              }),
               const Divider(),
               Row(
                 children: [
@@ -790,7 +790,7 @@ class TaskPageState extends State<TaskPage> {
                               onTap: () {
                                 Navigator.pushNamed(context, '/dashboard'); // Change route as needed.
                               },
-                              child: Container(
+                              child: SizedBox(
                                 height: double.infinity,
                                 
                                 child: Stack(
@@ -839,7 +839,7 @@ class TaskPageState extends State<TaskPage> {
                               onTap: () {
                                 Navigator.pushNamed(context, '/project'); // Change route as needed.
                               },
-                              child: Container(
+                              child: SizedBox(
                                 height: double.infinity,
                                 
                                 child: Stack(
@@ -853,7 +853,7 @@ class TaskPageState extends State<TaskPage> {
                                         child: const Icon(
                                         Icons.format_list_bulleted,
                                         size: 24, // Adjust size as needed
-                                        color: const Color(0xFFBF622C), // Changed to black
+                                        color: Color(0xFFBF622C), // Changed to black
                                       ),
                                       ),
                                     ),
@@ -888,7 +888,7 @@ class TaskPageState extends State<TaskPage> {
                               onTap: () {
                                 Navigator.pushNamed(context, '/add'); // change route as needed
                               }, 
-                              child: Container(
+                              child: SizedBox(
                                 height: double.infinity,
                                 
                                 child: Stack(
@@ -902,7 +902,7 @@ class TaskPageState extends State<TaskPage> {
                                         child: const Icon(
                                         Icons.control_point,
                                         size: 24, // Adjust size as needed
-                                        color: const Color(0xFF9AA5B6), // Set color or remove if you need default
+                                        color: Color(0xFF9AA5B6), // Set color or remove if you need default
                                       ),
                                       ),
                                     ),
@@ -933,7 +933,7 @@ class TaskPageState extends State<TaskPage> {
                           ),
                           // '캐릭터' button
                           Expanded(
-                            child: Container(
+                            child: SizedBox(
                               height: double.infinity,
                               
                               child: Stack(
@@ -947,7 +947,7 @@ class TaskPageState extends State<TaskPage> {
                                       child: const Icon(
                                         Icons.pets,
                                         size: 24, // Adjust size as needed
-                                        color: const Color(0xFF9AA5B6), // Set color or remove if you need default
+                                        color: Color(0xFF9AA5B6), // Set color or remove if you need default
                                       ), // Replace with your icon widget.
                                     ),
                                   ),
@@ -977,7 +977,7 @@ class TaskPageState extends State<TaskPage> {
                           ),
                           // '프로필' button
                           Expanded(
-                            child: Container(
+                            child: SizedBox(
                               height: double.infinity,
                               
                               child: Stack(
@@ -991,7 +991,7 @@ class TaskPageState extends State<TaskPage> {
                                       child: const Icon(
                                         Icons.person_outline,
                                         size: 24, // Adjust size as needed
-                                        color: const Color(0xFF9AA5B6), // Set color or remove if you need default
+                                        color: Color(0xFF9AA5B6), // Set color or remove if you need default
                                       ),
                                     ),
                                   ),
@@ -1051,7 +1051,7 @@ class TaskPageState extends State<TaskPage> {
                               onTap: () {
                                 Navigator.pushNamed(context, '/dashboard'); // Change route as needed.
                               },
-                              child: Container(
+                              child: SizedBox(
                                 height: double.infinity,
                                 
                                 child: Stack(
@@ -1100,7 +1100,7 @@ class TaskPageState extends State<TaskPage> {
                               onTap: () {
                                 Navigator.pushNamed(context, '/project'); // Change route as needed.
                               },
-                              child: Container(
+                              child: SizedBox(
                                 height: double.infinity,
                                 
                                 child: Stack(
@@ -1114,7 +1114,7 @@ class TaskPageState extends State<TaskPage> {
                                         child: const Icon(
                                         Icons.format_list_bulleted,
                                         size: 24, // Adjust size as needed
-                                        color: const Color(0xFFBF622C), // Changed to black
+                                        color: Color(0xFFBF622C), // Changed to black
                                       ),
                                       ),
                                     ),
@@ -1149,7 +1149,7 @@ class TaskPageState extends State<TaskPage> {
                               onTap: () {
                                 Navigator.pushNamed(context, '/add'); // change route as needed
                               }, 
-                              child: Container(
+                              child: SizedBox(
                                 height: double.infinity,
                                 
                                 child: Stack(
@@ -1163,7 +1163,7 @@ class TaskPageState extends State<TaskPage> {
                                         child: const Icon(
                                         Icons.control_point,
                                         size: 24, // Adjust size as needed
-                                        color: const Color(0xFF9AA5B6), // Set color or remove if you need default
+                                        color: Color(0xFF9AA5B6), // Set color or remove if you need default
                                       ),
                                       ),
                                     ),
@@ -1194,7 +1194,7 @@ class TaskPageState extends State<TaskPage> {
                           ),
                           // '캐릭터' button
                           Expanded(
-                            child: Container(
+                            child: SizedBox(
                               height: double.infinity,
                               
                               child: Stack(
@@ -1208,7 +1208,7 @@ class TaskPageState extends State<TaskPage> {
                                       child: const Icon(
                                         Icons.pets,
                                         size: 24, // Adjust size as needed
-                                        color: const Color(0xFF9AA5B6), // Set color or remove if you need default
+                                        color: Color(0xFF9AA5B6), // Set color or remove if you need default
                                       ), // Replace with your icon widget.
                                     ),
                                   ),
@@ -1238,7 +1238,7 @@ class TaskPageState extends State<TaskPage> {
                           ),
                           // '프로필' button
                           Expanded(
-                            child: Container(
+                            child: SizedBox(
                               height: double.infinity,
                               
                               child: Stack(
@@ -1252,7 +1252,7 @@ class TaskPageState extends State<TaskPage> {
                                       child: const Icon(
                                         Icons.person_outline,
                                         size: 24, // Adjust size as needed
-                                        color: const Color(0xFF9AA5B6), // Set color or remove if you need default
+                                        color: Color(0xFF9AA5B6), // Set color or remove if you need default
                                       ),
                                     ),
                                   ),

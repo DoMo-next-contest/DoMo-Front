@@ -7,12 +7,12 @@ class LabeledInput extends StatelessWidget {
   final bool obscureText;
 
   const LabeledInput({
-    Key? key,
+    super.key,
     required this.label,
     required this.placeholder,
     required this.controller,
     this.obscureText = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

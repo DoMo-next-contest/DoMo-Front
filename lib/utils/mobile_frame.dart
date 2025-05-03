@@ -6,11 +6,11 @@ class MobileFrame extends StatelessWidget {
   final double designHeight;
 
   const MobileFrame({
-    Key? key,
+    super.key,
     required this.child,
     this.designWidth = 393,
     this.designHeight = 852,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

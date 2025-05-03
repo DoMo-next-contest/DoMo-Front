@@ -25,7 +25,7 @@ class Subtask {
     (runningSince != null ? DateTime.now().difference(runningSince!) : Duration.zero);
 
   void start() {
-    if (runningSince == null) runningSince = DateTime.now();
+    runningSince ??= DateTime.now();
   }
 
   void pause() {

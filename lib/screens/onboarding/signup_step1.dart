@@ -4,7 +4,7 @@ import 'package:domo/widgets/labeled_input.dart';
 import 'package:domo/widgets/custom_button.dart';
 
 class SignupStep1 extends StatefulWidget {
-  const SignupStep1({Key? key}) : super(key: key);
+  const SignupStep1({super.key});
 
   @override
   State<SignupStep1> createState() => _SignupStep1State();

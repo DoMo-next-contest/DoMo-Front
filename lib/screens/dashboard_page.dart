@@ -244,7 +244,7 @@ class DashboardPageState extends State<DashboardPage> {
                                         child: const Icon(
                                         Icons.home,
                                         size: 24, // Adjust size as needed
-                                        color: const Color(0xFFBF622C), // Set color or remove if you need default
+                                        color: Color(0xFFBF622C), // Set color or remove if you need default
                                       ),
                                       ),
                                     ),
