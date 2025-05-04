@@ -88,7 +88,7 @@ class ProjectPageState extends State<ProjectPage> {
       backgroundColor: Colors.transparent, // let device–frame show
       body: SafeArea(
         child: Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(0),
           color: Colors.white,
           child: Stack(
             children: [

@@ -37,7 +37,7 @@ class DashboardPageState extends State<DashboardPage> {
       backgroundColor: Colors.transparent, // MobileFrame 배경 보이도록
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 16),
+          padding: const EdgeInsets.only(left: 0, right: 0, top: 0, bottom: 0),
           child: Center(
             child: Container(
               width: 393,

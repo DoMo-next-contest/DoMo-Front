@@ -143,7 +143,7 @@ class AddPageState extends State<AddPage> {
         child: Container(
           width: double.infinity,
           height: double.infinity,
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(0),
           decoration: const BoxDecoration(color: Colors.white),
           child: Stack(
             children: [
