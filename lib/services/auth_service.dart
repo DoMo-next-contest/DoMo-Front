@@ -1,9 +1,9 @@
 // lib/services/auth_service.dart
 
-import 'dart:convert';
+import 'dart:convert';           // ← add this
 import 'package:http/http.dart' as http;
 
-/// Custom exception for authentication errors.
+/// Thrown when login or signup fails.
 class AuthException implements Exception {
   final String message;
   AuthException(this.message);
@@ -11,33 +11,31 @@ class AuthException implements Exception {
   String toString() => 'AuthException: $message';
 }
 
-/// Model for the login response.
+/// Holds the two tokens returned in response headers.
 class LoginResponse {
-  /// The authentication token returned by the server.
-  final String token;
+  final String accessToken;
+  final String refreshToken;
 
-  LoginResponse({required this.token});
-
-  factory LoginResponse.fromJson(Map<String, dynamic> json) {
-    return LoginResponse(token: json['token'] as String);
-  }
+  LoginResponse({
+    required this.accessToken,
+    required this.refreshToken,
+  });
 }
 
 /// A simple authentication service that handles login API calls.
 class AuthService {
-  /// Base URL for your real backend
+  /// Base URL for your real backend.
   final String baseUrl;
 
   AuthService({
     this.baseUrl = 'http://ec2-3-38-104-110.ap-northeast-2.compute.amazonaws.com:8080',
   });
 
-  /// Attempts to log in with [loginId] and [password].
-  ///
-  /// Endpoint: POST /api/user/login
+  /// Calls POST /api/user/login with { loginId, password } and
+  /// reads the tokens out of the response headers.
   Future<LoginResponse> login(String loginId, String password) async {
     final uri = Uri.parse('$baseUrl/api/user/login');
-    final response = await http.post(
+    final resp = await http.post(
       uri,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
@@ -46,19 +44,20 @@ class AuthService {
       }),
     );
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-      return LoginResponse.fromJson(data);
+    if (resp.statusCode != 200) {
+      throw AuthException('Login failed (${resp.statusCode}): ${resp.body}');
     }
 
-    // 401 Unauthorized
-    if (response.statusCode == 401) {
-      throw AuthException('Invalid login credentials');
+    final accessToken  = resp.headers['authorization'];
+    final refreshToken = resp.headers['authorization-refresh'];
+
+    if (accessToken == null) {
+      throw AuthException('No access token returned');
     }
 
-    // any other error
-    throw AuthException(
-      'Login failed (status=${response.statusCode}): ${response.body}',
+    return LoginResponse(
+      accessToken: accessToken,
+      refreshToken: refreshToken ?? '',
     );
   }
 }
