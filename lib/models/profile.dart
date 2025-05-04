@@ -48,7 +48,7 @@ class Profile {
     return Profile(
       id: json['id'] as String,
       name: json['name'] as String,
-      username: json['username'] as String,
+      username: json['loginId'] as String,
       email: json['email'] as String,
       coins: (json['coins'] as num?)?.toInt() ?? 0,
       subtaskPreference: json['subtaskPreference'] as String?,

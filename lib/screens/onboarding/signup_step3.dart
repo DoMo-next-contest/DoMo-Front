@@ -20,27 +20,14 @@ class _SignupStep3State extends State<SignupStep3> {
   bool _isLoading = false;
 
   Future<void> _onNext() async {
-    setState(() => _isLoading = true);
-    try {
-      await ProfileService().updateProfile(
-        id: widget.profile.id,
-        timePreference: _labels[_sliderValue.toInt()],
-      );
-      widget.profile.timePreference = _labels[_sliderValue.toInt()];
+  widget.profile.timePreference = _labels[_sliderValue.toInt()];
+  Navigator.pushNamed(
+    context,
+    '/signupStep4',
+    arguments: widget.profile,
+  );
+}
 
-      Navigator.pushNamed(
-        context,
-        '/signupStep4',
-        arguments: widget.profile,
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('저장 실패: \$e')),
-      );
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {

@@ -5,6 +5,7 @@ import 'package:domo/widgets/custom_button.dart';
 import 'package:domo/services/profile_service.dart';
 import 'package:domo/models/profile.dart';
 
+
 class SignupStep1 extends StatefulWidget {
   const SignupStep1({Key? key}) : super(key: key);
 
@@ -34,12 +35,13 @@ class _SignupStep1State extends State<SignupStep1> {
 
     setState(() => _isLoading = true);
     try {
-      final Profile profile = await ProfileService().signUp(
-        loginId: username,
+      final Profile profile = await ProfileService().createProfile(
+        username: username,  // ✅ matches parameter name
         password: password,
         name: name,
         email: email,
       );
+
       // Optionally store token/password securely here
       Navigator.pushNamed(
         context,

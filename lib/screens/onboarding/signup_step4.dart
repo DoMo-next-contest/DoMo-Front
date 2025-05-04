@@ -33,28 +33,73 @@ class _SignupStep4State extends State<SignupStep4> {
         : <String>{};
   }
 
-  Future<void> _onDone() async {
-    setState(() => _isLoading = true);
-    try {
-      await ProfileService().updateProfile(
-        id: widget.profile.id,
-        categories: _selected.toList(),
-      );
-      widget.profile.categories = _selected.toList();
-
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        '/dashboard',
-        (route) => false,
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('저장 실패: $e')),
-      );
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
+  String _mapSubtaskPref(String? value) {
+  switch (value) {
+    case '구체적으로':
+      return 'MANY_TASKS';
+    case '보통으로':
+      return 'BALANCED_TASKS';
+    case '대략적으로':
+      return 'FEW_TASKS';
+    default:
+      return 'BALANCED_TASKS';
   }
+}
+
+String _mapTimePref(String? value) {
+  switch (value) {
+    case '빠듯하게':
+      return 'TIGHT';
+    case '적당히':
+      return 'BALANCED';
+    case '여유롭게':
+      return 'RELAXED';
+    default:
+      return 'BALANCED';
+  }
+}
+
+List<String> _mapTags(List<String>? rawTags) {
+  if (rawTags == null) return [];
+  final mapping = {
+    '업무': 'WORK',
+    '학업': 'STUDY',
+    '운동': 'EXERCISE',
+    '일상': 'LIFE',
+    '자기계발': 'SELF_IMPROVEMENT',
+  };
+  return rawTags.map((k) => mapping[k] ?? k).toList();
+}
+
+
+  Future<void> _onDone() async {
+  setState(() => _isLoading = true);
+  try {
+    // Store selected categories in profile
+    widget.profile.categories = _selected.toList();
+
+    // Send full onboarding data in one API call
+    await ProfileService().submitOnboardingPreferences(
+      detailPreference: _mapSubtaskPref(widget.profile.subtaskPreference),
+      workPace: _mapTimePref(widget.profile.timePreference),
+      interestedTags: _mapTags(widget.profile.categories),
+    );
+
+    // Navigate to dashboard
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      '/dashboard',
+      (route) => false,
+    );
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('온보딩 실패: $e')),
+    );
+  } finally {
+    if (mounted) setState(() => _isLoading = false);
+  }
+}
+
 
   @override
   Widget build(BuildContext context) {
