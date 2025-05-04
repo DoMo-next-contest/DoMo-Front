@@ -35,6 +35,22 @@ class Subtask {
       runningSince = null;
     }
   }
+
+  factory Subtask.fromJson(Map<String, dynamic> json) {
+    return Subtask(
+      title: json['title'] ?? '',
+      isDone: json['isDone'] ?? false,
+      expectedDuration: Duration(seconds: json['expectedDuration'] ?? 0),
+      actualDuration: Duration(seconds: json['actualDuration'] ?? 0),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'title': title,
+        'isDone': isDone,
+        'expectedDuration': expectedDuration.inSeconds,
+        'actualDuration': actualDuration.inSeconds,
+      };
   
 }
 
@@ -66,6 +82,25 @@ class Task {
   void touch() {
     lastActivity = DateTime.now();
   }
+
+  factory Task.fromJson(Map<String, dynamic> json) {
+    return Task(
+      name: json['name'] ?? '',
+      deadline: DateTime.parse(json['deadline']),
+      category: json['category'] ?? '기타',
+      subtasks: (json['subtasks'] as List<dynamic>)
+          .map((e) => Subtask.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    )..lastActivity = DateTime.parse(json['lastActivity']);
+  }
+
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'deadline': deadline.toIso8601String(),
+        'category': category,
+        'lastActivity': lastActivity.toIso8601String(),
+        'subtasks': subtasks.map((s) => s.toJson()).toList(),
+      };
 }
 
 List<Task> globalTaskList = [
@@ -133,3 +168,40 @@ List<Task> globalTaskList = [
     ],
   ),
 ];
+
+
+
+extension TaskJson on Task {
+  Map<String, dynamic> toJson() => {
+    'name': name,
+    'deadline': deadline.toIso8601String(),
+    'category': category,
+    'lastActivity': lastActivity.toIso8601String(),
+    'subtasks': subtasks.map((s) => s.toJson()).toList(),
+  };
+
+  static Task fromJson(Map<String, dynamic> json) => Task(
+    name: json['name'],
+    deadline: DateTime.parse(json['deadline']),
+    category: json['category'],
+    subtasks: (json['subtasks'] as List)
+      .map((s) => SubtaskJson.fromJson(s))
+      .toList(),
+  )..lastActivity = DateTime.parse(json['lastActivity']);
+}
+
+extension SubtaskJson on Subtask {
+  Map<String, dynamic> toJson() => {
+    'title': title,
+    'isDone': isDone,
+    'expectedDuration': expectedDuration.inSeconds,
+    'actualDuration': actualDuration.inSeconds,
+  };
+
+  static Subtask fromJson(Map<String, dynamic> json) => Subtask(
+    title: json['title'],
+    isDone: json['isDone'] ?? false,
+    expectedDuration: Duration(seconds: json['expectedDuration']),
+    actualDuration: Duration(seconds: json['actualDuration']),
+  );
+}

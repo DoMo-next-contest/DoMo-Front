@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:domo/models/task.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'dart:ui' show PointerDeviceKind;
+import 'package:domo/services/task_service.dart';
+
 
 class AddPage extends StatefulWidget {
   const AddPage({super.key});
@@ -120,6 +122,19 @@ class AddPageState extends State<AddPage> {
       subtasks: _generatedSubtasks,
     );
     globalTaskList.add(newTask);
+    try {
+      await TaskService().createTask(newTask);
+      Navigator.pushReplacementNamed(context, '/project');
+    } catch (e) {
+      await showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('저장 실패'),
+          content: Text('에러: $e'),
+          actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('확인'))],
+        ),
+      );
+    }
 
     await showDialog(
       context: context,
