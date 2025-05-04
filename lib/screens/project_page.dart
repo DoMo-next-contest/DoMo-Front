@@ -4,6 +4,8 @@ import 'dart:ui' show PointerDeviceKind;
 import 'package:flutter/material.dart';
 import 'package:domo/models/task.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:domo/services/task_service.dart';
+
 
 class ProjectPage extends StatefulWidget {
   const ProjectPage({Key? key}) : super(key: key);
@@ -13,6 +15,31 @@ class ProjectPage extends StatefulWidget {
 }
 
 class ProjectPageState extends State<ProjectPage> {
+
+  List<Task> _tasks = [];
+  bool _isLoading = true;
+
+  @override
+void initState() {
+  super.initState();
+  selectedCategories = {...Task.allCategories};
+  _loadTasksFromBackend();
+}
+
+Future<void> _loadTasksFromBackend() async {
+  try {
+    final tasks = await TaskService().getTasks();
+    setState(() {
+      _tasks = tasks;
+      _isLoading = false;
+    });
+  } catch (e) {
+    debugPrint('❌ Error loading tasks: $e');
+    setState(() => _isLoading = false);
+  }
+}
+
+
   // 1) Categories for filtering
   List<String> get categories => Task.allCategories;
   Set<String> selectedCategories = {...Task.allCategories};
@@ -21,12 +48,14 @@ class ProjectPageState extends State<ProjectPage> {
   final List<String> _sortOptions = ['가나다순', '진행률순', '마감일순'];
   String _selectedSort = '가나다순';
 
+  /*
   @override
   void initState() {
     super.initState();
     // In case categories were added/removed elsewhere, keep local selection in sync:
     selectedCategories = {...Task.allCategories};
   }
+  */
 
   // Persist updated categories list whenever it changes
   Future<void> _saveCategories() async {
@@ -67,9 +96,16 @@ class ProjectPageState extends State<ProjectPage> {
   @override
   Widget build(BuildContext context) {
     // -- 1) Filter --
+    /*
     final filtered = globalTaskList
         .where((t) => selectedCategories.contains(t.category))
         .toList();
+    */
+
+    final filtered = _tasks
+    .where((t) => selectedCategories.contains(t.category))
+    .toList();
+    
 
     // -- 2) Sort --
     switch (_selectedSort) {

@@ -36,11 +36,11 @@ class ProfileService {
       'email': email,
     };
 
-    final resp = await http.post(
-      uri,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(payload),
-    );
+  final resp = await http.post(
+    uri,
+    headers: {'Content-Type': 'application/json'},
+    body: jsonEncode(payload),
+  );
 
     if (resp.statusCode == 200) {
       final data = jsonDecode(resp.body) as Map<String, dynamic>;
