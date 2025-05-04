@@ -356,7 +356,7 @@ class _BottomNavBar extends StatelessWidget {
       Icons.person_outline,
     ];
     const labels = ['홈', '프로젝트', '추가', '캐릭터', '프로필'];
-    const routes = ['/dashboard', '/project', '/add', '/decor', '/dashboard'];
+    const routes = ['/dashboard', '/project', '/add', '/decor', '/profile'];
 
     return Container(
       decoration: BoxDecoration(

@@ -13,15 +13,27 @@ import 'screens/dashboard_page.dart';
 import 'screens/add_page.dart';
 import 'screens/project_page.dart';
 import 'screens/task_page.dart';
+import 'screens/profile_page.dart';
 import 'screens/onboarding/signup_step1.dart';
 import 'screens/onboarding/signup_step2.dart';
 import 'screens/onboarding/signup_step3.dart';
 import 'screens/onboarding/signup_step4.dart';
 
+/// A built-in “demo” profile, used if you don’t explicitly pass one.
+final _defaultProfile = Profile(
+  id: '0',
+  name: '홍길동',
+  username: 'userid',
+  email: 'you@domain.com',
+  subtaskPreference: '보통으로',
+  timePreference: '타이트하게',
+  categories: Task.allCategories,
+);
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Load saved categories (if any) and override the default list
+  // Load saved categories (if any)
   final prefs = await SharedPreferences.getInstance();
   final savedCats = prefs.getStringList('userCategories');
   if (savedCats != null && savedCats.isNotEmpty) {
@@ -46,7 +58,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       initialRoute: '/',
 
-      // Static routes for screens that don't need arguments
+      // Static routes that never need extra args:
       routes: {
         '/': (ctx) => const WelcomeScreen(),
         '/login': (ctx) => const LoginPage(),
@@ -57,14 +69,14 @@ class MyApp extends StatelessWidget {
         '/task': (ctx) => const TaskPage(),
       },
 
-      // Handle onboarding steps 2, 3, and 4 (all require a Profile)
       onGenerateRoute: (settings) {
+        // — Onboarding steps (require a Profile arg) —
         if (settings.name == '/signupStep2' ||
             settings.name == '/signupStep3' ||
             settings.name == '/signupStep4') {
           final args = settings.arguments;
           if (args is! Profile) {
-            // If no Profile passed, send back to Step1
+            // If somehow no Profile was passed, restart onboarding
             return MaterialPageRoute(
               builder: (_) => const SignupStep1(),
               settings: settings,
@@ -89,7 +101,17 @@ class MyApp extends StatelessWidget {
           }
         }
 
-        // Fallback to static routes
+        // — Profile page — always supply a Profile, falling back to our default
+        if (settings.name == '/profile') {
+          final maybeProfile = settings.arguments;
+          final profile = (maybeProfile is Profile) ? maybeProfile : _defaultProfile;
+          return MaterialPageRoute(
+            builder: (_) => ProfilePage(profile: profile),
+            settings: settings,
+          );
+        }
+
+        // — Fallback to any other static route —
         final pageBuilder = routes[settings.name];
         if (pageBuilder != null) {
           return MaterialPageRoute(
@@ -98,7 +120,7 @@ class MyApp extends StatelessWidget {
           );
         }
 
-        // Unknown route → back to welcome
+        // — Unknown? Go home —
         return MaterialPageRoute(
           builder: (_) => const WelcomeScreen(),
           settings: settings,
@@ -107,7 +129,7 @@ class MyApp extends StatelessWidget {
     );
   }
 
-  // Mirror of static routes for use in onGenerateRoute fallback
+  /// Mirror of our static `routes` map, for use in onGenerateRoute lookup
   static final Map<String, WidgetBuilder> routes = {
     '/': (ctx) => const WelcomeScreen(),
     '/login': (ctx) => const LoginPage(),

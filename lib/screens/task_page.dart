@@ -650,7 +650,7 @@ class _BottomNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     const icons = [Icons.home, Icons.format_list_bulleted, Icons.control_point, Icons.pets, Icons.person_outline];
     const labels = ['홈', '프로젝트', '추가', '캐릭터', '프로필'];
-    const routes = ['/dashboard', '/project', '/add', '/decor', '/dashboard'];
+    const routes = ['/dashboard', '/project', '/add', '/decor', '/profile'];
 
     return Container(
       decoration: BoxDecoration(border: Border(top: BorderSide(color: Colors.grey[300]!, width: 1))),

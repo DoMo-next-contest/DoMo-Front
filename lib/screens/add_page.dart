@@ -485,7 +485,7 @@ class AddPageState extends State<AddPage> {
                       _NavButton(icon: Icons.pets, label: '캐릭터', active: false, 
                           onTap: () => Navigator.pushNamed(context, '/decor')),
                       _NavButton(icon: Icons.person_outline, label: '프로필', active: false,
-                          onTap: () => Navigator.pushNamed(context, '/task')),
+                          onTap: () => Navigator.pushNamed(context, '/profile')),
                     ],
                   ),
                 ),

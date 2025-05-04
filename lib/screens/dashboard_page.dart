@@ -240,7 +240,7 @@ class _BottomNavBar extends StatelessWidget {
       '/project',
       '/add',
       '/decor',
-      '/dashboard',
+      '/profile',
     ];
 
     return Container(
