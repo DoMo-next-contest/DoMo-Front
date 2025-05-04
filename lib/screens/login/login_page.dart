@@ -4,6 +4,7 @@ import 'package:domo/screens/onboarding/signup_step1.dart';
 import 'package:flutter/material.dart';
 import 'package:domo/widgets/labeled_input.dart';
 import 'package:domo/widgets/custom_button.dart';
+import 'package:domo/services/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -23,9 +24,22 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  void _onLogin() {
-    // TODO: 로그인 로직 처리
-    Navigator.pushReplacementNamed(context, '/dashboard');
+  void _onLogin() async{
+    try {
+      final auth = AuthService();
+      final result = await auth.login(_idCtrl.text, _pwCtrl.text);
+      // 로그인 성공 후 토큰 저장 or 다음 화면 이동
+      debugPrint('Logged in, token: ${result.token}');
+      Navigator.pushReplacementNamed(context, '/dashboard');
+    } on AuthException catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message)),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Login error: $e')),
+      );
+    }
   }
 
   @override
@@ -56,7 +70,7 @@ class _LoginPageState extends State<LoginPage> {
                       const SizedBox(
                         width: double.infinity,
                         child: Text(
-                          'Domo에 로그인하세요 !',
+                          'Domo에 로그인하세요!',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.black,

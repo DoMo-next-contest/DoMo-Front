@@ -1,30 +1,48 @@
+// lib/screens/project/project_page.dart
+
+import 'dart:ui' show PointerDeviceKind;
 import 'package:flutter/material.dart';
 import 'package:domo/models/task.dart';
-import 'dart:ui' show PointerDeviceKind;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ProjectPage extends StatefulWidget {
-  const ProjectPage({super.key});
+  const ProjectPage({Key? key}) : super(key: key);
 
   @override
   ProjectPageState createState() => ProjectPageState();
 }
 
 class ProjectPageState extends State<ProjectPage> {
-  // Categories for filtering
+  // 1) Categories for filtering
   List<String> get categories => Task.allCategories;
+  Set<String> selectedCategories = {...Task.allCategories};
 
-  Set<String> selectedCategories = {'업무', '학업', '일상', '운동', '자기계발' ,'기타'}; // default selected
+  // 2) Sort options
+  final List<String> _sortOptions = ['가나다순', '진행률순', '마감일순'];
+  String _selectedSort = '가나다순';
+
+  @override
+  void initState() {
+    super.initState();
+    // In case categories were added/removed elsewhere, keep local selection in sync:
+    selectedCategories = {...Task.allCategories};
+  }
+
+  // Persist updated categories list whenever it changes
+  Future<void> _saveCategories() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('userCategories', Task.allCategories);
+  }
 
   Widget _buildChip(String label) {
-    final bool isOn = selectedCategories.contains(label);
+    final isOn = selectedCategories.contains(label);
     return GestureDetector(
       onTap: () {
         setState(() {
-          if (isOn) {
+          if (isOn)
             selectedCategories.remove(label);
-          } else {
+          else
             selectedCategories.add(label);
-          }
         });
       },
       child: Container(
@@ -36,9 +54,10 @@ class ProjectPageState extends State<ProjectPage> {
         child: Text(
           label,
           style: TextStyle(
-            color: isOn ? const Color(0xFFF5F5F5) : const Color(0xFF757575),
+            color: isOn ? Colors.white : const Color(0xFF757575),
+            fontFamily: 'Inter',
             fontSize: 14,
-            height: 1,
+            height: 1.0,
           ),
         ),
       ),
@@ -47,468 +66,332 @@ class ProjectPageState extends State<ProjectPage> {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
-    final containerWidth = screenWidth < 600 ? screenWidth * 0.9 : 393.0;
-
-    // Filter and sort tasks
+    // -- 1) Filter --
     final filtered = globalTaskList
         .where((t) => selectedCategories.contains(t.category))
-        .toList()
-      ..sort((a, b) => a.deadline.compareTo(b.deadline));
+        .toList();
+
+    // -- 2) Sort --
+    switch (_selectedSort) {
+      case '가나다순':
+        filtered.sort((a, b) => a.name.compareTo(b.name));
+        break;
+      case '진행률순':
+        filtered.sort((a, b) => b.progress.compareTo(a.progress));
+        break;
+      case '마감일순':
+        filtered.sort((a, b) => a.deadline.compareTo(b.deadline));
+        break;
+    }
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade200,
+      backgroundColor: Colors.transparent, // let device–frame show
       body: SafeArea(
-        child: Center(
-          child: Container(
-            width: containerWidth,
-            height: screenHeight,
-            padding: const EdgeInsets.all(16.0),
-            decoration: const BoxDecoration(color: Colors.white),
-            child: Stack(
-              children: [
-                // Title
-                const Positioned(
-                  left: 20,
-                  top: 20,
-                  child: Text(
-                    '프로젝트 목록',
-                    style: TextStyle(
-                      color: Color(0xFF1E1E1E),
-                      fontSize: 24,
-                      fontFamily: 'Inter',
-                      fontWeight: FontWeight.w700,
-                      height: 1.00,
-                      letterSpacing: -0.64,
-                    ),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          color: Colors.white,
+          child: Stack(
+            children: [
+              // — Title —
+              const Positioned(
+                left: 20,
+                top: 20,
+                child: Text(
+                  '프로젝트 목록',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1E1E1E),
+                    height: 1.00,
+                    letterSpacing: -0.64,
                   ),
                 ),
+              ),
 
-                // Filter chips
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  top: 80,
-                  child: SizedBox(
-                    height: 30,
-                    child: ScrollConfiguration(
-                      behavior: ScrollConfiguration.of(context).copyWith(
-                        dragDevices: {
-                          PointerDeviceKind.touch,
-                          PointerDeviceKind.mouse,
-                        },
-                      ),
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: categories.length,
-                        separatorBuilder: (_, __) => const SizedBox(width: 10),
-                        itemBuilder: (context, i) => _buildChip(categories[i]),
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Task list
-                Positioned(
-                  top: 120,
-                  left: 0,
-                  right: 0,
-                  bottom: 82,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: filtered.length,
-                    itemBuilder: (context, index) {
-                      final task = filtered[index];
-                      final daysLeft = task.deadline.difference(DateTime.now()).inDays;
-                      final progress = task.progress;
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 16.0),
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(16),
-                          onTap: () async {
-                            await Navigator.pushNamed(
-                              context,
-                              '/task',
-                              arguments: task.name,
-                            );
-                            // when we return, rebuild so progress circles update
-                            setState(() {});
-                          },
-                          child: Container(
-                            width: double.infinity,
-                            height: 90,
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-                            decoration: ShapeDecoration(
-                              color: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              shadows: const [
-                                BoxShadow(
-                                  color: Color(0x19000000),
-                                  blurRadius: 16,
-                                  offset: Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        task.name,
-                                        style: const TextStyle(
-                                          color: Color(0xFF121212),
-                                          fontSize: 14,
-                                          fontFamily: 'Inter',
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      const SizedBox(height: 12),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                        decoration: ShapeDecoration(
-                                          color: const Color(0xBFF2AC57),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(16),
-                                          ),
-                                          shadows: [
-                                            BoxShadow(
-                                              color: Color(0x19000000),
-                                              blurRadius: 16,
-                                              offset: Offset(0, 2),
-                                            ),
-                                          ],
-                                        ),
-                                        child: Text(
-                                          task.category,
-                                          style: const TextStyle(
-                                            color: Color(0xFFF5F5F5),
-                                            fontSize: 12,
-                                            fontFamily: 'Roboto',
-                                            fontWeight: FontWeight.w400,
-                                            height: 1,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Column(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                      decoration: ShapeDecoration(
-                                        color: const Color(0x331D1B20),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(16),
-                                        ),
-                                      ),
-                                      child: Text(
-                                        '${daysLeft}d',
-                                        style: const TextStyle(
-                                          color: Color(0xFF121212),
-                                          fontSize: 11,
-                                          fontFamily: 'Roboto',
-                                          fontWeight: FontWeight.w500,
-                                          height: 1,
-                                        ),
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      width: 30,
-                                      height: 30,
-                                      child: CircularProgressIndicator(
-                                        value: progress,
-                                        strokeWidth: 4,
-                                        backgroundColor: Color(0x33F2AC57),
-                                        valueColor: AlwaysStoppedAnimation(Color(0xFFF2AC57)),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      );
+              // — 1) Filter chips row —
+              Positioned(
+                left: 0,
+                right: 0,
+                top: 80,
+                height: 30,
+                child: ScrollConfiguration(
+                  behavior: ScrollConfiguration.of(context).copyWith(
+                    dragDevices: {
+                      PointerDeviceKind.touch,
+                      PointerDeviceKind.mouse,
                     },
                   ),
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: categories.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 10),
+                    itemBuilder: (_, i) => _buildChip(categories[i]),
+                  ),
                 ),
+              ),
 
-                // Bottom Navigation Bar.
+              // — 2) Sort dropdown under chips, flush left —
+              Positioned(
+                left: 16,
+                top: 120,
+                child: PopupMenuButton<String>(
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                  color: Colors.white,
+                  elevation: 4,
+                  onSelected: (v) {
+                    setState(() => _selectedSort = v);
+                  },
+                  itemBuilder: (_) => _sortOptions.map((opt) {
+                    return PopupMenuItem<String>(
+                      value: opt,
+                      child: Text(
+                        opt,
+                        style: const TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 14,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border:
+                          Border.all(color: Colors.grey.shade300, width: 1),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.sort, size: 18),
+                        const SizedBox(width: 4),
+                        Text(
+                          _selectedSort,
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 14,
+                            color: Colors.grey.shade800,
+                          ),
+                        ),
+                        const Icon(Icons.arrow_drop_down, size: 20),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
 
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    child: Container(
-                      width: 375,
-                      height: 56,
-                      //padding: const EdgeInsets.all(8.0),
-                      decoration: BoxDecoration(
-                        border: Border(
-                          top: BorderSide(
-                            color: Colors.grey[300]!, // Light gray color
-                            width: 1.0,              // Thickness of the line
+              // — 3) Project list —
+              Positioned(
+                left: 0,
+                right: 0,
+                top: 170,
+                bottom: 82,
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: filtered.length,
+                  itemBuilder: (ctx, idx) {
+                    final task = filtered[idx];
+                    final daysLeft =
+                        task.deadline.difference(DateTime.now()).inDays;
+                    final progress = task.progress;
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(16),
+                        onTap: () async {
+                          await Navigator.pushNamed(
+                            context,
+                            '/task',
+                            arguments: task.name,
+                          );
+                          setState(() {});
+                        },
+                        child: Container(
+                          height: 90,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 13),
+                          decoration: ShapeDecoration(
+                            color: Colors.white,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16)),
+                            shadows: const [
+                              BoxShadow(
+                                  color: Color(0x19000000),
+                                  blurRadius: 16,
+                                  offset: Offset(0, 2)),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              // Task info
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      task.name,
+                                      style: const TextStyle(
+                                        fontFamily: 'Inter',
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                        color: Color(0xFF121212),
+                                        height: 1.40,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 4),
+                                      decoration: ShapeDecoration(
+                                        color: const Color(0xBFF2AC57),
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(16)),
+                                      ),
+                                      child: Text(
+                                        task.category,
+                                        style: const TextStyle(
+                                          fontFamily: 'Roboto',
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w400,
+                                          color: Color(0xFFF5F5F5),
+                                          height: 1.00,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              // Days left & progress
+                              Column(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 4),
+                                    decoration: ShapeDecoration(
+                                      color: const Color(0x331D1B20),
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(16)),
+                                    ),
+                                    child: Text(
+                                      '${daysLeft}d',
+                                      style: const TextStyle(
+                                        fontFamily: 'Roboto',
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w500,
+                                        color: Color(0xFF121212),
+                                        height: 1.00,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    width: 30,
+                                    height: 30,
+                                    child: CircularProgressIndicator(
+                                      value: progress,
+                                      strokeWidth: 4,
+                                      backgroundColor:
+                                          const Color(0x33F2AC57),
+                                      valueColor:
+                                          const AlwaysStoppedAnimation(
+                                              Color(0xFFF2AC57)),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: InkWell(
-                              onTap: () {
-                                Navigator.pushNamed(context, '/dashboard'); // Change route as needed.
-                              },
-                              child: SizedBox(
-                                height: double.infinity,
-                                
-                                child: Stack(
-                                  children: [
-                                    Positioned(
-                                      left: 26,
-                                      top: 8,
-                                      child: SizedBox(
-                                        width: 24,
-                                        height: 24,
-                                        child: const Icon(
-                                        Icons.home,
-                                        size: 24, // Adjust size as needed
-                                        color: Color(0xFF9AA5B6), // Changed to gray
-                                      ),
-                                      ),
-                                    ),
-                                    Positioned(
-                                      left: -6,
-                                      top: 38,
-                                      child: SizedBox(
-                                        width: 88,
-                                        height: 14,
-                                        child: Text(
-                                          '홈',
-                                          textAlign: TextAlign.center,
-                                          style: TextStyle(
-                                            color: const Color(0xFF9AA5B6), // Changed to gray
-                                            fontSize: 13,
-                                            fontFamily: 'Inter',
-                                            fontWeight: FontWeight.w400, // Changed to regular
-                                            height: 1.08,
-                                            letterSpacing: -0.50,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                          // 'project' button
-                          Expanded(
-                            child: InkWell(
-                              onTap: () {
-                                Navigator.pushNamed(context, '/project'); // Change route as needed.
-                              },
-                              child: SizedBox(
-                                height: double.infinity,
-                                
-                                child: Stack(
-                                  children: [
-                                    Positioned(
-                                      left: 26,
-                                      top: 8,
-                                      child: SizedBox(
-                                        width: 24,
-                                        height: 24,
-                                        child: const Icon(
-                                        Icons.format_list_bulleted,
-                                        size: 24, // Adjust size as needed
-                                        color: Color(0xFFBF622C), // Changed to black
-                                      ),
-                                      ),
-                                    ),
-                                    Positioned(
-                                      left: -6,
-                                      top: 38,
-                                      child: SizedBox(
-                                        width: 88,
-                                        height: 14,
-                                        child: Text(
-                                          '프로젝트',
-                                          textAlign: TextAlign.center,
-                                          style: TextStyle(
-                                            color: const Color(0xFFBF622C), // Changed to darker color
-                                            fontSize: 13,
-                                            fontFamily: 'Inter',
-                                            fontWeight: FontWeight.w600, // Changed to bold
-                                            height: 1.08,
-                                            letterSpacing: -0.50,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                          // '추가' button
-                          Expanded(
-                            child: InkWell(
-                              onTap: () {
-                                Navigator.pushNamed(context, '/add'); // change route as needed
-                              }, 
-                              child: SizedBox(
-                                height: double.infinity,
-                                
-                                child: Stack(
-                                  children: [
-                                    Positioned(
-                                      left: 26,
-                                      top: 8,
-                                      child: SizedBox(
-                                        width: 24,
-                                        height: 24,
-                                        child: const Icon(
-                                        Icons.control_point,
-                                        size: 24, // Adjust size as needed
-                                        color: Color(0xFF9AA5B6), // Set color or remove if you need default
-                                      ),
-                                      ),
-                                    ),
-                                    Positioned(
-                                      left: -6,
-                                      top: 38,
-                                      child: SizedBox(
-                                        width: 88,
-                                        height: 14,
-                                        child: Text(
-                                          '추가',
-                                          textAlign: TextAlign.center,
-                                          style: TextStyle(
-                                            color: const Color(0xFF9AA5B6),
-                                            fontSize: 13,
-                                            fontFamily: 'Inter',
-                                            fontWeight: FontWeight.w400,
-                                            height: 1.08,
-                                            letterSpacing: -0.50,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                          // '캐릭터' button
-                          Expanded(
-                            child: SizedBox(
-                              height: double.infinity,
-                              
-                              child: Stack(
-                                children: [
-                                  Positioned(
-                                    left: 26,
-                                    top: 8,
-                                    child: SizedBox(
-                                      width: 24,
-                                      height: 24,
-                                      child: const Icon(
-                                        Icons.pets,
-                                        size: 24, // Adjust size as needed
-                                        color: Color(0xFF9AA5B6), // Set color or remove if you need default
-                                      ), // Replace with your icon widget.
-                                    ),
-                                  ),
-                                  Positioned(
-                                    left: -6,
-                                    top: 38,
-                                    child: SizedBox(
-                                      width: 88,
-                                      height: 14,
-                                      child: Text(
-                                        '캐릭터',
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          color: const Color(0xFF9AA5B6),
-                                          fontSize: 13,
-                                          fontFamily: 'Inter',
-                                          fontWeight: FontWeight.w400,
-                                          height: 1.08,
-                                          letterSpacing: -0.50,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          // '프로필' button
-                          Expanded(
-                            child: SizedBox(
-                              height: double.infinity,
-                              
-                              child: Stack(
-                                children: [
-                                  Positioned(
-                                    left: 26,
-                                    top: 8,
-                                    child: SizedBox(
-                                      width: 24,
-                                      height: 24,
-                                      child: const Icon(
-                                        Icons.person_outline,
-                                        size: 24, // Adjust size as needed
-                                        color: Color(0xFF9AA5B6), // Set color or remove if you need default
-                                      ),
-                                    ),
-                                  ),
-                                  Positioned(
-                                    left: -6,
-                                    top: 38,
-                                    child: SizedBox(
-                                      width: 88,
-                                      height: 14,
-                                      child: Text(
-                                        '프로필',
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          color: const Color(0xFF9AA5B6),
-                                          fontSize: 13,
-                                          fontFamily: 'Inter',
-                                          fontWeight: FontWeight.w400,
-                                          height: 1.08,
-                                          letterSpacing: -0.50,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  ),
-              ],
-            ),
+                    );
+                  },
+                ),
+              ),
+
+              // — 4) Bottom navigation bar —
+              const Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: SizedBox(
+                  height: 56,
+                  child: _BottomNavBar(activeIndex: 1),
+                ),
+              ),
+            ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Reusable bottom‐nav bar
+class _BottomNavBar extends StatelessWidget {
+  final int activeIndex; // 0=home,1=project,2=add,3=char,4=profile
+
+  const _BottomNavBar({required this.activeIndex});
+
+  @override
+  Widget build(BuildContext context) {
+    const icons = [
+      Icons.home,
+      Icons.format_list_bulleted,
+      Icons.control_point,
+      Icons.pets,
+      Icons.person_outline,
+    ];
+    const labels = ['홈', '프로젝트', '추가', '캐릭터', '프로필'];
+    const routes = ['/dashboard', '/project', '/add', '/decor', '/dashboard'];
+
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: Colors.grey.shade300, width: 1)),
+      ),
+      child: Row(
+        children: List.generate(5, (i) {
+          final color = i == activeIndex
+              ? const Color(0xFFBF622C)
+              : const Color(0xFF9AA5B6);
+          final weight = i == activeIndex ? FontWeight.w600 : FontWeight.w400;
+          return Expanded(
+            child: InkWell(
+              onTap: () => Navigator.pushNamed(context, routes[i]),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(icons[i], color: color, size: 24),
+                  const SizedBox(height: 2),
+                  Text(
+                    labels[i],
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 13,
+                      fontWeight: weight,
+                      color: color,
+                      height: 1.08,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }),
       ),
     );
   }

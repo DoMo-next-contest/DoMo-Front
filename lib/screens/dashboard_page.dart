@@ -1,9 +1,12 @@
+// lib/screens/dashboard/dashboard_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter_3d_controller/flutter_3d_controller.dart';
 import 'package:model_viewer_plus/model_viewer_plus.dart';
+import 'package:domo/models/task.dart';
 
 class DashboardPage extends StatefulWidget {
-  const DashboardPage({super.key});
+  const DashboardPage({Key? key}) : super(key: key);
 
   @override
   DashboardPageState createState() => DashboardPageState();
@@ -24,57 +27,56 @@ class DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
-    // For phone devices, use 90% of width; else fixed width.
-    final containerWidth = screenWidth < 600 ? screenWidth * 0.9 : 393.0;
-
+    // 가장 최근 활동한 프로젝트를 찾습니다.
+    final Task recent = globalTaskList.reduce(
+      (a, b) => a.lastActivity.isAfter(b.lastActivity) ? a : b,
+    );
+    final double progress = recent.progress;
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade200,
+      backgroundColor: Colors.transparent, // MobileFrame 배경 보이도록
       body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 16),
           child: Center(
             child: Container(
-              width: containerWidth,
-              height: screenHeight,
-              padding: const EdgeInsets.all(16.0),
-              decoration: const BoxDecoration(color: Colors.white),
-              
+              width: 393,
+              height: 852,
+              clipBehavior: Clip.antiAlias,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+              ),
               child: Stack(
                 children: [
-                  // GLB Model with model_viewer_plus
+                  // 3D 캐릭터
                   Positioned(
-                    top: 220,
-                    left: 0,
-                    right: 0,
+                    top: 220, left: 0, right: 0,
                     child: Center(
                       child: SizedBox(
-                        width: 300,
-                        height: 300,
+                        width: 300, height: 300,
                         child: ModelViewer(
-                          src: 'assets/character.glb', // Use a direct asset path.
+                          src: 'assets/character.glb',
                           alt: '3D model of Cutie',
                           autoRotate: true,
                           cameraControls: true,
-                          disableZoom: true, // Disables zooming (pinch-to-zoom).
-                          disablePan: true,  // Disables panning (translation).
+                          disableZoom: true,
+                          disablePan: true,
                           backgroundColor: Colors.transparent,
                         ),
                       ),
                     ),
                   ),
-                  // Greeting text positioned 160 pixels from the top.
+
+                  // 인사말
                   const Positioned(
-                    top: 150,
-                    left: 0,
-                    right: 0,
+                    top: 150, left: 0, right: 0,
                     child: Text(
                       '반가워요, 예슬님!',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Color(0xFF1E1E1E),
                         fontSize: 32,
-                        fontFamily: 'Inter',
                         fontWeight: FontWeight.w700,
                         height: 1.12,
                         letterSpacing: -0.64,
@@ -82,392 +84,188 @@ class DashboardPageState extends State<DashboardPage> {
                     ),
                   ),
 
+                  // 최근 프로젝트 카드
                   Positioned(
-                    left: 30,
-                    right: 30,
-                    bottom: 140,
-                    child: Container(
-                      width: 300,
-                      height: 80,
-                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
-                      decoration: ShapeDecoration(
-                        color: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        shadows: [
-                          BoxShadow(
-                            color: Color(0x19000000),
-                            blurRadius: 16,
-                            offset: Offset(0, 2),
-                            spreadRadius: 0,
-                          )
-                        ],
+                    left: 30, right: 30, bottom: 140,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(16),
+                      onTap: () => Navigator.pushNamed(
+                        context,
+                        '/task',
+                        arguments: recent.name,
                       ),
-                      child: Column(
-                        //mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        spacing: 15,
-                        children: [
-                          SizedBox(
-                            width: double.infinity,
-                            child: Row(
-                              //mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              spacing: 12,
+                      child: Container(
+                        height: 81,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 18, vertical: 9),
+                        decoration: ShapeDecoration(
+                          color: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          shadows: const [
+                            BoxShadow(
+                              color: Color(0x19000000),
+                              blurRadius: 16,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Row(
                               children: [
-                                SizedBox(
-                                  width: 110,
+                                Expanded(
                                   child: Text(
-                                    '최근 프로젝트명',
-                                    style: TextStyle(
-                                      color: const Color(0xFF21272A),
+                                    recent.name,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      color: Color(0xFF21272A),
                                       fontSize: 16,
-                                      fontFamily: 'Roboto',
                                       fontWeight: FontWeight.w600,
-                                      height: 1.40,
                                     ),
                                   ),
                                 ),
+                                const SizedBox(width: 12),
                                 Container(
-                                  width: 41,
-                                  height: 16,
-                                  padding: const EdgeInsets.all(2), // Reduced padding
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 1),
                                   decoration: ShapeDecoration(
                                     color: const Color(0xFFF2AC57),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(10),
                                     ),
-                                    shadows: [
+                                    shadows: const [
                                       BoxShadow(
                                         color: Color(0x19000000),
                                         blurRadius: 16,
                                         offset: Offset(0, 2),
-                                        spreadRadius: 0,
-                                      )
-                                    ],
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    crossAxisAlignment: CrossAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        '태그',
-                                        style: TextStyle(
-                                          color: Color(0xFFF5F5F5),
-                                          fontSize: 10,
-                                          fontFamily: 'Roboto',
-                                          fontWeight: FontWeight.w400,
-                                          height: 1,
-                                        ),
                                       ),
                                     ],
                                   ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Container(
-                            width: 300,
-                            height: 8,
-                            decoration: ShapeDecoration(
-                              color: const Color(0xFFC1C7CD),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            child: Stack(
-                              children: [
-                                Positioned(
-                                  left: 0,
-                                  top: 0,
-                                  child: Container(
-                                    width: 86.67,
-                                    height: 8,
-                                    decoration: ShapeDecoration(
-                                      color: const Color(0xFFAB4E18),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    recent.category,
+                                    style: const TextStyle(
+                                      color: Color(0xFFF5F5F5),
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w400,
                                     ),
                                   ),
                                 ),
+                                const SizedBox(width: 12),
+                                const Icon(
+                                  Icons.chevron_right,
+                                  color: Color(0xFF9AA5B6),
+                                  size: 24,
+                                ),
                               ],
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 8),
+
+                            // 진행률 바
+                            Container(
+                              width: 294,
+                              height: 8,
+                              decoration: ShapeDecoration(
+                                color: const Color(0xFFC1C7CD),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              child: Stack(
+                                children: [
+                                  Positioned(
+                                    left: 0,
+                                    top: 0,
+                                    child: Container(
+                                      width: 294 * progress,
+                                      height: 8,
+                                      decoration: ShapeDecoration(
+                                        color: const Color(0xFFAB4E18),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
 
-
-                  Positioned(
+                  // Bottom navigation
+                  const Positioned(
                     left: 0,
                     right: 0,
                     bottom: 0,
-                    child: Container(
-                      width: 375,
+                    child: SizedBox(
                       height: 56,
-                      //padding: const EdgeInsets.all(8.0),
-                      decoration: BoxDecoration(
-                        border: Border(
-                          top: BorderSide(
-                            color: Colors.grey[300]!, // Light gray color
-                            width: 1.0,              // Thickness of the line
-                          ),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: InkWell(
-                              onTap: () {
-                                Navigator.pushNamed(context, '/dashboard'); // Change route as needed.
-                              },
-                              child: SizedBox(
-                                height: double.infinity,
-                                
-                                child: Stack(
-                                  children: [
-                                    Positioned(
-                                      left: 26,
-                                      top: 8,
-                                      child: SizedBox(
-                                        width: 24,
-                                        height: 24,
-                                        child: const Icon(
-                                        Icons.home,
-                                        size: 24, // Adjust size as needed
-                                        color: Color(0xFFBF622C), // Set color or remove if you need default
-                                      ),
-                                      ),
-                                    ),
-                                    Positioned(
-                                      left: -6,
-                                      top: 38,
-                                      child: SizedBox(
-                                        width: 88,
-                                        height: 14,
-                                        child: Text(
-                                          '홈',
-                                          textAlign: TextAlign.center,
-                                          style: TextStyle(
-                                            color: const Color(0xFFBF622C),
-                                            fontSize: 13,
-                                            fontFamily: 'Inter',
-                                            fontWeight: FontWeight.w600,
-                                            height: 1.08,
-                                            letterSpacing: -0.50,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                          // 'project' button
-                          Expanded(
-                            child: InkWell(
-                              onTap: () {
-                                Navigator.pushNamed(context, '/project'); // Change route as needed.
-                              },
-                              child: SizedBox(
-                                height: double.infinity,
-                                
-                                child: Stack(
-                                  children: [
-                                    Positioned(
-                                      left: 26,
-                                      top: 8,
-                                      child: SizedBox(
-                                        width: 24,
-                                        height: 24,
-                                        child: const Icon(
-                                        Icons.format_list_bulleted,
-                                        size: 24, // Adjust size as needed
-                                        color: Color(0xFF9AA5B6), // Set color or remove if you need default
-                                      ),
-                                      ),
-                                    ),
-                                    Positioned(
-                                      left: -6,
-                                      top: 38,
-                                      child: SizedBox(
-                                        width: 88,
-                                        height: 14,
-                                        child: Text(
-                                          '프로젝트',
-                                          textAlign: TextAlign.center,
-                                          style: TextStyle(
-                                            color: const Color(0xFF9AA5B6),
-                                            fontSize: 13,
-                                            fontFamily: 'Inter',
-                                            fontWeight: FontWeight.w400,
-                                            height: 1.08,
-                                            letterSpacing: -0.50,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                          // '추가' button
-                          Expanded(
-                            child: InkWell(
-                              onTap: () {
-                                Navigator.pushNamed(context, '/add'); // change route as needed
-                              }, 
-                              child: SizedBox(
-                                height: double.infinity,
-                                
-                                child: Stack(
-                                  children: [
-                                    Positioned(
-                                      left: 26,
-                                      top: 8,
-                                      child: SizedBox(
-                                        width: 24,
-                                        height: 24,
-                                        child: const Icon(
-                                        Icons.control_point,
-                                        size: 24, // Adjust size as needed
-                                        color: Color(0xFF9AA5B6), // Set color or remove if you need default
-                                      ),
-                                      ),
-                                    ),
-                                    Positioned(
-                                      left: -6,
-                                      top: 38,
-                                      child: SizedBox(
-                                        width: 88,
-                                        height: 14,
-                                        child: Text(
-                                          '추가',
-                                          textAlign: TextAlign.center,
-                                          style: TextStyle(
-                                            color: const Color(0xFF9AA5B6),
-                                            fontSize: 13,
-                                            fontFamily: 'Inter',
-                                            fontWeight: FontWeight.w400,
-                                            height: 1.08,
-                                            letterSpacing: -0.50,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                          // '캐릭터' button
-                          Expanded(
-                            child: SizedBox(
-                              height: double.infinity,
-                              
-                              child: Stack(
-                                children: [
-                                  Positioned(
-                                    left: 26,
-                                    top: 8,
-                                    child: SizedBox(
-                                      width: 24,
-                                      height: 24,
-                                      child: const Icon(
-                                        Icons.pets,
-                                        size: 24, // Adjust size as needed
-                                        color: Color(0xFF9AA5B6), // Set color or remove if you need default
-                                      ), // Replace with your icon widget.
-                                    ),
-                                  ),
-                                  Positioned(
-                                    left: -6,
-                                    top: 38,
-                                    child: SizedBox(
-                                      width: 88,
-                                      height: 14,
-                                      child: Text(
-                                        '캐릭터',
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          color: const Color(0xFF9AA5B6),
-                                          fontSize: 13,
-                                          fontFamily: 'Inter',
-                                          fontWeight: FontWeight.w400,
-                                          height: 1.08,
-                                          letterSpacing: -0.50,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          // '프로필' button
-                          Expanded(
-                            child: SizedBox(
-                              height: double.infinity,
-                              
-                              child: Stack(
-                                children: [
-                                  Positioned(
-                                    left: 26,
-                                    top: 8,
-                                    child: SizedBox(
-                                      width: 24,
-                                      height: 24,
-                                      child: const Icon(
-                                        Icons.person_outline,
-                                        size: 24, // Adjust size as needed
-                                        color: Color(0xFF9AA5B6), // Set color or remove if you need default
-                                      ),
-                                    ),
-                                  ),
-                                  Positioned(
-                                    left: -6,
-                                    top: 38,
-                                    child: SizedBox(
-                                      width: 88,
-                                      height: 14,
-                                      child: Text(
-                                        '프로필',
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          color: const Color(0xFF9AA5B6),
-                                          fontSize: 13,
-                                          fontFamily: 'Inter',
-                                          fontWeight: FontWeight.w400,
-                                          height: 1.08,
-                                          letterSpacing: -0.50,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
+                      child: _BottomNavBar(activeIndex: 0),
+                    ),
                   ),
                 ],
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// exactly the same bottom‐nav from your ProjectPage:
+class _BottomNavBar extends StatelessWidget {
+  final int activeIndex; // 0=home,1=project,2=add,3=char,4=profile
+  const _BottomNavBar({required this.activeIndex});
+
+  @override
+  Widget build(BuildContext context) {
+    const icons = [
+      Icons.home,
+      Icons.format_list_bulleted,
+      Icons.control_point,
+      Icons.pets,
+      Icons.person_outline,
+    ];
+    const labels = ['홈', '프로젝트', '추가', '캐릭터', '프로필'];
+    // match exactly your project page routes
+    const routes = [
+      '/dashboard',
+      '/project',
+      '/add',
+      '/decor',
+      '/dashboard',
+    ];
+
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: Colors.grey[300]!, width: 1)),
+      ),
+      child: Row(
+        children: List.generate(5, (i) {
+          final color = i == activeIndex ? const Color(0xFFBF622C) : const Color(0xFF9AA5B6);
+          final weight = i == activeIndex ? FontWeight.w600 : FontWeight.w400;
+          return Expanded(
+            child: InkWell(
+              onTap: () => Navigator.pushNamed(context, routes[i]),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(icons[i], color: color, size: 24),
+                  const SizedBox(height: 2),
+                  Text(labels[i], style: TextStyle(color: color, fontSize: 13, fontWeight: weight)),
+                ],
+              ),
+            ),
+          );
+        }),
+      ),
     );
   }
 }

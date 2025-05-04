@@ -1,10 +1,27 @@
-// lib/screens/welcome/welcome_page.dart
-
 import 'package:flutter/material.dart';
 import 'package:domo/widgets/custom_button.dart';
+import 'package:flutter_3d_controller/flutter_3d_controller.dart';
+import 'package:model_viewer_plus/model_viewer_plus.dart';
 
-class WelcomeScreen extends StatelessWidget {
-  const WelcomeScreen({super.key});
+class WelcomeScreen extends StatefulWidget {
+  const WelcomeScreen({Key? key}) : super(key: key);
+
+  @override
+  WelcomePageState createState() => WelcomePageState();
+}
+
+class WelcomePageState extends State<WelcomeScreen> {
+  final Flutter3DController _controller = Flutter3DController();
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.onModelLoaded.addListener(() {
+      if (_controller.onModelLoaded.value) {
+        debugPrint('✅ Model loaded successfully');
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,6 +35,29 @@ class WelcomeScreen extends StatelessWidget {
           decoration: const BoxDecoration(color: Colors.white),
           child: Stack(
             children: [
+              // 3D 모델
+              Positioned(
+                top: 300,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: SizedBox(
+                    width: 300,
+                    height: 300,
+                    child: ModelViewer(
+                      src: 'assets/character.glb',
+                      alt: '3D model of Cutie',
+                      autoRotate: true,
+                      cameraControls: true,
+                      disableZoom: true,
+                      disablePan: true,
+                      backgroundColor: Colors.transparent,
+                    ),
+                  ),
+                ),
+              ),
+
+              // 기존 Welcome UI
               Positioned(
                 left: 29,
                 top: 0,
@@ -27,9 +67,7 @@ class WelcomeScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      const SizedBox(height: 200),
-
-                      // 1) 메인 타이틀
+                      const SizedBox(height: 150),
                       const Text(
                         'Domo에 오신 것을 환영합니다',
                         textAlign: TextAlign.center,
@@ -42,8 +80,6 @@ class WelcomeScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 8),
-
-                      // 2) 서브타이틀
                       const Text(
                         '앱을 시작하려면 로그인하거나 가입하세요.',
                         textAlign: TextAlign.center,
@@ -55,10 +91,8 @@ class WelcomeScreen extends StatelessWidget {
                           height: 1.4,
                         ),
                       ),
-
                       const Spacer(),
 
-                      // 3) 버튼 Column
                       Column(
                         children: [
                           SizedBox(
@@ -84,8 +118,7 @@ class WelcomeScreen extends StatelessWidget {
                           ),
                         ],
                       ),
-
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 60),
                     ],
                   ),
                 ),

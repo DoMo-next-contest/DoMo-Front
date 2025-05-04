@@ -1,52 +1,135 @@
+// lib/main.dart
+
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'package:domo/utils/mobile_frame.dart';
+import 'package:domo/models/task.dart';
+import 'package:domo/models/profile.dart';
+
 import 'screens/welcome/welcome_page.dart';
 import 'screens/login/login_page.dart';
 import 'screens/dashboard_page.dart';
 import 'screens/add_page.dart';
 import 'screens/project_page.dart';
 import 'screens/task_page.dart';
+import 'screens/customization_page.dart';
 import 'screens/onboarding/signup_step1.dart';
-import 'screens/onboarding/onboarding_step2.dart';
-import 'screens/onboarding/onboarding_step3.dart';
-import 'screens/onboarding/onboarding_step4.dart';
+import 'screens/onboarding/signup_step2.dart';
+import 'screens/onboarding/signup_step3.dart';
+import 'screens/onboarding/signup_step4.dart';
 
-void main() {
-  runApp(const MyApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Load saved categories (if any) and override the default list
+  final prefs = await SharedPreferences.getInstance();
+  final savedCats = prefs.getStringList('userCategories');
+  if (savedCats != null && savedCats.isNotEmpty) {
+    Task.allCategories = savedCats;
+  }
+
+  runApp(MobileFrame(child: const MyApp()));
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-  
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'DoMo App',
       theme: ThemeData(primarySwatch: Colors.green),
       debugShowCheckedModeBanner: false,
+      initialRoute: '/',
 
-      builder: (context, child) {
-        return Container(
-          color: Colors.grey.shade200,
-          child: Center(
-            child: MobileFrame(child: child!),
-          ),
-        );
+      // Static routes for screens that don't need arguments
+      routes: {
+        '/': (ctx) => const WelcomeScreen(),
+        '/login': (ctx) => const LoginPage(),
+        '/signup': (ctx) => const SignupStep1(),
+        '/dashboard': (ctx) => const DashboardPage(),
+        '/add': (ctx) => const AddPage(),
+        '/project': (ctx) => const ProjectPage(),
+        '/task': (ctx) => const TaskPage(),
       },
 
-      initialRoute: '/project',
-      routes: {
-        '/': (context) => const WelcomeScreen(),
-        '/login': (context) => const LoginPage(),
-        '/signup': (context) => const SignupStep1(),
-        '/dashboard': (context) => const DashboardPage(),
-        '/add': (context) => const AddPage(),
-        '/project': (context) => const ProjectPage(),
-        '/task': (context) => const TaskPage(),
-        '/onboardingStep2': (context) => const OnboardingStep2(),
-        '/onboardingStep3': (context) => const OnboardingStep3(),
-        '/onboardingStep4': (context) => const OnboardingStep4(),
+      // Handle onboarding steps 2, 3, and 4 (all require a Profile)
+      onGenerateRoute: (settings) {
+        // 1) signup steps
+        if (settings.name == '/signupStep2' ||
+            settings.name == '/signupStep3' ||
+            settings.name == '/signupStep4') {
+          final args = settings.arguments;
+          if (args is! Profile) {
+            return MaterialPageRoute(
+              builder: (_) => const SignupStep1(),
+              settings: settings,
+            );
+          }
+          switch (settings.name) {
+            case '/signupStep2':
+              return MaterialPageRoute(
+                builder: (_) => SignupStep2(profile: args),
+                settings: settings,
+              );
+            case '/signupStep3':
+              return MaterialPageRoute(
+                builder: (_) => SignupStep3(profile: args),
+                settings: settings,
+              );
+            case '/signupStep4':
+              return MaterialPageRoute(
+                builder: (_) => SignupStep4(profile: args),
+                settings: settings,
+              );
+            // no default here, switch must be exhaustive
+          }
+        }
+
+        // 2) your decoration/customization page
+        if (settings.name == '/decor') {
+          final args = settings.arguments;
+          if (args is Profile) {
+            return MaterialPageRoute(
+              builder: (_) => CustomizationPage(profile: args),
+              settings: settings,
+            );
+          } else {
+            // if no Profile, you can redirect to login or welcome
+            return MaterialPageRoute(
+              builder: (_) => const WelcomeScreen(),
+              settings: settings,
+            );
+          }
+        }
+
+        // --- fallback to the rest of your static routes ---
+        final pageBuilder = routes[settings.name];
+        if (pageBuilder != null) {
+          return MaterialPageRoute(
+            builder: pageBuilder,
+            settings: settings,
+          );
+        }
+
+        // --- ultimate fallback ---
+        return MaterialPageRoute(
+          builder: (_) => const WelcomeScreen(),
+          settings: settings,
+        );
       },
     );
   }
+
+  // Mirror of static routes for use in onGenerateRoute fallback
+  static final Map<String, WidgetBuilder> routes = {
+    '/': (ctx) => const WelcomeScreen(),
+    '/login': (ctx) => const LoginPage(),
+    '/signup': (ctx) => const SignupStep1(),
+    '/dashboard': (ctx) => const DashboardPage(),
+    '/add': (ctx) => const AddPage(),
+    '/project': (ctx) => const ProjectPage(),
+    '/task': (ctx) => const TaskPage(),
+  };
 }
