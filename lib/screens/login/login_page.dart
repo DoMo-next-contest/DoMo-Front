@@ -24,23 +24,23 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  void _onLogin() async{
-    try {
-      final auth = AuthService();
-      final result = await auth.login(_idCtrl.text, _pwCtrl.text);
-      // 로그인 성공 후 토큰 저장 or 다음 화면 이동
-      debugPrint('Logged in, token: ${result.token}');
-      Navigator.pushReplacementNamed(context, '/dashboard');
-    } on AuthException catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message)),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Login error: $e')),
-      );
-    }
+  void _onLogin() async {
+  try {
+    final auth = AuthService();
+    final tokens = await auth.login(_idCtrl.text, _pwCtrl.text);
+
+    // Save them somewhere (secure storage, provider, etc.)
+    debugPrint('▶ access token:  ${tokens.accessToken}');
+    debugPrint('▶ refresh token: ${tokens.refreshToken}');
+
+    // Now navigate
+    Navigator.pushReplacementNamed(context, '/dashboard');
+  } on AuthException catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(e.message)),
+    );
   }
+}
 
   @override
   Widget build(BuildContext context) {
