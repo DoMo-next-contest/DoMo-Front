@@ -467,7 +467,7 @@ class AddPageState extends State<AddPage> {
                 right: 0,
                 bottom: 0,
                 child: Container(
-                  height: 56,
+                  height: 68,
                   decoration: BoxDecoration(
                     border: Border(
                       top: BorderSide(color: Colors.grey[300]!, width: 1),

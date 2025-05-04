@@ -104,7 +104,7 @@ class ProfilePage extends StatelessWidget {
                 right: 0,
                 bottom: 0,
                 child: SizedBox(
-                  height: 56,
+                  height: 68,
                   child: _BottomNavBar(activeIndex: 4), // 4 = profile
                 ),
               ),
