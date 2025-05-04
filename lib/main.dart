@@ -13,7 +13,6 @@ import 'screens/dashboard_page.dart';
 import 'screens/add_page.dart';
 import 'screens/project_page.dart';
 import 'screens/task_page.dart';
-import 'screens/customization_page.dart';
 import 'screens/onboarding/signup_step1.dart';
 import 'screens/onboarding/signup_step2.dart';
 import 'screens/onboarding/signup_step3.dart';
@@ -29,7 +28,11 @@ Future<void> main() async {
     Task.allCategories = savedCats;
   }
 
-  runApp(MobileFrame(child: const MyApp()));
+  runApp(
+    MobileFrame(
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -56,12 +59,12 @@ class MyApp extends StatelessWidget {
 
       // Handle onboarding steps 2, 3, and 4 (all require a Profile)
       onGenerateRoute: (settings) {
-        // 1) signup steps
         if (settings.name == '/signupStep2' ||
             settings.name == '/signupStep3' ||
             settings.name == '/signupStep4') {
           final args = settings.arguments;
           if (args is! Profile) {
+            // If no Profile passed, send back to Step1
             return MaterialPageRoute(
               builder: (_) => const SignupStep1(),
               settings: settings,
@@ -83,28 +86,10 @@ class MyApp extends StatelessWidget {
                 builder: (_) => SignupStep4(profile: args),
                 settings: settings,
               );
-            // no default here, switch must be exhaustive
           }
         }
 
-        // 2) your decoration/customization page
-        if (settings.name == '/decor') {
-          final args = settings.arguments;
-          if (args is Profile) {
-            return MaterialPageRoute(
-              builder: (_) => CustomizationPage(profile: args),
-              settings: settings,
-            );
-          } else {
-            // if no Profile, you can redirect to login or welcome
-            return MaterialPageRoute(
-              builder: (_) => const WelcomeScreen(),
-              settings: settings,
-            );
-          }
-        }
-
-        // --- fallback to the rest of your static routes ---
+        // Fallback to static routes
         final pageBuilder = routes[settings.name];
         if (pageBuilder != null) {
           return MaterialPageRoute(
@@ -113,7 +98,7 @@ class MyApp extends StatelessWidget {
           );
         }
 
-        // --- ultimate fallback ---
+        // Unknown route → back to welcome
         return MaterialPageRoute(
           builder: (_) => const WelcomeScreen(),
           settings: settings,
