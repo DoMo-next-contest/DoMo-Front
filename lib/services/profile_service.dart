@@ -1,29 +1,38 @@
 // lib/services/profile_service.dart
 
 import 'dart:convert';
-import 'package:flutter/foundation.dart';    // for debugPrint
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:domo/models/profile.dart';
 
-/// A mock ProfileService that echoes payloads against httpbin.org
-/// while also providing an updateProfile stub.
 class ProfileService {
-  /// Base URL for testing. Defaults to httpbin's echo endpoint.
+  /// Point at your real backend.
   final String baseUrl;
 
-  ProfileService({this.baseUrl = 'https://httpbin.org'});
+  ProfileService({
+    this.baseUrl = 'http://ec2-3-38-104-110.ap-northeast-2.compute.amazonaws.com:8080',
+  });
 
-  /// Creates a new profile by POSTing to httpbin.org/post,
-  /// which echoes your JSON under the 'json' key.
-  Future<Profile> createProfile({
+  /// Sign up a new user.
+  ///
+  /// Swagger spec wants exactly:
+  /// {
+  ///   "loginId": "...",
+  ///   "password": "...",
+  ///   "name": "...",
+  ///   "email": "..."
+  /// }
+  Future<Profile> signUp({
+    required String loginId,
+    required String password,
     required String name,
-    required String username,
     required String email,
   }) async {
-    final uri = Uri.parse('$baseUrl/post');
+    final uri = Uri.parse('$baseUrl/api/user/signup');
     final payload = {
+      'loginId': loginId,
+      'password': password,
       'name': name,
-      'username': username,
       'email': email,
     };
 
@@ -35,35 +44,34 @@ class ProfileService {
 
     if (resp.statusCode == 200) {
       final data = jsonDecode(resp.body) as Map<String, dynamic>;
-      debugPrint('🌐 ECHOED CREATE PAYLOAD: ${data['json']}');
+      debugPrint('✅ Signup response: $data');
 
-      // Return a dummy Profile so your UI flow continues
-      return Profile(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        name: name,
-        username: username,
-        email: email,
-      );
+      // Assume the response JSON has the same shape as Profile.fromJson expects.
+      // If it's nested, e.g. { "data": { … } }, adjust accordingly.
+      return Profile.fromJson(data);
     }
 
-    throw Exception('Echo test failed: ${resp.statusCode}');
+    throw Exception(
+      'Failed to sign up (status=${resp.statusCode}): ${resp.body}',
+    );
   }
 
-  /// Updates an existing profile by POSTing to httpbin.org/post as well.
-  /// In a real backend you'd PUT to /profiles/{id}; here we echo.
+  /// Update an existing user profile.
+  ///
+  /// Example swagger might be PUT /api/user/{id}, adjust as needed.
   Future<Profile> updateProfile({
     required String id,
     String? subtaskPreference,
     String? timePreference,
     List<String>? categories,
   }) async {
-    final uri = Uri.parse('$baseUrl/post');
-    final Map<String, dynamic> body = {'id': id};
+    final uri = Uri.parse('$baseUrl/api/user/$id');
+    final body = <String, dynamic>{};
     if (subtaskPreference != null) body['subtaskPreference'] = subtaskPreference;
-    if (timePreference != null)     body['timePreference'] = timePreference;
-    if (categories != null)         body['categories'] = categories;
+    if (timePreference    != null) body['timePreference']    = timePreference;
+    if (categories        != null) body['categories']        = categories;
 
-    final resp = await http.post(
+    final resp = await http.put(
       uri,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(body),
@@ -71,23 +79,12 @@ class ProfileService {
 
     if (resp.statusCode == 200) {
       final data = jsonDecode(resp.body) as Map<String, dynamic>;
-      debugPrint('🌐 ECHOED UPDATE PAYLOAD: ${data['json']}');
-
-      // Return a new Profile instance with updated fields
-      // In a real scenario, you would parse from server response.
-      return Profile(
-        id: id,
-        name: data['json']['name'] ?? '',
-        username: data['json']['username'] ?? '',
-        email: data['json']['email'] ?? '',
-        subtaskPreference: data['json']['subtaskPreference'] as String?,
-        timePreference: data['json']['timePreference'] as String?,
-        categories: data['json']['categories'] != null
-            ? List<String>.from(data['json']['categories'] as List)
-            : null,
-      );
+      debugPrint('✅ Update response: $data');
+      return Profile.fromJson(data);
     }
 
-    throw Exception('Echo update failed: ${resp.statusCode}');
+    throw Exception(
+      'Failed to update profile (status=${resp.statusCode}): ${resp.body}',
+    );
   }
 }

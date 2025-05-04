@@ -34,8 +34,12 @@ class _SignupStep1State extends State<SignupStep1> {
 
     setState(() => _isLoading = true);
     try {
-      final Profile profile = await ProfileService()
-          .createProfile(name: name, username: username, email: email);
+      final Profile profile = await ProfileService().signUp(
+        loginId: username,
+        password: password,
+        name: name,
+        email: email,
+      );
       // Optionally store token/password securely here
       Navigator.pushNamed(
         context,

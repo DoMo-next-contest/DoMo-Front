@@ -14,6 +14,7 @@ import 'screens/add_page.dart';
 import 'screens/project_page.dart';
 import 'screens/task_page.dart';
 import 'screens/profile_page.dart';
+import 'screens/decor_page.dart';
 import 'screens/onboarding/signup_step1.dart';
 import 'screens/onboarding/signup_step2.dart';
 import 'screens/onboarding/signup_step3.dart';
@@ -110,6 +111,15 @@ class MyApp extends StatelessWidget {
             settings: settings,
           );
         }
+
+        if (settings.name == '/decor') {
+                  final maybeProfile = settings.arguments;
+                  final profile = (maybeProfile is Profile) ? maybeProfile : _defaultProfile;
+                  return MaterialPageRoute(
+                    builder: (_) => DecorPage(profile: profile),
+                    settings: settings,
+                  );
+                }
 
         // — Fallback to any other static route —
         final pageBuilder = routes[settings.name];
