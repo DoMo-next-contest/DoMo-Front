@@ -5,6 +5,7 @@ import 'package:domo/models/task.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'dart:ui' show PointerDeviceKind;
 import 'package:domo/services/task_service.dart';
+import 'package:table_calendar/table_calendar.dart';
 
 
 class AddPage extends StatefulWidget {
@@ -14,10 +15,81 @@ class AddPage extends StatefulWidget {
   AddPageState createState() => AddPageState();
 }
 
+
+
 class AddPageState extends State<AddPage> {
-  List<String> get _categories => Task.allCategories;
+
+Future<void> _showStyledDialog({
+  required String title,
+  required String message,
+  String buttonText = '확인',
+}) {
+  return showDialog<void>(
+    context: context,
+    barrierColor: Colors.black26,
+    builder: (_) => Dialog(
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 200),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(title,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 12),
+            Text(message, style: const TextStyle(fontSize: 14)),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFC78E48),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  minimumSize: const Size.fromHeight(48),
+                ),
+                child: Text(buttonText, style: const TextStyle(color: Colors.white)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+// …into real mutable fields:
+  List<String> _categories = [];
   String _selectedCategory = '기타';
   List<Subtask> _generatedSubtasks = [];
+
+  @override
+  void initState() {
+    super.initState();
+
+    // 2) seed immediately from whatever is already in Task.allCategories
+    _categories = List.from(Task.allCategories);
+    // if that list had something, pick the first as default
+    if (_categories.isNotEmpty) {
+      _selectedCategory = _categories.first;
+    }
+
+    // 3) now asynchronously re‑load from the server
+    Task.loadCategories().then((_) {
+      setState(() {
+        _categories = List.from(Task.allCategories);
+        // if our previously selected category no longer exists, pick a safe default:
+        if (!_categories.contains(_selectedCategory)) {
+          _selectedCategory = _categories.isNotEmpty ? _categories.first : '기타';
+        }
+      });
+    }).catchError((_) {
+      // optional: swallow errors or show a snackbar
+    });
+  }
 
   DateTime? _selectedDeadline;
   final _dateController = TextEditingController();
@@ -37,20 +109,92 @@ class AddPageState extends State<AddPage> {
   }
 
   Future<void> _selectDeadlineDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedDeadline ?? DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
-    );
-    if (picked != null && picked != _selectedDeadline) {
-      setState(() {
-        _selectedDeadline = picked;
-        _dateController.text =
-            '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
-      });
-    }
-  }
+  DateTime selectedDate = _selectedDeadline ?? DateTime.now();
+  DateTime focusedDay = selectedDate;
+
+  await showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) {
+      return StatefulBuilder(
+        builder: (context, setModalState) {
+          return Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // drag‑handle
+                Container(
+                  width: 40, height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // calendar
+                TableCalendar(
+                  firstDay: DateTime.now().subtract(const Duration(days: 365)),
+                  lastDay: DateTime.now().add(const Duration(days: 365 * 5)),
+                  focusedDay: focusedDay,
+                  selectedDayPredicate: (day) => isSameDay(day, selectedDate),
+                  onDaySelected: (day, focus) {
+                    setModalState(() {
+                      selectedDate = day;
+                      focusedDay = focus;
+                    });
+                  },
+                  headerStyle: const HeaderStyle(
+                    formatButtonVisible: false,
+                    titleCentered: true,
+                  ),
+                  calendarStyle: const CalendarStyle(
+                    todayDecoration: BoxDecoration(
+                      color: Color(0xFFC78E48), shape: BoxShape.circle),
+                    selectedDecoration: BoxDecoration(
+                      color: const Color(0xFFF2AC57), shape: BoxShape.circle),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // confirm
+                ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _selectedDeadline = selectedDate;
+                      _dateController.text =
+                        '${selectedDate.year}-${selectedDate.month.toString().padLeft(2,'0')}-${selectedDate.day.toString().padLeft(2,'0')}';
+                    });
+                    Navigator.pop(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFF2AC57),
+                    foregroundColor: Colors.white,  
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
+                    //minimumSize: const Size.fromHeight(48),
+                    fixedSize: const Size(200, 48), 
+                  ),
+                  child: const Text(
+                    '확인', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+            ),
+          );
+        },
+      );
+    },
+  );
+}
+
 
   Widget _buildChip(String label) {
     final isSelected = label == _selectedCategory;
@@ -99,56 +243,42 @@ class AddPageState extends State<AddPage> {
   }
 
   Future<void> _onGenerateSubtaskPressed() async {
-    if (_nameController.text.isEmpty ||
-        _dateController.text.isEmpty ||
-        _detailsController.text.isEmpty ||
-        _requirementController.text.isEmpty) {
-      await showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-          title: const Text('Incomplete Fields'),
-          content: const Text('Please fill in all fields before generating a task.'),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))
-          ],
-        ),
-      );
-      return;
-    }
-    final newTask = Task(
-      name: _nameController.text,
-      deadline: _selectedDeadline!,
-      category: _selectedCategory,
-      subtasks: _generatedSubtasks,
+  if (_nameController.text.isEmpty ||
+      _dateController.text.isEmpty ||
+      _detailsController.text.isEmpty ||
+      _requirementController.text.isEmpty) {
+    await _showStyledDialog(
+      title: 'Incomplete Fields',
+      message: 'Please fill in all fields before generating a task.',
+      buttonText: 'OK',
     );
-    globalTaskList.add(newTask);
-    try {
-      await TaskService().createTask(newTask);
-      Navigator.pushReplacementNamed(context, '/project');
-    } catch (e) {
-      await showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-          title: const Text('저장 실패'),
-          content: Text('에러: $e'),
-          actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('확인'))],
-        ),
-      );
-    }
-
-    await showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Success'),
-        content: const Text('Task generated'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))
-        ],
-      ),
-    );
-
-    Navigator.pushReplacementNamed(context, '/project');
+    return;
   }
+
+  final newTask = Task(
+    id: 99,
+    name: _nameController.text,
+    deadline: _selectedDeadline!,
+    category: _selectedCategory,
+    requirements: _detailsController.text,
+    description: _requirementController.text,
+  );
+
+  try {
+    await TaskService().createTask(newTask);
+    await _showStyledDialog(
+      title: '저장 성공',
+      message: '태스크 생성되었습니다.',
+    );
+    Navigator.pushReplacementNamed(context, '/project');
+  } catch (e) {
+    await _showStyledDialog(
+      title: '저장 실패',
+      message: '에러: $e',
+    );
+  }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -176,7 +306,7 @@ class AddPageState extends State<AddPage> {
               // Title
               const Positioned(
                 left: 20,
-                top: 20,
+                top: 30,
                 child: Text(
                   '새 프로젝트 추가',
                   style: TextStyle(
@@ -447,7 +577,7 @@ class AddPageState extends State<AddPage> {
               Positioned(
                 left: 50,
                 right: 50,
-                bottom: 75,
+                bottom: 80,
                 child: GestureDetector(
                   onTap: _onGenerateSubtaskPressed,
                   child: Container(

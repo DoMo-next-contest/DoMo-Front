@@ -68,6 +68,7 @@ List<String> _mapTags(List<String>? rawTags) {
     '일상': 'LIFE',
     '자기계발': 'SELF_IMPROVEMENT',
   };
+
   return rawTags.map((k) => mapping[k] ?? k).toList();
 }
 

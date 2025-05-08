@@ -27,7 +27,7 @@ class ProfilePage extends StatelessWidget {
               Positioned.fill(
                 bottom: 56, // leave room for nav bar
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.only(top: 53, left: 16, right: 16),
+                  padding: const EdgeInsets.only(top: 20, left: 16, right: 16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [

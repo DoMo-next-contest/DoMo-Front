@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:domo/services/task_service.dart';
 
 
+
 class ProjectPage extends StatefulWidget {
   const ProjectPage({Key? key}) : super(key: key);
 
@@ -19,12 +20,30 @@ class ProjectPageState extends State<ProjectPage> {
   List<Task> _tasks = [];
   bool _isLoading = true;
 
-  @override
+ @override
 void initState() {
   super.initState();
-  selectedCategories = {...Task.allCategories};
+
+  // kick off your tasks load as before
   _loadTasksFromBackend();
+
+  // now load the tags, and when that's done update both Task.allCategories
+  // *and* our selectedCategories inside setState
+  Task.loadCategories().then((_) {
+    setState(() {
+      // allCategories has just been replaced by loadCategories()
+      selectedCategories = {...Task.allCategories};
+    });
+  }).catchError((_) {
+    // if load failed, fall back and still setState
+    setState(() {
+      //Task.allCategories = ['업무','학업','일상','운동','자기계발','기타'];
+      selectedCategories  = {...Task.allCategories};
+    });
+  });
 }
+
+
 
 Future<void> _loadTasksFromBackend() async {
   try {
@@ -56,6 +75,8 @@ Future<void> _loadTasksFromBackend() async {
     selectedCategories = {...Task.allCategories};
   }
   */
+
+ 
 
   // Persist updated categories list whenever it changes
   Future<void> _saveCategories() async {
@@ -105,7 +126,10 @@ Future<void> _loadTasksFromBackend() async {
     final filtered = _tasks
     .where((t) => selectedCategories.contains(t.category))
     .toList();
-    
+    /*
+    final filtered = _tasks;
+    debugPrint('🔍 total tasks: ${_tasks.length}, after filter: ${filtered.length}');
+    */
 
     // -- 2) Sort --
     switch (_selectedSort) {
@@ -131,7 +155,7 @@ Future<void> _loadTasksFromBackend() async {
               // — Title —
               const Positioned(
                 left: 20,
-                top: 20,
+                top: 30,
                 child: Text(
                   '프로젝트 목록',
                   style: TextStyle(
@@ -171,7 +195,7 @@ Future<void> _loadTasksFromBackend() async {
               // — 2) Sort dropdown under chips, flush left —
               Positioned(
                 left: 16,
-                top: 120,
+                top: 130,
                 child: PopupMenuButton<String>(
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8)),
@@ -243,7 +267,7 @@ Future<void> _loadTasksFromBackend() async {
                           await Navigator.pushNamed(
                             context,
                             '/task',
-                            arguments: task.name,
+                            arguments: task,
                           );
                           setState(() {});
                         },

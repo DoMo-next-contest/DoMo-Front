@@ -75,45 +75,10 @@ class DecorPageState extends State<DecorPage> {
                 ),
               ),
 
-              // Coins & 버튼
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.monetization_on,
-                        color: Color(0xFFF2AC57)),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${widget.profile.coins} 코인',
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    ElevatedButton(
-                      onPressed: () {
-                        // TODO: Handle purchase
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFF2AC57),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: const Text('새로운 데코 얻기 (40)'),
-                    ),
-                  ],
-                ),
-              ),
-
               // Main 3D model viewer (with key)
               SizedBox(
                 width: double.infinity,
-                height: 320,
+                height: 250,
                 child: Center(
                   child: SizedBox(
                     width: 300,
@@ -131,6 +96,45 @@ class DecorPageState extends State<DecorPage> {
                   ),
                 ),
               ),
+
+              const SizedBox(height: 8),
+
+              // Coins & 버튼
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    const Icon(Icons.monetization_on,
+                        color: Color(0xFFF2AC57)),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${widget.profile.coins} 코인',
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFF2AC57),
+                        foregroundColor: Colors.white,           // ← forces white text/icons
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      onPressed: () { /* … */ },
+                      child: const Text('새로운 데코 얻기 (40)'),
+                    ),
+
+                  ],
+                ),
+              ),
+
+              
 
               const SizedBox(height: 8),
 

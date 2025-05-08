@@ -2,6 +2,9 @@
 
 import 'dart:convert';           // ← add this
 import 'package:http/http.dart' as http;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter/foundation.dart';
+
 
 /// Thrown when login or signup fails.
 class AuthException implements Exception {
@@ -50,6 +53,14 @@ class AuthService {
 
     final accessToken  = resp.headers['authorization'];
     final refreshToken = resp.headers['authorization-refresh'];
+
+    if (accessToken != null) {
+      final storage = FlutterSecureStorage();
+      await storage.write(key: 'accessToken', value: accessToken);
+      debugPrint('🔐 Saved access token from header');
+    } else {
+      debugPrint('⚠️ No token found in header');
+    }
 
     if (accessToken == null) {
       throw AuthException('No access token returned');

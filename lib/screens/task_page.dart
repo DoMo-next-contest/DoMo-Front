@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:domo/models/task.dart';
 import 'package:domo/utils/mobile_frame.dart';
+import 'package:domo/services/task_service.dart';
 
 class TaskPage extends StatefulWidget {
   const TaskPage({Key? key}) : super(key: key);
@@ -16,12 +17,15 @@ class TaskPage extends StatefulWidget {
 class TaskPageState extends State<TaskPage> {
   late String taskName;
   late Task currentTask;
+  bool _isLoading = true;
+  String? _error;
   bool _isEditing = false;
 
   final Map<Subtask, Timer?> _timers = {};
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _subtaskController = TextEditingController();
   final TextEditingController _categoryController = TextEditingController();
+  final TextEditingController _descController = TextEditingController();
 
   late String selectedCategory;
   DateTime _focusedDay = DateTime.now();
@@ -29,23 +33,34 @@ class TaskPageState extends State<TaskPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final passed = ModalRoute.of(context)?.settings.arguments as String?;
-    taskName = passed ?? 'Unknown Task';
-    currentTask = globalTaskList.firstWhere(
-      (t) => t.name == taskName,
-      orElse:
-          () => Task(
-            name: taskName,
-            deadline: DateTime.now(),
-            subtasks: [],
-            category: '기타',
-          ),
-    );
+    // read the Task object directly
+    final passed = ModalRoute.of(context)?.settings.arguments as Task?;
+    if (passed == null) {
+      throw Exception('No Task passed to TaskPage');
+    }
+    currentTask = passed;
+
+    // now you can read both id and name:
+    debugPrint('currentTask.id = ${currentTask.id}');
+    debugPrint('currentTask.name = ${currentTask.name}');
+
     selectedCategory = currentTask.category;
     _nameController.text = currentTask.name;
-    for (var sub in currentTask.subtasks) {
-      _timers.putIfAbsent(sub, () => null);
-    }
+    _descController.text = currentTask.description;
+    TaskService().getSubtasks(currentTask.id).then((subs) {
+      setState(() {
+        currentTask.subtasks = subs;
+        for (var s in subs) {
+          _timers.putIfAbsent(s, () => null);
+        }
+        _isLoading = false;
+      });
+    }).catchError((e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    });
   }
 
   @override
@@ -56,6 +71,7 @@ class TaskPageState extends State<TaskPage> {
     _nameController.dispose();
     _subtaskController.dispose();
     _categoryController.dispose();
+    _descController.dispose();
     super.dispose();
   }
 
@@ -232,7 +248,7 @@ class TaskPageState extends State<TaskPage> {
                 color: Colors.white,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
               ),
-              padding: const EdgeInsets.all(0),
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 0),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -265,11 +281,11 @@ class TaskPageState extends State<TaskPage> {
                     ),
                     calendarStyle: const CalendarStyle(
                       todayDecoration: BoxDecoration(
-                        color: Color(0xFFF2AC57),
+                        color: Color(0xFFC78E48),
                         shape: BoxShape.circle,
                       ),
                       selectedDecoration: BoxDecoration(
-                        color: Color(0xFFBF622C),
+                        color: const Color(0xFFF2AC57),
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -284,11 +300,15 @@ class TaskPageState extends State<TaskPage> {
                       Navigator.pop(context);
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFBF622C),
+                      backgroundColor: const Color(0xFFF2AC57),
+                      foregroundColor: Colors.white,  
+
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      minimumSize: const Size.fromHeight(48),
+                      //minimumSize: const Size.fromHeight(48),
+                      fixedSize: const Size(200, 48), 
+
                     ),
                     child: const Text(
                       '확인',
@@ -307,6 +327,162 @@ class TaskPageState extends State<TaskPage> {
       },
     );
   }
+
+  Future<void> _editSubtask(Subtask sub) async {
+  // controllers pre‑filled
+  final titleCtrl = TextEditingController(text: sub.title);
+  final timeCtrl = TextEditingController(
+    text: _formatDuration(sub.actualDuration),
+  );
+
+  await showDialog(
+    context: context,
+    barrierColor: Colors.black26,
+    builder: (_) => Dialog(
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 200),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('하위작업 수정', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 12),
+            TextField(
+              controller: titleCtrl,
+              decoration: InputDecoration(labelText: '제목', border: OutlineInputBorder()),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: timeCtrl,
+              decoration: InputDecoration(labelText: '실제 시간 (HH:MM:SS)', border: OutlineInputBorder()),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                // apply edits
+                setState(() {
+                  sub.title = titleCtrl.text;
+                  // parse hh:mm:ss
+                  final parts = timeCtrl.text.split(':').map(int.parse).toList();
+                  if (parts.length == 3) {
+                    sub.actualDuration = Duration(
+                      hours: parts[0], minutes: parts[1], seconds: parts[2]);
+                  }
+                  currentTask.touch();
+                });
+                Navigator.pop(context);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFF2AC57),
+                foregroundColor: Colors.white, 
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                fixedSize: const Size(200, 48),
+              ),
+              child: const Text('확인', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+Future<void> _addSubtaskDialog() async {
+  final titleCtrl = TextEditingController();
+  final hoursCtrl = TextEditingController();
+  final minsCtrl  = TextEditingController();
+
+  await showDialog(
+    context: context,
+    barrierColor: Colors.black26,
+    builder: (_) => Dialog(
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 200),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('새 하위작업 추가', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 12),
+
+            // 제목 입력
+            TextField(
+              controller: titleCtrl,
+              decoration: InputDecoration(
+                labelText: '제목',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // 예상 시간 입력
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: hoursCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: '시간 (H)',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: minsCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: '분 (M)',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // 확인 버튼
+            ElevatedButton(
+              onPressed: () {
+                final title = titleCtrl.text.trim();
+                final h = int.tryParse(hoursCtrl.text) ?? 0;
+                final m = int.tryParse(minsCtrl.text)  ?? 0;
+                if (title.isNotEmpty) {
+                  setState(() {
+                    currentTask.subtasks.add(
+                      Subtask(
+                        title: title,
+                        expectedDuration: Duration(hours: h, minutes: m),
+                      ),
+                    );
+                    currentTask.touch();
+                  });
+                  Navigator.pop(context);
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                foregroundColor: Colors.white, 
+                backgroundColor: const Color(0xFFF2AC57),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                fixedSize: const Size(200, 48),
+              ),
+              child: const Text('확인', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -344,15 +520,32 @@ class TaskPageState extends State<TaskPage> {
                             ),
                           ),
                           Positioned(
-                            right: 16,
-                            top: 16,
-                            child: IconButton(
-                              icon: Icon(_isEditing ? Icons.check : Icons.edit),
-                              onPressed:
-                                  () =>
-                                      setState(() => _isEditing = !_isEditing),
-                            ),
-                          ),
+  right: 16,
+  top: 16,
+  child: IconButton(
+    icon: Icon(_isEditing ? Icons.check : Icons.edit),
+    onPressed: () async {
+      if (_isEditing) {
+        // we’re leaving edit‑mode → grab the latest edits
+        currentTask.name = _nameController.text;
+        // if you have a desc controller, pull that too:
+        // currentTask.description = _descController.text;
+        try {
+          await TaskService().updateProject(currentTask);
+          ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('저장되었습니다')));
+        } catch (e) {
+          ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('저장 실패: $e')));
+        }
+      }
+      // toggle editing state (enter or exit edit‑mode)
+      setState(() => _isEditing = !_isEditing);
+    },
+  ),
+),
+
+
                         ],
                       ),
                     ),
@@ -420,9 +613,54 @@ class TaskPageState extends State<TaskPage> {
                     ),
                   ),
 
+                  Positioned(
+  top: 120,   // adjust as needed
+  left: 20,
+  right: 20,
+  child: SizedBox(
+    height: 32,   // same height as your title field
+    child: _isEditing
+      ? TextField(
+          controller: _descController,
+          decoration: const InputDecoration(
+            border: InputBorder.none,
+            isDense: true,
+            contentPadding: EdgeInsets.zero,
+            hintText: '설명이 없습니다',
+          ),
+          style: const TextStyle(
+            color: Color(0xFF767E8C),
+            fontSize: 12,
+            fontFamily: 'Barlow',
+            fontWeight: FontWeight.w400,
+            height: 1.25,
+          ),
+          onChanged: (v) => currentTask.description = v,
+        )
+      : Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            currentTask.description.isEmpty
+              ? '설명이 없습니다'
+              : currentTask.description,
+            style: const TextStyle(
+              color: Color(0xFF767E8C),
+              fontSize: 12,
+              fontFamily: 'Barlow',
+              fontWeight: FontWeight.w400,
+              height: 1.25,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+  ),
+),
+
+
                   // deadline
                   Positioned(
-                    top: 140,
+                    top: 160,
                     left: 16,
                     right: 16,
                     child: InkWell(
@@ -464,7 +702,7 @@ class TaskPageState extends State<TaskPage> {
 
                   // subtasks
                   Positioned(
-                    top: 200,
+                    top: 220,
                     left: 0,
                     right: 0,
                     bottom: 135,
@@ -651,7 +889,7 @@ class TaskPageState extends State<TaskPage> {
                                               Icons.edit_outlined,
                                             ),
                                             onPressed:
-                                                () => currentTask.touch(),
+                                                () => _editSubtask(sub),
                                           ),
                                           IconButton(
                                             icon: const Icon(Icons.delete),
@@ -685,43 +923,35 @@ class TaskPageState extends State<TaskPage> {
                                   ),
                                 );
                               }
-                              // add-subtask row
                               return Padding(
                                 key: const ValueKey('add-subtask'),
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 8,
-                                ),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: TextField(
-                                        controller: _subtaskController,
-                                        decoration: const InputDecoration(
-                                          hintText: '새로운 하위작업 직접 추가하기',
-                                          border: OutlineInputBorder(),
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                child: GestureDetector(
+                                  onTap: () => _addSubtaskDialog(),
+                                  child: Container(
+                                    height: 75,
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+                                    decoration: ShapeDecoration(
+                                      color: Colors.white,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                      shadows: const [
+                                        BoxShadow(color: Color(0x19000000), blurRadius: 16, offset: Offset(0, 2)),
+                                      ],
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: const [
+                                        Icon(Icons.add, color: Color(0xFFBF622C)),
+                                        SizedBox(width: 8),
+                                        Text(
+                                          '하위작업 추가',
+                                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Color(0xFFBF622C)),
                                         ),
-                                      ),
+                                      ],
                                     ),
-                                    const SizedBox(width: 8),
-                                    IconButton(
-                                      icon: const Icon(Icons.add),
-                                      onPressed: () {
-                                        final text =
-                                            _subtaskController.text.trim();
-                                        if (text.isNotEmpty) {
-                                          setState(() {
-                                            currentTask.subtasks.add(
-                                              Subtask(title: text),
-                                            );
-                                            _subtaskController.clear();
-                                            currentTask.touch();
-                                          });
-                                        }
-                                      },
-                                    ),
-                                  ],
+                                  ),
                                 ),
-                              );
+                              );;
                             },
                           ),
                         ),
@@ -729,7 +959,6 @@ class TaskPageState extends State<TaskPage> {
                     ),
                   ),
 
-                  // delete/complete row
                   Positioned(
                     left: 0,
                     right: 0,
@@ -738,82 +967,82 @@ class TaskPageState extends State<TaskPage> {
                       padding: const EdgeInsets.symmetric(horizontal: 24.0),
                       child: Row(
                         children: [
+                          // 프로젝트 삭제하기 (custom dialog + API)
                           Expanded(
-                            child: OutlinedButton(
-                              onPressed: () async {
-                                final ok =
-                                    await showDialog<bool>(
-                                      context: context,
-                                      builder:
-                                          (_) => AlertDialog(
-                                            title: const Text('프로젝트 삭제'),
-                                            content: const Text('정말 삭제하시겠습니까?'),
-                                            actions: [
-                                              TextButton(
-                                                onPressed:
-                                                    () => Navigator.pop(
-                                                      context,
-                                                      false,
-                                                    ),
-                                                child: const Text('취소'),
+                            child: GestureDetector(
+                              onTap: () => showDialog<bool>(
+                                context: context,
+                                barrierColor: Colors.black26,
+                                builder: (_) => Dialog(
+                                  backgroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                  insetPadding: const EdgeInsets.symmetric(horizontal: 30, vertical: 200),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Text('프로젝트 삭제', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                                        const SizedBox(height: 12),
+                                        const Text('이 프로젝트를 정말 삭제하시겠습니까?'),
+                                        const SizedBox(height: 16),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                          children: [
+                                            OutlinedButton(
+                                              onPressed: () => Navigator.pop(context, false),
+                                              child: const Text('취소'),
+                                              style: OutlinedButton.styleFrom(
+                                                side: BorderSide(color: Colors.grey[400]!),
+                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                               ),
-                                              TextButton(
-                                                onPressed:
-                                                    () => Navigator.pop(
-                                                      context,
-                                                      true,
-                                                    ),
-                                                style: TextButton.styleFrom(
-                                                  foregroundColor: Colors.red,
-                                                ),
-                                                child: const Text('삭제'),
+                                            ),
+                                            ElevatedButton(
+                                              onPressed: () async {
+                                                Navigator.pop(context, true);
+                                                await TaskService().deleteProject(currentTask.id);
+                                                Navigator.pushReplacementNamed(context, '/project');
+                                              },
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: const Color(0xFFC78E48),
+                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                               ),
-                                            ],
-                                          ),
-                                    ) ??
-                                    false;
-                                if (ok) {
-                                  setState(
-                                    () => globalTaskList.remove(currentTask),
-                                  );
-                                  Navigator.pop(context);
-                                }
-                              },
-                              style: OutlinedButton.styleFrom(
-                                minimumSize: const Size.fromHeight(48),
-                                side: const BorderSide(
-                                  color: Color(0xFFC78E48),
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
+                                              child: const Text('삭제', style: TextStyle(color: Colors.white)),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
                               ),
-                              child: const Text(
-                                '프로젝트 삭제하기',
-                                style: TextStyle(
-                                  color: Color(0xFFC78E48),
-                                  fontWeight: FontWeight.w500,
+                              child: Container(
+                                height: 38,
+                                decoration: ShapeDecoration(
+                                  color: Colors.white,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                  shadows: const [BoxShadow(color: Color(0x19000000), blurRadius: 8, offset: Offset(0,2))],
                                 ),
+                                alignment: Alignment.center,
+                                child: const Text('프로젝트 삭제하기', style: TextStyle(color: Color(0xFFC78E48), fontWeight: FontWeight.w500)),
                               ),
                             ),
                           ),
                           const SizedBox(width: 10),
+                          // 프로젝트 완료하기 (placeholder for API)
                           Expanded(
-                            child: ElevatedButton(
-                              onPressed: () => currentTask.touch(),
-                              style: ElevatedButton.styleFrom(
-                                minimumSize: const Size.fromHeight(48),
-                                backgroundColor: const Color(0xFFC78E48),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
+                            child: GestureDetector(
+                              onTap: () {
+                                // TODO: show complete dialog and call API
+                              },
+                              child: Container(
+                                height: 48,
+                                decoration: ShapeDecoration(
+                                  color: const Color(0xFFC78E48),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                 ),
-                              ),
-                              child: const Text(
-                                '프로젝트 완료하기',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w500,
-                                ),
+                                alignment: Alignment.center,
+                                child: const Text('프로젝트 완료하기', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
                               ),
                             ),
                           ),
