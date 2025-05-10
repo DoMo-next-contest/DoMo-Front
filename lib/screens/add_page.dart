@@ -6,6 +6,7 @@ import 'package:dotted_border/dotted_border.dart';
 import 'dart:ui' show PointerDeviceKind;
 import 'package:domo/services/task_service.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:domo/widgets/bottom_nav_bar.dart';
 
 
 class AddPage extends StatefulWidget {
@@ -791,76 +792,16 @@ Future<void> _editSubtask(Subtask sub, int index) async {
 
               // Bottom nav
               Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: Container(
-                  height: 68,
-                  decoration: BoxDecoration(
-                    border: Border(
-                      top: BorderSide(color: Colors.grey[300]!, width: 1),
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: SizedBox(
+                      height: 68,
+                      child: BottomNavBar(activeIndex: 2),
                     ),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _NavButton(icon: Icons.home, label: '홈', active: false,
-                          onTap: () => Navigator.pushNamed(context, '/dashboard')),
-                      _NavButton(icon: Icons.format_list_bulleted, label: '프로젝트', active: false,
-                          onTap: () => Navigator.pushNamed(context, '/project')),
-                      _NavButton(icon: Icons.control_point, label: '추가', active: true,
-                          onTap: () => Navigator.pushNamed(context, '/add')),
-                      _NavButton(icon: Icons.pets, label: '캐릭터', active: false, 
-                          onTap: () => Navigator.pushNamed(context, '/decor')),
-                      _NavButton(icon: Icons.person_outline, label: '프로필', active: false,
-                          onTap: () => Navigator.pushNamed(context, '/profile')),
-                    ],
-                  ),
-                ),
-              ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-// reuse the same _NavButton from project_page.dart above
-class _NavButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool active;
-  final VoidCallback onTap;
-  const _NavButton({
-    required this.icon,
-    required this.label,
-    required this.active,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final color = active ? const Color(0xFFBF622C) : const Color(0xFF9AA5B6);
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: color, size: 24),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                color: color,
-                fontSize: 13,
-                fontWeight: active ? FontWeight.w600 : FontWeight.w400,
-                height: 1.08,
-                letterSpacing: -0.5,
-              ),
-            ),
-          ],
         ),
       ),
     );
