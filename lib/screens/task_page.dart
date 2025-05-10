@@ -22,6 +22,7 @@ class TaskPageState extends State<TaskPage> {
   String? _error;
   bool _isEditing = false;
   int _listVersion = 0;
+  bool _isCompleting = false;
 
   final Map<Subtask, Timer?> _timers = {};
   final TextEditingController _nameController = TextEditingController();
@@ -1238,21 +1239,78 @@ Future<void> _addSubtaskDialog() async {
                             ),
                           ),
                           const SizedBox(width: 10),
-                          // 프로젝트 완료하기 (placeholder for API)
+                          // 프로젝트 완료하기
                           Expanded(
-                            child: GestureDetector(
-                              onTap: () {
-                                // TODO: show complete dialog and call API
+                            child: StatefulBuilder(
+                              // We wrap in a StatefulBuilder only if you want local setState here—otherwise just use the outer state
+                              builder: (ctx, setLocalState) {
+                                return GestureDetector(
+                                  onTap: () async {
+                                    // 1) 난이도 선택 dialog
+                                    String level = '상';
+                                    final chosen = await showDialog<String>(
+                                      context: context,
+                                      builder: (dCtx) => AlertDialog(
+                                        title: const Text('난이도 입력'),
+                                        content: StatefulBuilder(
+                                          builder: (c2, dialogSetState) {
+                                            return DropdownButton<String>(
+                                              value: level,
+                                              items: ['상','중','하']
+                                                  .map((l) => DropdownMenuItem(value: l, child: Text(l)))
+                                                  .toList(),
+                                              onChanged: (v) => dialogSetState(() => level = v!),
+                                            );
+                                          },
+                                        ),
+                                        actions: [
+                                          TextButton(onPressed: () => Navigator.pop(dCtx, null), child: const Text('취소')),
+                                          TextButton(onPressed: () => Navigator.pop(dCtx, level), child: const Text('확인')),
+                                        ],
+                                      ),
+                                    );
+                                    if (chosen == null) return; // user cancelled
+
+                                    // 2) Call API
+                                    setState(() => _isCompleting = true);
+                                    try {
+                                      final reward = await TaskService()
+                                          .completeAndRewardProject(
+                                            projectId: currentTask.id, 
+                                            level: chosen,
+                                          )
+                                          .timeout(const Duration(seconds: 10));
+
+                                      // 3) Remove from list, show reward, navigate
+                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('획득 보상: $reward')));
+                                      Navigator.pushReplacementNamed(context, '/project'); 
+                                    } catch (e) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text('오류: $e')),
+                                      );
+                                    } finally {
+                                      setState(() => _isCompleting = false);
+                                    }
+                                  },
+                                  child: Container(
+                                    height: 48,
+                                    decoration: ShapeDecoration(
+                                      color: const Color(0xFFC78E48),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: _isCompleting
+                                      ? const SizedBox(
+                                          width: 20, height: 20,
+                                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                        )
+                                      : const Text(
+                                          '프로젝트 완료하기',
+                                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+                                        ),
+                                  ),
+                                );
                               },
-                              child: Container(
-                                height: 48,
-                                decoration: ShapeDecoration(
-                                  color: const Color(0xFFC78E48),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                ),
-                                alignment: Alignment.center,
-                                child: const Text('프로젝트 완료하기', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
-                              ),
                             ),
                           ),
                         ],

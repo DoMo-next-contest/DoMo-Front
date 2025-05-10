@@ -61,6 +61,7 @@ Future<void> _showStyledDialog({
   );
 }
 
+   int _listVersion = 0;
 // …into real mutable fields:
   List<String> _categories = [];
   String _selectedCategory = '기타';
@@ -256,9 +257,14 @@ Future<void> _showStyledDialog({
   );
   try {
     final generated = await TaskService().generateSubtasksWithAI(7);
-    //await TaskService().updateSubtasks(7, generated);
+    await TaskService().updateSubtasks(7, generated);
     Navigator.pop(context);
-    _generatedSubtasks = generated;
+    
+    setState(() {
+      _generatedSubtasks = generated;
+      _listVersion++;               // ← bump here
+    });
+  
   } catch (e) {
     Navigator.pop(context);
     ScaffoldMessenger.of(context).showSnackBar(
@@ -619,6 +625,7 @@ Future<void> _editSubtask(Subtask sub, int index) async {
 
                       if (_generatedSubtasks.isNotEmpty) ...[
   ReorderableListView(
+    key: ValueKey(_listVersion),
     buildDefaultDragHandles: false,
     shrinkWrap: true,
     physics: NeverScrollableScrollPhysics(),
