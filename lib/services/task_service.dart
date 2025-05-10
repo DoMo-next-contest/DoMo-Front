@@ -410,5 +410,29 @@ Future<void> updateSubtaskActualTime(int subTaskId, int minutes) async {
     }
   }
 
+  Future<List<Subtask>> generateSubtasksWithAI(int projectId) async {
+    final storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'accessToken');
+    final url = Uri.parse('$baseUrl/api/gpt/$projectId/subtasks');
+    final resp = await http.post(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type':  'application/json',
+      },
+    );
+    if (resp.statusCode < 200 || resp.statusCode >= 300) {
+      throw Exception('AI generation failed ${resp.statusCode}: ${resp.body}');
+    }
+    final jsonBody = jsonDecode(resp.body) as Map<String, dynamic>;
+    final list = jsonBody['subTaskList'] as List<dynamic>;
+    return list.map((m) => Subtask(
+      id:                DateTime.now().microsecondsSinceEpoch,
+      order:             m['subTaskOrder'] as int,
+      title:             m['subTaskName'] as String,
+      expectedDuration:  Duration(minutes: m['subTaskExpectedTime'] as int),
+      tag:               m['subTaskTag'] as String,
+    )).toList();
+  }
 }
 

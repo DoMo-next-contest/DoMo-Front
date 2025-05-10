@@ -229,6 +229,7 @@ Future<void> _showStyledDialog({
       ),
     );
   }
+  /*
   Future<List<Subtask>> _generateSubtasksWithAI() async {
     await Future.delayed(const Duration(seconds: 1));
     return [
@@ -246,6 +247,25 @@ Future<void> _showStyledDialog({
       
     ];
   }
+  */
+  Future<void> _onGenerateAI() async {
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => const Center(child: CircularProgressIndicator()),
+  );
+  try {
+    final generated = await TaskService().generateSubtasksWithAI(7);
+    //await TaskService().updateSubtasks(7, generated);
+    Navigator.pop(context);
+    _generatedSubtasks = generated;
+  } catch (e) {
+    Navigator.pop(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('AI 생성 실패: $e')),
+    );
+  }
+}
 
   Future<void> _onGenerateSubtaskPressed() async {
   if (_nameController.text.isEmpty ||
@@ -703,10 +723,7 @@ Future<void> _editSubtask(Subtask sub, int index) async {
                             height: 69,
                             color: Colors.transparent,
                             child: InkWell(
-                              onTap: () async {
-                                final generated = await _generateSubtasksWithAI();
-                                setState(() => _generatedSubtasks = generated);
-                              },
+                              onTap: _onGenerateAI,
                               child: Center(
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
