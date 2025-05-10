@@ -229,16 +229,21 @@ Future<void> _showStyledDialog({
       ),
     );
   }
-
   Future<List<Subtask>> _generateSubtasksWithAI() async {
     await Future.delayed(const Duration(seconds: 1));
     return [
+      
       Subtask(
-          title: '리서치 자료 수집',
+          id :1,
+          order : 1,
+          title: '리서치 자료 수집1',
           expectedDuration: const Duration(hours: 3, minutes: 15)),
-      Subtask(title: '초안 작성', expectedDuration: const Duration(hours: 2)),
-      Subtask(
-          title: '검토 및 수정', expectedDuration: const Duration(hours: 1, minutes: 30)),
+      Subtask(id :2,
+          order : 2,title: '초안 작성2', expectedDuration: const Duration(hours: 2)),
+      Subtask(id :3,
+          order : 3,
+          title: '검토 및 수정3', expectedDuration: const Duration(hours: 1, minutes: 30)),
+      
     ];
   }
 

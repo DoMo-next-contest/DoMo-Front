@@ -14,6 +14,70 @@ class ProjectTag {
 }
 
 class Subtask {
+  final int id;
+  int order;
+  String title;
+  bool isDone;
+  Duration expectedDuration;
+  Duration actualDuration;
+  String tag;
+
+  DateTime? runningSince;
+
+  Subtask({
+    required this.id,
+    required this.order,
+    required this.title,
+    this.isDone = false,
+    this.expectedDuration = Duration.zero,
+    this.actualDuration = Duration.zero,
+    this.tag = '',
+  });
+
+  factory Subtask.fromJson(Map<String, dynamic> json) {
+    return Subtask(
+      id: json['subTaskId'] as int,
+      order: json['subTaskOrder'] as int,
+      title: json['subTaskName'] as String? ?? '',
+      isDone: json['subTaskIsDone'] as bool? ?? false,
+      expectedDuration:
+          Duration(seconds: json['subTaskExpectedTime']*60 as int? ?? 0),
+      actualDuration:
+          Duration(seconds: json['subTaskActualTime']*60 as int? ?? 0),
+      tag: json['subTaskTag'] as String? ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'subTaskId': id,
+        'subTaskOrder': order,
+        'subTaskName': title,
+        'subTaskIsDone': isDone,
+        'subTaskExpectedTime': expectedDuration*60,
+        'subTaskActualTime': actualDuration*60,
+        'subTaskTag': tag,
+      };
+  
+  /// current total elapsed
+  Duration get elapsed =>
+      actualDuration +
+      (runningSince != null
+          ? DateTime.now().difference(runningSince!)
+          : Duration.zero);
+
+  void start() {
+    runningSince ??= DateTime.now();
+  }
+
+  void pause() {
+    if (runningSince != null) {
+      actualDuration = elapsed;
+      runningSince = null;
+    }
+  }
+}
+/*
+class Subtask {
   String title;
   bool isDone;
 
@@ -48,6 +112,7 @@ class Subtask {
       runningSince = null;
     }
   }
+  
 
   factory Subtask.fromJson(Map<String, dynamic> json) {
     return Subtask(
@@ -66,6 +131,7 @@ class Subtask {
       };
   
 }
+*/
 
 // ✅ Task model with dynamic (user-defined) category
 /// A task with dynamic (user-defined) categories and optional subtasks.
@@ -109,6 +175,16 @@ class Task {
     'EXERCISE': '운동',
     'SELF_IMPROVEMENT': '자기계발',
   };
+
+  /// UI label → raw tag
+  static String categoryToRawTag(String ui) {
+    return rawToUi.entries
+        .firstWhere(
+          (kv) => kv.value == ui,
+          orElse: () => MapEntry(ui, ui),  // fallback to itself
+        )
+        .key;
+  }
 
   static Future<void> loadCategories() async {
     final rawList = await TaskService().getProjectTags();  // List<String>
@@ -158,7 +234,7 @@ class Task {
     };
     return m;
   }
-
+  /*
   static String categoryToRawTag(String uiCategory) {
     const reverseMap = {
       '업무':             'WORK',
@@ -171,7 +247,7 @@ class Task {
     //return reverseMap[uiCategory] ?? uiCategory;
     return reverseMap[uiCategory] ?? reverseMap['업무']!;
   }
-
+  */
   static String _categoryToRawTag(String cat) {
     const reverseMap = {
       '업무': 'WORK',
@@ -182,6 +258,7 @@ class Task {
     };
     return reverseMap[cat] ?? cat;
   }
+  
 }
 
 
@@ -195,10 +272,13 @@ List<Task> globalTaskList = [
     requirements: '',
     subtasks: [
       Subtask(
+        order:0,
+        id: 0,
         title: 'Design UI',
         expectedDuration: Duration(hours: 2, minutes: 15),
       ),
-      Subtask(title: 'Implement backend', expectedDuration: Duration(hours: 3)),
+      Subtask(order:0,
+        id: 0,title: 'Implement backend', expectedDuration: Duration(hours: 3)),
     ],
   )
 ];
@@ -232,14 +312,19 @@ extension SubtaskJson on Subtask {
   Map<String, dynamic> toJson() => {
     'title': title,
     'isDone': isDone,
-    'expectedDuration': expectedDuration.inSeconds,
-    'actualDuration': actualDuration.inSeconds,
+    'expectedDuration': expectedDuration*60,
+    'actualDuration': actualDuration*60,
   };
 
   static Subtask fromJson(Map<String, dynamic> json) => Subtask(
-    title: json['title'],
-    isDone: json['isDone'] ?? false,
-    expectedDuration: Duration(seconds: json['expectedDuration']),
-    actualDuration: Duration(seconds: json['actualDuration']),
+    id: json['subTaskId'] as int,
+      order: json['subTaskOrder'] as int,
+      title: json['subTaskName'] as String? ?? '',
+      isDone: json['subTaskIsDone'] as bool? ?? false,
+      expectedDuration:
+          Duration(seconds: json['subTaskExpectedTime'*60] as int? ?? 0),
+      actualDuration:
+          Duration(seconds: json['subTaskActualTime']*60 as int? ?? 0),
+      tag: json['subTaskTag'] as String? ?? '',
   );
 }

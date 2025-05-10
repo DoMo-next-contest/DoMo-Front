@@ -12,7 +12,7 @@ class ProfileService {
   final String baseUrl;
 
   ProfileService({
-    this.baseUrl = 'http://ec2-3-38-104-110.ap-northeast-2.compute.amazonaws.com:8080',
+    this.baseUrl = 'http://ec2-15-165-74-79.ap-northeast-2.compute.amazonaws.com:8080',
   });
 
   /// Sign up a new user.

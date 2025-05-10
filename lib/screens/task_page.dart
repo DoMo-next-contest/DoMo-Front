@@ -17,9 +17,11 @@ class TaskPage extends StatefulWidget {
 class TaskPageState extends State<TaskPage> {
   late String taskName;
   late Task currentTask;
+  late Future<List<Subtask>> _subsFuture;
   bool _isLoading = true;
   String? _error;
   bool _isEditing = false;
+  int _listVersion = 0;
 
   final Map<Subtask, Timer?> _timers = {};
   final TextEditingController _nameController = TextEditingController();
@@ -39,6 +41,8 @@ class TaskPageState extends State<TaskPage> {
       throw Exception('No Task passed to TaskPage');
     }
     currentTask = passed;
+
+    _subsFuture = TaskService().getSubtasks(currentTask.id);
 
     // now you can read both id and name:
     debugPrint('currentTask.id = ${currentTask.id}');
@@ -60,6 +64,12 @@ class TaskPageState extends State<TaskPage> {
         _error = e.toString();
         _isLoading = false;
       });
+    });
+  }
+
+  void _reloadSubtasks() {
+    setState(() {
+      _subsFuture = TaskService().getSubtasks(currentTask.id);
     });
   }
 
@@ -211,13 +221,30 @@ class TaskPageState extends State<TaskPage> {
                       IconButton(
                         icon: const Icon(Icons.add_circle_outline, size: 28),
                         color: const Color(0xFFBF622C),
-                        onPressed: () {
+                        onPressed: () async {
                           final newCat = _categoryController.text.trim();
-                          if (newCat.isNotEmpty &&
-                              !Task.allCategories.contains(newCat)) {
-                            setState(() => Task.allCategories.add(newCat));
+                          if (newCat.isEmpty || Task.allCategories.contains(newCat)) return;
+
+                          Navigator.pop(context); // close dialog immediately
+
+                          try {
+                            // 1) send to server
+                            await TaskService().createProjectTag(newCat);
+
+                            // 2) on success, update local list
+                            setState(() {
+                              Task.allCategories.add(newCat);
+                            });
                             _categoryController.clear();
-                            Navigator.pop(context);
+
+                            // 3) reopen the picker so the user sees it added
+                            _showCategoryPicker();
+                          } catch (e) {
+                            // if the API call failed, show an error
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('카테고리 생성에 실패했습니다: $e')),
+                            );
+                            // optionally reopen the dialog so they can retry
                             _showCategoryPicker();
                           }
                         },
@@ -329,20 +356,15 @@ class TaskPageState extends State<TaskPage> {
   }
 
   Future<void> _editSubtask(Subtask sub) async {
-  // controllers pre‑filled
   final titleCtrl = TextEditingController(text: sub.title);
-  final timeCtrl = TextEditingController(
-    text: _formatDuration(sub.actualDuration),
-  );
+  final timeCtrl = TextEditingController(text: _formatDuration(sub.actualDuration));
 
   await showDialog(
     context: context,
     barrierColor: Colors.black26,
     builder: (_) => Dialog(
       backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 200),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -362,11 +384,10 @@ class TaskPageState extends State<TaskPage> {
             ),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: () {
-                // apply edits
+              onPressed: () async {
+                // 1) apply local edits
                 setState(() {
                   sub.title = titleCtrl.text;
-                  // parse hh:mm:ss
                   final parts = timeCtrl.text.split(':').map(int.parse).toList();
                   if (parts.length == 3) {
                     sub.actualDuration = Duration(
@@ -375,10 +396,30 @@ class TaskPageState extends State<TaskPage> {
                   currentTask.touch();
                 });
                 Navigator.pop(context);
+
+                // 2) send to server
+                try {
+                  await TaskService().updateSubtask(sub.id, {
+                    'subTaskName': sub.title,
+                    'subTaskExpectedTime': sub.expectedDuration.inMinutes,
+                    'subTaskTag': sub.tag,
+                    'subTaskOrder':        sub.order,
+                  });
+                  await TaskService().updateSubtaskActualTime(sub.id, sub.elapsed.inMinutes);
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('하위작업이 저장되었습니다')),
+                  );
+                } catch (e) {
+                  // revert on failure
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('저장 실패: $e')),
+                  );
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFF2AC57),
-                foregroundColor: Colors.white, 
+                foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 fixedSize: const Size(200, 48),
               ),
@@ -451,23 +492,50 @@ Future<void> _addSubtaskDialog() async {
 
             // 확인 버튼
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 final title = titleCtrl.text.trim();
                 final h = int.tryParse(hoursCtrl.text) ?? 0;
-                final m = int.tryParse(minsCtrl.text)  ?? 0;
-                if (title.isNotEmpty) {
-                  setState(() {
-                    currentTask.subtasks.add(
-                      Subtask(
-                        title: title,
-                        expectedDuration: Duration(hours: h, minutes: m),
-                      ),
-                    );
-                    currentTask.touch();
-                  });
-                  Navigator.pop(context);
+                final m = int.tryParse(minsCtrl.text) ?? 0;
+                if (title.isEmpty) return;
+
+                final newSub = Subtask(
+                  id:    0,
+                  order: currentTask.subtasks.length + 1,
+                  title: title,
+                  expectedDuration: Duration(hours: h, minutes: m),
+                  tag:   'DOCUMENTATION',
+                );
+
+                Navigator.pop(context);
+                // 1) Optimistically insert locally
+                setState(() {
+                  currentTask.subtasks.add(newSub);
+                  currentTask.touch();
+                  _listVersion++; 
+                });
+                
+
+                // 2) Send to server
+                try {
+                  await TaskService().createSubtasks(currentTask.id, newSub);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('하위작업이 추가되었습니다')),
+                  );
+                  /*
+                  Navigator.pushReplacementNamed(
+                    context,
+                    '/task',
+                    arguments: currentTask,
+                  );
+                  */
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('저장 실패: $e')),
+                  );
                 }
               },
+              
+
               style: ElevatedButton.styleFrom(
                 foregroundColor: Colors.white, 
                 backgroundColor: const Color(0xFFF2AC57),
@@ -526,20 +594,29 @@ Future<void> _addSubtaskDialog() async {
     icon: Icon(_isEditing ? Icons.check : Icons.edit),
     onPressed: () async {
       if (_isEditing) {
-        // we’re leaving edit‑mode → grab the latest edits
+        // 1) Sync any name/desc edits you did via controllers:
         currentTask.name = _nameController.text;
-        // if you have a desc controller, pull that too:
-        // currentTask.description = _descController.text;
+        currentTask.description = _descController.text;
+
+        // 2) Send the *entire* subtask list back:
         try {
+          await TaskService().updateSubtasks(currentTask.id, currentTask.subtasks);
           await TaskService().updateProject(currentTask);
-          ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('저장되었습니다')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('저장되었습니다')),
+          );
+          // 3) Refresh from server (optional but safer):
+          final fresh = await TaskService().getSubtasks(currentTask.id);
+          setState(() => currentTask.subtasks = fresh);
         } catch (e) {
-          ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('저장 실패: $e')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('저장 실패: $e')),
+          );
         }
+
+
       }
-      // toggle editing state (enter or exit edit‑mode)
+      // 4) Finally, toggle edit mode
       setState(() => _isEditing = !_isEditing);
     },
   ),
@@ -724,26 +801,28 @@ Future<void> _addSubtaskDialog() async {
                         ),
                         Expanded(
                           child: ReorderableListView.builder(
+                            key: ValueKey(_listVersion),
                             buildDefaultDragHandles: false,
                             padding: const EdgeInsets.symmetric(
                               horizontal: 16,
                               vertical: 8,
                             ),
                             itemCount: currentTask.subtasks.length + 1,
-                            onReorder: (oldIndex, newIndex) {
+                            onReorder: (oldIndex, newIndex) async {
                               setState(() {
                                 final max = currentTask.subtasks.length;
                                 if (newIndex > max) newIndex = max;
                                 if (oldIndex < max) {
                                   if (newIndex > oldIndex) newIndex -= 1;
-                                  final moved = currentTask.subtasks.removeAt(
-                                    oldIndex,
-                                  );
+                                  final moved = currentTask.subtasks.removeAt(oldIndex);
                                   currentTask.subtasks.insert(newIndex, moved);
-                                  currentTask.touch();
                                 }
-                              });
-                            },
+                                // 1) renumber the 'order' field for every subtask
+                                for (var i = 0; i < currentTask.subtasks.length; i++) {
+                                  currentTask.subtasks[i].order = i + 1;
+                                }
+                                currentTask.touch();
+                              });},
                             itemBuilder: (ctx, i) {
                               if (i < currentTask.subtasks.length) {
                                 final sub = currentTask.subtasks[i];
@@ -751,7 +830,7 @@ Future<void> _addSubtaskDialog() async {
                                 final isRunning = _timers[sub] != null;
 
                                 return Padding(
-                                  key: ValueKey(sub.title),
+                                  key: ValueKey(sub.id),
                                   padding: const EdgeInsets.only(bottom: 12),
                                   child: Container(
                                     height: 75,
@@ -777,22 +856,40 @@ Future<void> _addSubtaskDialog() async {
                                         // fixed 40px slot
                                         SizedBox(
                                           width: 40,
-                                          child:
-                                              _isEditing
-                                                  ? ReorderableDragStartListener(
-                                                    index: i,
-                                                    child: const Icon(
-                                                      Icons.drag_handle,
-                                                    ),
-                                                  )
-                                                  : Checkbox(
-                                                    value: sub.isDone,
-                                                    onChanged:
-                                                        (c) => setState(() {
-                                                          sub.isDone = c!;
-                                                          currentTask.touch();
-                                                        }),
-                                                  ),
+                                          child: _isEditing
+                                              ? ReorderableDragStartListener(
+                                                  index: i,
+                                                  child: const Icon(Icons.drag_handle),
+                                                )
+                                              : Checkbox(
+                                                  value: sub.isDone,
+                                                  onChanged: (checked) async {
+                                                    final newValue = checked!;
+                                                    // 1) optimistic update
+                                                    setState(() {
+                                                      sub.isDone = newValue;
+                                                      currentTask.touch();
+                                                    });
+                                                    // 2) send to server
+                                                    try {
+                                                      if (newValue) {
+                                                        // mark done
+                                                        await TaskService().setSubtaskDone(sub.id);
+                                                      } else {
+                                                        // mark undone
+                                                        await TaskService().setSubtaskUndone(sub.id);
+                                                      }
+                                                    } catch (e) {
+                                                      // 3) revert on failure
+                                                      setState(() {
+                                                        sub.isDone = !newValue;
+                                                      });
+                                                      ScaffoldMessenger.of(context).showSnackBar(
+                                                        SnackBar(content: Text('상태 업데이트 실패: $e')),
+                                                      );
+                                                    }
+                                                  },
+                                                ),
                                         ),
                                         const SizedBox(width: 16),
                                         // title + durations
@@ -893,29 +990,69 @@ Future<void> _addSubtaskDialog() async {
                                           ),
                                           IconButton(
                                             icon: const Icon(Icons.delete),
-                                            onPressed: () {
+                                            onPressed: () async {
+                                              // 1) grab & remove locally
+                                              final removed = currentTask.subtasks[i];
                                               setState(() {
-                                                currentTask.subtasks.removeAt(
-                                                  i,
-                                                );
-                                                currentTask.touch();
+                                                currentTask.subtasks.removeAt(i);
+                                                // re‑index order fields
+                                                for (var j = 0; j < currentTask.subtasks.length; j++) {
+                                                  currentTask.subtasks[j].order = j + 1;
+                                                }
                                               });
+
+                                              try {
+                                                // 2) delete on server
+                                                await TaskService().deleteSubtask(removed.id);
+                                                // 3) push updated ordering back to server
+                                                await TaskService().updateSubtasks(
+                                                  currentTask.id,
+                                                  currentTask.subtasks,
+                                                );
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  const SnackBar(content: Text('하위작업이 삭제되었습니다')),
+                                                );
+                                              } catch (e) {
+                                                // 4) on failure, revert locally
+                                                setState(() {
+                                                  currentTask.subtasks.insert(i, removed);
+                                                  for (var j = 0; j < currentTask.subtasks.length; j++) {
+                                                    currentTask.subtasks[j].order = j + 1;
+                                                  }
+                                                });
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  SnackBar(content: Text('삭제 실패: $e')),
+                                                );
+                                              }
                                             },
                                           ),
                                         ] else ...[
                                           IconButton(
-                                            icon: Icon(
-                                              isRunning
-                                                  ? Icons.pause
-                                                  : Icons.play_arrow,
-                                            ),
-                                            onPressed:
-                                                () => setState(
-                                                  () =>
-                                                      isRunning
-                                                          ? _pauseSubtask(sub)
-                                                          : _startSubtask(sub),
-                                                ),
+                                            icon: Icon(isRunning ? Icons.pause : Icons.play_arrow),
+                                            onPressed: () async {
+                                              if (isRunning) {
+                                                // 1) Stop the timer
+                                                _pauseSubtask(sub);
+
+                                                // 2) Save actual time to server (in minutes)
+                                                try {
+                                                  await TaskService().updateSubtaskActualTime(
+                                                    sub.id,
+                                                    sub.elapsed.inMinutes,
+                                                  );
+                                                } catch (e) {
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    SnackBar(content: Text('실제 시간 업데이트 실패: $e')),
+                                                  );
+                                                }
+
+                                                // 3) Refresh UI if needed
+                                                setState(() {});
+                                              } else {
+                                                // 4) Start the timer
+                                                setState(() => _startSubtask(sub));
+                                              }
+                                            },
                                           ),
                                         ],
                                       ],

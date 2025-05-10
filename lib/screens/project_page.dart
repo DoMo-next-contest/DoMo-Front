@@ -122,10 +122,12 @@ Future<void> _loadTasksFromBackend() async {
         .where((t) => selectedCategories.contains(t.category))
         .toList();
     */
-
+  
+    
     final filtered = _tasks
     .where((t) => selectedCategories.contains(t.category))
     .toList();
+    
     /*
     final filtered = _tasks;
     debugPrint('🔍 total tasks: ${_tasks.length}, after filter: ${filtered.length}');
