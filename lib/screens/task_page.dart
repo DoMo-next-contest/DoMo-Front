@@ -396,6 +396,7 @@ class TaskPageState extends State<TaskPage> {
                   currentTask.touch();
                 });
                 Navigator.pop(context);
+                
 
                 // 2) send to server
                 try {
@@ -826,8 +827,10 @@ Future<void> _addSubtaskDialog() async {
                             itemBuilder: (ctx, i) {
                               if (i < currentTask.subtasks.length) {
                                 final sub = currentTask.subtasks[i];
-                                final elapsed = sub.elapsed;
-                                final isRunning = _timers[sub] != null;
+                                final elapsed = sub.actualDuration;
+                                final isRunning = _timers[sub] != null; 
+
+                                final display = isRunning ? sub.elapsed : sub.actualDuration;
 
                                 return Padding(
                                   key: ValueKey(sub.id),
@@ -836,7 +839,7 @@ Future<void> _addSubtaskDialog() async {
                                     height: 75,
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 16,
-                                      vertical: 13,
+                                      vertical: 12,
                                     ),
                                     decoration: ShapeDecoration(
                                       color: Colors.white,
@@ -966,7 +969,7 @@ Future<void> _addSubtaskDialog() async {
                                                       ),
                                                     ),
                                                     child: Text(
-                                                      _formatDuration(elapsed),
+                                                      _formatDuration(display),
                                                       style: const TextStyle(
                                                         fontSize: 12,
                                                         fontWeight:

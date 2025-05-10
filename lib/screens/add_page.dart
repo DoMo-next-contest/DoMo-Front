@@ -260,6 +260,9 @@ Future<void> _showStyledDialog({
     return;
   }
 
+  
+
+
   final newTask = Task(
     id: 99,
     name: _nameController.text,
@@ -282,6 +285,129 @@ Future<void> _showStyledDialog({
       message: '에러: $e',
     );
   }
+}
+
+Future<void> _editSubtask(Subtask sub, int index) async {
+  final titleCtrl = TextEditingController(text: sub.title);
+  final hoursCtrl = TextEditingController(text: sub.expectedDuration.inHours.toString());
+  final minutesCtrl = TextEditingController(
+    text: sub.expectedDuration.inMinutes.remainder(60).toString(),
+  );
+
+  await showDialog(
+    context: context,
+    builder: (_) => Dialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 200),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      backgroundColor: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: ShapeDecoration(
+          color: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shadows: const [
+            BoxShadow(
+              color: Color(0x19000000),
+              blurRadius: 16,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '하위작업 수정',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFFF2AC57),
+            
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: titleCtrl,
+              decoration: InputDecoration(
+                labelText: '제목',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: hoursCtrl,
+                    decoration: InputDecoration(
+                      labelText: '시간(시)',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ),
+                    keyboardType: TextInputType.number,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextField(
+                    controller: minutesCtrl,
+                    decoration: InputDecoration(
+                      labelText: '분',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ),
+                    keyboardType: TextInputType.number,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: TextButton.styleFrom(
+                    textStyle: TextStyle(color: Colors.grey[600]),
+                    foregroundColor: Colors.black,
+                  ),
+                  child: Text('취소'),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      sub.title = titleCtrl.text;
+                      sub.expectedDuration = Duration(
+                        hours: int.tryParse(hoursCtrl.text) ?? 0,
+                        minutes: int.tryParse(minutesCtrl.text) ?? 0,
+                      );
+                      _generatedSubtasks[index] = sub;
+                    });
+                    Navigator.pop(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFF2AC57),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  ),
+                  child: Text('저장', style: TextStyle(fontWeight: FontWeight.w600)),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
 
@@ -415,7 +541,7 @@ Future<void> _showStyledDialog({
                         ),
                       ),
 
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 12),
 
                       // Category chips
                       SizedBox(
@@ -433,7 +559,7 @@ Future<void> _showStyledDialog({
                         ),
                       ),
 
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 12),
 
                       // Requirements
                       const Text(
@@ -464,76 +590,104 @@ Future<void> _showStyledDialog({
 
                       const SizedBox(height: 20),
 
+                      const Text(
+                        '하위작업 ',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+                      ),
+                       const SizedBox(height: 12),
                       // Generated subtasks
+
                       if (_generatedSubtasks.isNotEmpty) ...[
-                        Column(
-                          children: _generatedSubtasks.map((sub) {
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: Container(
-                                height: 75,
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                decoration: ShapeDecoration(
-                                  color: Colors.white,
-                                  shape:
-                                      RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                  shadows: const [
-                                    BoxShadow(
-                                      color: Color(0x19000000),
-                                      blurRadius: 16,
-                                      offset: Offset(0, 2),
-                                    )
-                                  ],
-                                ),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            sub.title,
-                                            style: const TextStyle(
-                                                fontSize: 14, fontWeight: FontWeight.w500),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 6, vertical: 4),
-                                            decoration: ShapeDecoration(
-                                              color: const Color(0x19BF622C),
-                                              shape: RoundedRectangleBorder(
-                                                  borderRadius: BorderRadius.circular(4)),
-                                            ),
-                                            child: Text(
-                                              '${sub.expectedDuration.inHours}H ${sub.expectedDuration.inMinutes.remainder(60)}M',
-                                              style: const TextStyle(
-                                                  color: Color(0xFFBF622C),
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.w600),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(Icons.delete_outline, size: 24),
-                                      onPressed: () {
-                                        setState(() {
-                                          _generatedSubtasks.remove(sub);
-                                        });
-                                      },
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ],
+  ReorderableListView(
+    buildDefaultDragHandles: false,
+    shrinkWrap: true,
+    physics: NeverScrollableScrollPhysics(),
+    onReorder: (oldIndex, newIndex) async {
+      setState(() {
+        final max = _generatedSubtasks.length;
+        if (newIndex > max) newIndex = max;
+        if (newIndex > oldIndex) newIndex--;
+        final moved = _generatedSubtasks.removeAt(oldIndex);
+        _generatedSubtasks.insert(newIndex, moved);
+        for (var i = 0; i < _generatedSubtasks.length; i++) {
+          _generatedSubtasks[i].order = i + 1;
+        }
+      });
+    },
+    children: List.generate(_generatedSubtasks.length, (i) {
+      final sub = _generatedSubtasks[i];
+      return Container(
+        key: ValueKey(sub.id),
+        margin: const EdgeInsets.only(bottom: 12),
+        height: 75,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: ShapeDecoration(
+          color: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shadows: const [
+            BoxShadow(
+              color: Color(0x19000000),
+              blurRadius: 16,
+              offset: Offset(0, 2),
+            )
+          ],
+        ),
+        child: Row(
+          children: [
+            // ← left‑side drag handle only
+            ReorderableDragStartListener(
+              index: i,
+              child: const Padding(
+                padding: EdgeInsets.only(right: 12),
+                child: Icon(Icons.drag_handle, size: 24),
+              ),
+            ),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    sub.title,
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                    decoration: ShapeDecoration(
+                      color: const Color(0x19BF622C),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                    ),
+                    child: Text(
+                      '${sub.expectedDuration.inHours}H ${sub.expectedDuration.inMinutes.remainder(60)}M',
+                      style: const TextStyle(
+                        color: Color(0xFFBF622C),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // ← Edit button
+            IconButton(
+              icon: const Icon(Icons.edit, size: 24),
+              onPressed: () => _editSubtask(sub, i),
+            ),
+            // ← Delete button
+            IconButton(
+              icon: const Icon(Icons.delete_outline, size: 24),
+              onPressed: () => setState(() => _generatedSubtasks.removeAt(i)),
+            ),
+          ],
+        ),
+      );
+    }),
+  ),
+],
 
 
                       // AI button
@@ -546,7 +700,7 @@ Future<void> _showStyledDialog({
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(8),
                           child: Container(
-                            height: 71,
+                            height: 69,
                             color: Colors.transparent,
                             child: InkWell(
                               onTap: () async {
@@ -573,11 +727,11 @@ Future<void> _showStyledDialog({
                           ),
                         ),
                       ),
+                      const SizedBox(height: 12),
                     ],
                   ),
                 ),
               ),
-
               // Save button
               Positioned(
                 left: 50,
