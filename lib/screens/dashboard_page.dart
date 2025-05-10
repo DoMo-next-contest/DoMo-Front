@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_3d_controller/flutter_3d_controller.dart';
 import 'package:model_viewer_plus/model_viewer_plus.dart';
 import 'package:domo/models/task.dart';
+import 'package:domo/widgets/bottom_nav_bar.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({Key? key}) : super(key: key);
@@ -51,10 +52,13 @@ class DashboardPageState extends State<DashboardPage> {
                 children: [
                   // 3D 캐릭터
                   Positioned(
-                    top: 220, left: 0, right: 0,
+                    top: 220,
+                    left: 0,
+                    right: 0,
                     child: Center(
                       child: SizedBox(
-                        width: 300, height: 300,
+                        width: 300,
+                        height: 300,
                         child: ModelViewer(
                           src: 'assets/character.glb',
                           alt: '3D model of Cutie',
@@ -70,7 +74,9 @@ class DashboardPageState extends State<DashboardPage> {
 
                   // 인사말
                   const Positioned(
-                    top: 150, left: 0, right: 0,
+                    top: 150,
+                    left: 0,
+                    right: 0,
                     child: Text(
                       '반가워요, 예슬님!',
                       textAlign: TextAlign.center,
@@ -86,18 +92,23 @@ class DashboardPageState extends State<DashboardPage> {
 
                   // 최근 프로젝트 카드
                   Positioned(
-                    left: 30, right: 30, bottom: 140,
+                    left: 30,
+                    right: 30,
+                    bottom: 140,
                     child: InkWell(
                       borderRadius: BorderRadius.circular(16),
-                      onTap: () => Navigator.pushNamed(
-                        context,
-                        '/task',
-                        arguments: recent.name,
-                      ),
+                      onTap:
+                          () => Navigator.pushNamed(
+                            context,
+                            '/task',
+                            arguments: recent.name,
+                          ),
                       child: Container(
                         height: 81,
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 18, vertical: 9),
+                          horizontal: 18,
+                          vertical: 9,
+                        ),
                         decoration: ShapeDecoration(
                           color: Colors.white,
                           shape: RoundedRectangleBorder(
@@ -130,7 +141,9 @@ class DashboardPageState extends State<DashboardPage> {
                                 const SizedBox(width: 12),
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 1),
+                                    horizontal: 8,
+                                    vertical: 1,
+                                  ),
                                   decoration: ShapeDecoration(
                                     color: const Color(0xFFF2AC57),
                                     shape: RoundedRectangleBorder(
@@ -185,7 +198,9 @@ class DashboardPageState extends State<DashboardPage> {
                                       decoration: ShapeDecoration(
                                         color: const Color(0xFFAB4E18),
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(10),
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -200,13 +215,13 @@ class DashboardPageState extends State<DashboardPage> {
                   ),
 
                   // Bottom navigation
-                  const Positioned(
+                  Positioned(
                     left: 0,
                     right: 0,
                     bottom: 0,
                     child: SizedBox(
                       height: 68,
-                      child: _BottomNavBar(activeIndex: 0),
+                      child: BottomNavBar(activeIndex: 0),
                     ),
                   ),
                 ],
@@ -214,57 +229,6 @@ class DashboardPageState extends State<DashboardPage> {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-/// exactly the same bottom‐nav from your ProjectPage:
-class _BottomNavBar extends StatelessWidget {
-  final int activeIndex; // 0=home,1=project,2=add,3=char,4=profile
-  const _BottomNavBar({required this.activeIndex});
-
-  @override
-  Widget build(BuildContext context) {
-    const icons = [
-      Icons.home,
-      Icons.format_list_bulleted,
-      Icons.control_point,
-      Icons.pets,
-      Icons.person_outline,
-    ];
-    const labels = ['홈', '프로젝트', '추가', '캐릭터', '프로필'];
-    // match exactly your project page routes
-    const routes = [
-      '/dashboard',
-      '/project',
-      '/add',
-      '/decor',
-      '/profile',
-    ];
-
-    return Container(
-      decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: Colors.grey[300]!, width: 1)),
-      ),
-      child: Row(
-        children: List.generate(5, (i) {
-          final color = i == activeIndex ? const Color(0xFFBF622C) : const Color(0xFF9AA5B6);
-          final weight = i == activeIndex ? FontWeight.w600 : FontWeight.w400;
-          return Expanded(
-            child: InkWell(
-              onTap: () => Navigator.pushNamed(context, routes[i]),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(icons[i], color: color, size: 24),
-                  const SizedBox(height: 2),
-                  Text(labels[i], style: TextStyle(color: color, fontSize: 13, fontWeight: weight)),
-                ],
-              ),
-            ),
-          );
-        }),
       ),
     );
   }

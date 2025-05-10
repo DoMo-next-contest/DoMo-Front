@@ -13,12 +13,13 @@ import 'screens/dashboard_page.dart';
 import 'screens/add_page.dart';
 import 'screens/project_page.dart';
 import 'screens/task_page.dart';
-import 'screens/profile_page.dart';
+import 'screens/profile/profile_page.dart';
 import 'screens/decor_page.dart';
 import 'screens/onboarding/signup_step1.dart';
 import 'screens/onboarding/signup_step2.dart';
 import 'screens/onboarding/signup_step3.dart';
 import 'screens/onboarding/signup_step4.dart';
+import 'screens/profile/completed_projects_page.dart';
 
 /// A built-in “demo” profile, used if you don’t explicitly pass one.
 final _defaultProfile = Profile(
@@ -41,11 +42,7 @@ Future<void> main() async {
     Task.allCategories = savedCats;
   }
 
-  runApp(
-    MobileFrame(
-      child: const MyApp(),
-    ),
-  );
+  runApp(MobileFrame(child: const MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -102,32 +99,35 @@ class MyApp extends StatelessWidget {
           }
         }
 
-        // — Profile page — always supply a Profile, falling back to our default
+        // — Profile page — now fetches its own Profile internally
         if (settings.name == '/profile') {
-          final maybeProfile = settings.arguments;
-          final profile = (maybeProfile is Profile) ? maybeProfile : _defaultProfile;
           return MaterialPageRoute(
-            builder: (_) => ProfilePage(profile: profile),
+            builder: (_) => const ProfilePage(),
             settings: settings,
           );
         }
 
+        // inside your onGenerateRoute:
+        if (settings.name == '/completed') {
+          return MaterialPageRoute(
+            builder: (_) => const CompletedProjectsPage(),
+          );
+        }
+
         if (settings.name == '/decor') {
-                  final maybeProfile = settings.arguments;
-                  final profile = (maybeProfile is Profile) ? maybeProfile : _defaultProfile;
-                  return MaterialPageRoute(
-                    builder: (_) => DecorPage(profile: profile),
-                    settings: settings,
-                  );
-                }
+          final maybeProfile = settings.arguments;
+          final profile =
+              (maybeProfile is Profile) ? maybeProfile : _defaultProfile;
+          return MaterialPageRoute(
+            builder: (_) => DecorPage(profile: profile),
+            settings: settings,
+          );
+        }
 
         // — Fallback to any other static route —
         final pageBuilder = routes[settings.name];
         if (pageBuilder != null) {
-          return MaterialPageRoute(
-            builder: pageBuilder,
-            settings: settings,
-          );
+          return MaterialPageRoute(builder: pageBuilder, settings: settings);
         }
 
         // — Unknown? Go home —

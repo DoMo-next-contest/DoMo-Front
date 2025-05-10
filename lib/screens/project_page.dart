@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:domo/models/task.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:domo/services/task_service.dart';
+import 'package:domo/widgets/bottom_nav_bar.dart';
 
 
 
@@ -49,8 +50,7 @@ Future<void> _loadTasksFromBackend() async {
   try {
     final tasks = await TaskService().getTasks();
     setState(() {
-      _tasks = tasks;
-      _isLoading = false;
+      _tasks = tasks.where((t) => t.progress < 1.0).toList();
     });
   } catch (e) {
     debugPrint('❌ Error loading tasks: $e');
@@ -385,75 +385,18 @@ Future<void> _loadTasksFromBackend() async {
               ),
 
               // — 4) Bottom navigation bar —
-              const Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: SizedBox(
-                  height: 68,
-                  child: _BottomNavBar(activeIndex: 1),
-                ),
-              ),
+              Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: SizedBox(
+                      height: 68,
+                      child: BottomNavBar(activeIndex: 1),
+                    ),
+                  ),
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-/// Reusable bottom‐nav bar
-class _BottomNavBar extends StatelessWidget {
-  final int activeIndex; // 0=home,1=project,2=add,3=char,4=profile
-
-  const _BottomNavBar({required this.activeIndex});
-
-  @override
-  Widget build(BuildContext context) {
-    const icons = [
-      Icons.home,
-      Icons.format_list_bulleted,
-      Icons.control_point,
-      Icons.pets,
-      Icons.person_outline,
-    ];
-    const labels = ['홈', '프로젝트', '추가', '캐릭터', '프로필'];
-    const routes = ['/dashboard', '/project', '/add', '/decor', '/profile'];
-
-    return Container(
-      decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: Colors.grey.shade300, width: 1)),
-      ),
-      child: Row(
-        children: List.generate(5, (i) {
-          final color = i == activeIndex
-              ? const Color(0xFFBF622C)
-              : const Color(0xFF9AA5B6);
-          final weight = i == activeIndex ? FontWeight.w600 : FontWeight.w400;
-          return Expanded(
-            child: InkWell(
-              onTap: () => Navigator.pushNamed(context, routes[i]),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(icons[i], color: color, size: 24),
-                  const SizedBox(height: 2),
-                  Text(
-                    labels[i],
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 13,
-                      fontWeight: weight,
-                      color: color,
-                      height: 1.08,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }),
       ),
     );
   }

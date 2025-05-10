@@ -67,6 +67,7 @@ flutter:
     - assets/cutie.png
     - assets/car.png
     - assets/tiger_with_car.glb
+    - assets/coin.png
   
 
   # The following line ensures that the Material Icons font is

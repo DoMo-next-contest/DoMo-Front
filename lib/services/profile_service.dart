@@ -15,16 +15,6 @@ class ProfileService {
     this.baseUrl = 'http://ec2-15-165-74-79.ap-northeast-2.compute.amazonaws.com:8080',
   });
 
-  /// Sign up a new user.
-  ///
-  /// Swagger spec wants exactly:
-  /// {
-  ///   "loginId": "...",
-  ///   "password": "...",
-  ///   "name": "...",
-  ///   "email": "..."
-  /// }
-
 Future<Profile> createProfile({
   required String name,
   required String username,
@@ -110,11 +100,6 @@ Future<void> submitOnboardingPreferences({
   }
 }
 
-
-
-
-
-
   /// Update an existing user profile.
   ///
   /// Example swagger might be PUT /api/user/{id}, adjust as needed.
@@ -144,6 +129,112 @@ Future<void> submitOnboardingPreferences({
 
     throw Exception(
       'Failed to update profile (status=${resp.statusCode}): ${resp.body}',
+    );
+  }
+  /// 세분화 선호도만 PATCH
+  Future<void> updateDetailPreference(String detailPreference) async {
+    final uri = Uri.parse('$baseUrl/api/user/users/detail-preference');
+    final storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'accessToken');
+    if (token == null) throw Exception('No access token found');
+
+    final resp = await http.patch(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'detailPreference': detailPreference,
+      }),
+    );
+
+    if (resp.statusCode != 200) {
+      throw Exception('세분화 선호도 수정 실패: ${resp.statusCode}');
+    }
+  }
+
+  /// 시간 선호도만 PATCH
+  Future<void> updateTimePreference(String timePreference) async {
+    final uri = Uri.parse('$baseUrl/api/user/users/work-pace');
+    final storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'accessToken');
+    if (token == null) throw Exception('No access token found');
+
+    final resp = await http.patch(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'timePreference': timePreference,
+      }),
+    );
+
+    if (resp.statusCode != 200) {
+      throw Exception('시간 선호도 수정 실패: ${resp.statusCode}');
+    }
+  }
+
+  /*
+  /// GET /api/user/users/me  (or whatever your “current user” endpoint is)
+  Future<Profile> fetchProfile() async {
+    final uri = Uri.parse('$baseUrl/api/user/users/me');
+    final storage = FlutterSecureStorage();
+    final token   = await storage.read(key: 'accessToken');
+    if (token == null) throw Exception('No token');
+
+    final resp = await http.get(
+      uri,
+      headers: { 'Authorization': 'Bearer $token' }
+    );
+    if (resp.statusCode == 200) {
+      final data = jsonDecode(resp.body) as Map<String, dynamic>;
+      return Profile.fromJson(data);
+    } else {
+      throw Exception('Failed to load profile: ${resp.statusCode}');
+    }
+  }
+  */
+
+  /// 비밀번호 변경
+  Future<void> updatePassword({
+    required String oldPassword,
+    required String newPassword,
+  }) async {
+    final uri = Uri.parse('$baseUrl/api/user/password');
+    final storage = FlutterSecureStorage();
+    final token   = await storage.read(key: 'accessToken');
+    if (token == null) throw Exception('No access token');
+
+    final resp = await http.put(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'oldPassword': oldPassword,
+        'newPassword': newPassword,
+      }),
+    );
+
+    if (resp.statusCode != 200) {
+      throw Exception('비밀번호 변경 실패 (${resp.statusCode}): ${resp.body}');
+    }
+  }
+
+  Future<Profile> fetchProfile() async {
+    await Future.delayed(const Duration(milliseconds: 800));
+    return Profile(
+      id: '315',
+      name: '이지완',
+      username: 'jiyaa',
+      email: 'jiyaa@korea.ac.kr',
+      coins: 100,
+      subtaskPreference: '보통으로',
+      timePreference: '여유롭게',
     );
   }
 }

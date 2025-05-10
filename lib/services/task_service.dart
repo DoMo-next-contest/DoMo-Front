@@ -410,5 +410,36 @@ Future<void> updateSubtaskActualTime(int subTaskId, int minutes) async {
     }
   }
 
+  /// 프로젝트 완료 처리 및 보상 계산
+  Future<String> completeAndRewardProject({
+    required int projectId,
+    required String level, // '상','중','하'
+  }) async {
+    final uri = Uri.parse(
+      '$baseUrl/api/project/$projectId/complete?level=$level'
+    );
+    // load token
+    final storage = FlutterSecureStorage();
+    final token   = await storage.read(key: 'accessToken');
+    if (token == null) throw Exception('No access token');
+    
+    final resp = await http.put(
+      uri,
+      headers: {
+        'Accept': '*/*',
+        'Authorization': 'Bearer $token',
+      },
+    );
+    if (resp.statusCode == 200) {
+      // swagger says returns a string
+      return resp.body;
+    } else if (resp.statusCode == 400) {
+      throw Exception('잘못된 요청 혹은 상태 오류');
+    } else if (resp.statusCode == 404) {
+      throw Exception('프로젝트를 찾을 수 없습니다');
+    } else {
+      throw Exception('완료 실패 (${resp.statusCode})');
+    }
+  }
 }
 
