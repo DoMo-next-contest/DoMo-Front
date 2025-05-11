@@ -60,14 +60,14 @@ dev_dependencies:
 # The following section is specific to Flutter packages.
 flutter:
   assets:
-    - assets/cutie.glb
-    - assets/character.glb
-    - assets/main_top.png
+    - assets/glb/cutie.glb
+    - assets/glb/character.glb
+    - assets/png/main_top.png
     - assets/checklist.svg
-    - assets/cutie.png
-    - assets/car.png
-    - assets/tiger_with_car.glb
-    - assets/coin.png
+    - assets/png/cutie.png
+    - assets/png/car.png
+    - assets/glb/tiger_with_car.glb
+    - assets/png/coin.png
   
 
   # The following line ensures that the Material Icons font is

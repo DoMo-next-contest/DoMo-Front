@@ -60,7 +60,7 @@ class DashboardPageState extends State<DashboardPage> {
                         width: 300,
                         height: 300,
                         child: ModelViewer(
-                          src: 'assets/character.glb',
+                          src: 'assets/glb/character.glb',
                           alt: '3D model of Cutie',
                           autoRotate: true,
                           cameraControls: true,

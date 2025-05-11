@@ -26,17 +26,17 @@ class DecorPageState extends State<DecorPage> {
   // 모델 + 썸네일 정보
   final List<DecorItem> availableDecors = [
     DecorItem(
-      modelSrc: 'assets/character.glb',
-      thumbnail: 'assets/cutie.png',
+      modelSrc: 'assets/glb/character.glb',
+      thumbnail: 'assets/png/cutie.png',
     ),
     DecorItem(
-      modelSrc: 'assets/tiger_with_car.glb',
-      thumbnail: 'assets/car.png',
+      modelSrc: 'assets/glb/tiger_with_car.glb',
+      thumbnail: 'assets/png/car.png',
     ),
   ];
 
   // 현재 표시할 모델 경로
-  String currentModelSrc = 'assets/character.glb';
+  String currentModelSrc = 'assets/glb/character.glb';
 
   @override
   void initState() {
