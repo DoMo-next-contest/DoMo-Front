@@ -68,6 +68,7 @@ Future<void> _showStyledDialog({
   String _selectedCategory = '기타';
   List<Subtask> _generatedSubtasks = [];
   int? _projectId;          // <-- add this
+  bool   _hasSaved = false;
 
   @override
   void initState() {
@@ -340,7 +341,7 @@ Future<void> _showStyledDialog({
     for (final sub in _generatedSubtasks) {
       await TaskService().createSubtasks(_projectId!, sub);
     }
-
+    _hasSaved = true;
     Navigator.pop(context); // dismiss loader
     await _showStyledDialog(
       title: '저장 성공',
@@ -481,9 +482,23 @@ Future<void> _editSubtask(Subtask sub, int index) async {
 }
 
 
+
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return WillPopScope(
+    onWillPop: () async {
+      // if we created a project but never saved it, delete it before popping
+      if (_projectId != null && !_hasSaved) {
+        try {
+          await TaskService().deleteProject(_projectId!);
+        } catch (_) { /* swallow errors if you like */ }
+      }
+      return true; // allow the pop to actually happen
+    },
+    
+    
+    child: Scaffold(
       backgroundColor: Colors.transparent,
       body: SafeArea(
         child: Container(
@@ -979,6 +994,7 @@ Future<void> _editSubtask(Subtask sub, int index) async {
           ),
         ),
       ),
+    ),
     );
   }
 }
