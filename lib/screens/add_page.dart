@@ -629,8 +629,8 @@ Future<void> _editSubtask(Subtask sub, int index) async {
     key: ValueKey(_listVersion),
     buildDefaultDragHandles: false,
     shrinkWrap: true,
-    physics: NeverScrollableScrollPhysics(),
-    onReorder: (oldIndex, newIndex) async {
+    physics: const NeverScrollableScrollPhysics(),
+    onReorder: (oldIndex, newIndex) {
       setState(() {
         final max = _generatedSubtasks.length;
         if (newIndex > max) newIndex = max;
@@ -642,7 +642,146 @@ Future<void> _editSubtask(Subtask sub, int index) async {
         }
       });
     },
-    children: List.generate(_generatedSubtasks.length, (i) {
+    children: List.generate(_generatedSubtasks.length + 1, (i) {
+      // ① “새 하위작업 추가” 버튼
+      if (i == _generatedSubtasks.length) {
+        return Container(
+          key: const ValueKey('add-subtask'),
+          margin: const EdgeInsets.only(bottom: 12),
+          height: 75,
+          decoration: ShapeDecoration(
+            color: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shadows: const [
+              BoxShadow(color: Color(0x19000000), blurRadius: 16, offset: Offset(0, 2))
+            ],
+          ),
+          child: InkWell(
+            onTap: () async {
+              final titleCtrl = TextEditingController();
+              final hoursCtrl = TextEditingController();
+              final minsCtrl = TextEditingController();
+              await showDialog(
+                context: context,
+                barrierColor: Colors.black26,
+                builder: (_) => Dialog(
+                  insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 200),
+                  backgroundColor: Colors.transparent,
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: ShapeDecoration(
+                      color: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      shadows: const [
+                        BoxShadow(color: Color(0x22000000), blurRadius: 16, offset: Offset(0,4))
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '새 하위작업 추가',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFFF2AC57),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: titleCtrl,
+                          decoration: InputDecoration(
+                            labelText: '제목',
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: hoursCtrl,
+                                keyboardType: TextInputType.number,
+                                decoration: InputDecoration(
+                                  labelText: '시간(시)',
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: TextField(
+                                controller: minsCtrl,
+                                keyboardType: TextInputType.number,
+                                decoration: InputDecoration(
+                                  labelText: '분',
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              style: TextButton.styleFrom(foregroundColor: Colors.black),
+                              child: const Text('취소'),
+                            ),
+                            const SizedBox(width: 8),
+                            ElevatedButton(
+                              onPressed: () {
+                                final title = titleCtrl.text.trim();
+                                final h = int.tryParse(hoursCtrl.text) ?? 0;
+                                final m = int.tryParse(minsCtrl.text) ?? 0;
+                                if (title.isEmpty) return;
+                                setState(() {
+                                  _generatedSubtasks.add(Subtask(
+                                    id: _generatedSubtasks.length + 1,
+                                    order: _generatedSubtasks.length + 1,
+                                    title: title,
+                                    expectedDuration: Duration(hours: h, minutes: m),
+                                  ));
+                                  _listVersion++;
+                                });
+                                Navigator.pop(context);
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFF2AC57),
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                              ),
+                              child: const Text('저장', style: TextStyle(fontWeight: FontWeight.w600)),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+            child: Center(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  Icon(Icons.add, color: Color(0xFFF2AC57)),
+                  SizedBox(width: 8),
+                  Text(
+                    '새 하위작업 추가',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Color(0xFFF2AC57)),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }
+
+      // ② 기존 생성된 하위작업 항목
       final sub = _generatedSubtasks[i];
       return Container(
         key: ValueKey(sub.id),
@@ -653,16 +792,11 @@ Future<void> _editSubtask(Subtask sub, int index) async {
           color: Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           shadows: const [
-            BoxShadow(
-              color: Color(0x19000000),
-              blurRadius: 16,
-              offset: Offset(0, 2),
-            )
+            BoxShadow(color: Color(0x19000000), blurRadius: 16, offset: Offset(0, 2)),
           ],
         ),
         child: Row(
           children: [
-            // ← left‑side drag handle only
             ReorderableDragStartListener(
               index: i,
               child: const Padding(
@@ -700,12 +834,10 @@ Future<void> _editSubtask(Subtask sub, int index) async {
                 ],
               ),
             ),
-            // ← Edit button
             IconButton(
               icon: const Icon(Icons.edit, size: 24),
               onPressed: () => _editSubtask(sub, i),
             ),
-            // ← Delete button
             IconButton(
               icon: const Icon(Icons.delete_outline, size: 24),
               onPressed: () => setState(() => _generatedSubtasks.removeAt(i)),
