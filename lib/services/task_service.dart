@@ -441,6 +441,7 @@ Future<void> updateSubtaskActualTime(int subTaskId, int minutes) async {
       throw Exception('완료 실패 (${resp.statusCode})');
     }
   }
+
   Future<List<Subtask>> generateSubtasksWithAI(int projectId) async {
     final storage = FlutterSecureStorage();
     final token = await storage.read(key: 'accessToken');
@@ -457,6 +458,8 @@ Future<void> updateSubtaskActualTime(int subTaskId, int minutes) async {
     }
     final jsonBody = jsonDecode(resp.body) as Map<String, dynamic>;
     final list = jsonBody['subTaskList'] as List<dynamic>;
+
+    debugPrint('Parsed subtasks: $list');
     return list.map((m) => Subtask(
       id:                m['subTaskOrder'] as int,
       order:             m['subTaskOrder'] as int,
