@@ -334,7 +334,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 ),
                               ),
                               Image.asset(
-                                'assets/coin.png',
+                                'assets/png/coin.png',
                                 width: 20, // 원하시는 크기로 조정
                                 height: 20,
                               ),
