@@ -40,7 +40,7 @@ class _CompletedProjectsPageState extends State<CompletedProjectsPage> {
       final all = await TaskService().getTasks();
       // keep only fully completed
       setState(() {
-        _tasks = all.where((t) => t.progress >= 1.0).toList();
+        _tasks = all.where((t) => t.progress > 1.0).toList();
         _isLoading = false;
       });
     } catch (e) {

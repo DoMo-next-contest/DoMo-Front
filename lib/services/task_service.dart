@@ -10,61 +10,62 @@ import 'package:http/http.dart' as http;
 
 class TaskService {
   final String baseUrl;
-  TaskService({this.baseUrl = 'http://ec2-15-165-74-79.ap-northeast-2.compute.amazonaws.com:8080'});
+  TaskService({this.baseUrl = 'https://15.165.74.79.nip.io'});
+  //https://15.165.74.79.nip.io/swagger-ui/index.html#
 
-  Future<void> createTask(Task task) async {
-    // 1) Grab token
-    final storage = FlutterSecureStorage();
-    final token = await storage.read(key: 'accessToken');
-    if (token == null) {
-      throw Exception('No access token found – are you logged in?');
-    }
-
-    // 2) Build URL
-    final url = Uri.parse('$baseUrl/api/project');
-
-    // 3) Reverse-map UI category -> raw backend tag
-    const _reverseTagMap = {
-      '업무': 'WORK',
-      '학업': 'STUDY',
-      '일상': 'LIFE',
-      '운동': 'EXERCISE',
-      '자기계발': 'SELF_IMPROVEMENT',
-    };
-    final rawTag = _reverseTagMap[task.category] ?? task.category;
-
-    // 4) Build request body exactly per API schema
-    final body = <String, dynamic>{
-      'projectName'       : task.name,
-      'projectDescription': task.description,
-      'projectRequirement': task.requirements,
-      'projectDeadline'   : task.deadline.toUtc().toIso8601String(),
-      'projectTagName'    : rawTag,
-    };
-
-    // 5) POST with headers
-    final response = await http.post(
-      url,
-      headers: {
-        'Content-Type' : 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode(body),
-    );
-
-    // 6) Log for debugging
-    debugPrint('createTask → HTTP ${response.statusCode}: ${response.body}');
-
-    // 7) Accept any 2xx
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception(
-        'Task creation failed (${response.statusCode}): ${response.body}',
-      );
-    }
-    // If you want to parse and use the returned Task object:
-    // final created = Task.fromJson(jsonDecode(response.body));
-    // return created;
+  Future<int> createTask(Task task) async {
+  // 1) Grab token
+  final storage = FlutterSecureStorage();
+  final token = await storage.read(key: 'accessToken');
+  if (token == null) {
+    throw Exception('No access token found – are you logged in?');
   }
+
+  // 2) Build URL
+  final url = Uri.parse('$baseUrl/api/project');
+
+  // 3) Reverse-map UI category -> raw backend tag
+  const _reverseTagMap = {
+    '업무': 'WORK',
+    '학업': 'STUDY',
+    '일상': 'LIFE',
+    '운동': 'EXERCISE',
+    '자기계발': 'SELF_IMPROVEMENT',
+  };
+  final rawTag = _reverseTagMap[task.category] ?? task.category;
+
+  // 4) Build request body exactly per API schema
+  final body = <String, dynamic>{
+    'projectName'       : task.name,
+    'projectDescription': task.description,
+    'projectRequirement': task.requirements,
+    'projectDeadline'   : task.deadline.toUtc().toIso8601String(),
+    'projectTagName'    : rawTag,
+  };
+
+  // 5) POST with headers
+  final response = await http.post(
+    url,
+    headers: {
+      'Content-Type' : 'application/json',
+      'Authorization': 'Bearer $token',
+    },
+    body: jsonEncode(body),
+  );
+
+  // 6) Log for debugging
+  debugPrint('createTask → HTTP ${response.statusCode}: ${response.body}');
+
+  // 7) Accept any 2xx
+  if (response.statusCode < 200 || response.statusCode >= 300) {
+    throw Exception(
+      'Task creation failed (${response.statusCode}): ${response.body}',
+    );
+  }
+
+  // 8) Parse the plain-number body into an int
+  return int.parse(response.body.trim());
+}
 
   Future<List<Task>> getTasks() async {
     // 1) Grab the token you saved in ProfileService
@@ -181,38 +182,32 @@ class TaskService {
   }
 
   Future<void> updateProject(Task task) async {
-    // 1) fetch JWT
-    final storage = FlutterSecureStorage();
-    final token = await storage.read(key: 'accessToken');
-    if (token == null) throw Exception('Not logged in');
+  final storage = FlutterSecureStorage();
+  final token = await storage.read(key: 'accessToken');
+  if (token == null) throw Exception('Not logged in');
 
-    // 2) build URL
-    final url = Uri.parse('$baseUrl/api/project/${task.id}');
+  final url = Uri.parse('$baseUrl/api/project/${task.id}');
+  final body = {
+    'projectName'       : task.name,
+    'projectDescription': task.description,       // ← use this key
+    'projectRequirement': task.requirements,      // ← and this
+    'projectDeadline'   : task.deadline.toUtc().toIso8601String(),
+    'projectTagName'    : Task.categoryToRawTag(task.category),
+  };
 
-    // 3) serialize body
-    final body = {
-      'projectName':     task.name,
-      'projectDeadline': task.deadline.toIso8601String(),
-      'projectTagName':  Task.categoryToRawTag(task.category),
-      'description':     task.description,
-      'requirements':    task.requirements,
-    };
+  final resp = await http.put(
+    url,
+    headers: {
+      'Authorization': 'Bearer $token',
+      'Content-Type' : 'application/json',
+    },
+    body: jsonEncode(body),
+  );
 
-    // 4) call PUT
-    final resp = await http.put(
-      url,
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type':  'application/json',
-      },
-      body: jsonEncode(body),
-    );
-
-    // 5) check for errors
-    if (resp.statusCode < 200 || resp.statusCode >= 300) {
-      throw Exception('Failed to update project [${resp.statusCode}]: ${resp.body}');
-    }
+  if (resp.statusCode < 200 || resp.statusCode >= 300) {
+    throw Exception('Failed to update project [${resp.statusCode}]: ${resp.body}');
   }
+}
 
   Future<List<String>> getProjectTags() async {
     final storage = FlutterSecureStorage();
@@ -468,5 +463,33 @@ Future<void> updateSubtaskActualTime(int subTaskId, int minutes) async {
       tag:               m['subTaskTag'] as String,
     )).toList();
   }
+
+  Future<void> updateProgressRate(int projectId, double rate) async {
+    final storage = FlutterSecureStorage();
+    final token   = await storage.read(key: 'accessToken');
+    if (token == null) throw Exception('Not logged in');
+
+    final url = Uri.parse('$baseUrl/api/project/$projectId/progress-rate');
+
+    // Some backends expect JSON { "progressRate": 0.42 }
+    final body = jsonEncode({ 'progressRate': rate });
+
+    final resp = await http.put(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type' : 'application/json',
+      },
+      body: body,
+    );
+
+    if (resp.statusCode < 200 || resp.statusCode >= 300) {
+      throw Exception(
+        'Failed to update progress rate [${resp.statusCode}]: ${resp.body}'
+      );
+    }
+  }
+
+  
 }
 

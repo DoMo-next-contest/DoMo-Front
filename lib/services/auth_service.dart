@@ -31,7 +31,7 @@ class AuthService {
   final String baseUrl;
 
   AuthService({
-    this.baseUrl = 'http://ec2-15-165-74-79.ap-northeast-2.compute.amazonaws.com:8080',
+    this.baseUrl = 'https://15.165.74.79.nip.io',
   });
 
   /// Calls POST /api/user/login with { loginId, password } and

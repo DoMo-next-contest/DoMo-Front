@@ -49,9 +49,12 @@ void initState() {
 Future<void> _loadTasksFromBackend() async {
   try {
     final tasks = await TaskService().getTasks();
+    
     setState(() {
-      _tasks = tasks.where((t) => t.progress < 1.0).toList();
+      _tasks = tasks.where((t) => t.progress <= 1.0).toList();
     });
+    
+   
   } catch (e) {
     debugPrint('❌ Error loading tasks: $e');
     setState(() => _isLoading = false);

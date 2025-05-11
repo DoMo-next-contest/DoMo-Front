@@ -133,6 +133,24 @@ class Subtask {
 }
 */
 
+extension TaskProgressExt on Task {
+  /// Prefer the backend’s projectProgressRate if it’s non-null and > 0,
+  /// otherwise recompute as done/total.
+  double get computedProgress {
+    // 1) Try the server value
+    final server = (progress > 0.0) ? progress : null;
+    if (server != null) return server;
+
+    // 2) Fallback: no subtasks → zero
+    if (subtasks.isEmpty) return 0.0;
+
+    // 3) Compute done/total
+    final done = subtasks.where((s) => s.isDone).length;
+    return done / subtasks.length;
+  }
+}
+
+
 // ✅ Task model with dynamic (user-defined) category
 /// A task with dynamic (user-defined) categories and optional subtasks.
 /// A Task whose database‑assigned id may be null until saved.
@@ -145,6 +163,7 @@ class Task {
   List<Subtask> subtasks;
   String category;
   DateTime lastActivity;
+  double progress;
 
   Task({
     required this.id,
@@ -154,6 +173,7 @@ class Task {
     this.description = '',
     this.requirements = '',
     this.subtasks = const [],
+    this.progress = 0.0,
   }) : lastActivity = DateTime.now();
 
   /*
@@ -163,7 +183,6 @@ class Task {
   ];
   */
 
-  
 
   /// UI‐side list of categories
   static List<String> allCategories = [];
@@ -190,8 +209,8 @@ class Task {
     final rawList = await TaskService().getProjectTags();  // List<String>
   }
 
-  double get progress =>
-      subtasks.isEmpty ? 0.0 : subtasks.where((s) => s.isDone).length / subtasks.length;
+  //double get progressRate =>
+    //  subtasks.isEmpty ? 0.0 : subtasks.where((s) => s.isDone).length / subtasks.length;
 
   void touch() => lastActivity = DateTime.now();
 
@@ -211,8 +230,9 @@ class Task {
       name: json['projectName'] as String? ?? '',
       deadline: DateTime.parse(json['projectDeadline'] as String),
       category: category,
-      description: json['description'] as String? ?? '',
-      requirements: json['requirements'] as String? ?? '',
+      progress: ((json['projectProgressRate'] as num?)?.toDouble() ?? 0.0) / 100.0,
+      description: json['projectDescription'] as String? ?? '',
+      requirements: json['projectRequirements'] as String? ?? '',
       subtasks: (json['subtasks'] as List<dynamic>?)
               ?.map((e) => Subtask.fromJson(e as Map<String, dynamic>))
               .toList() ??
@@ -258,6 +278,7 @@ class Task {
     };
     return reverseMap[cat] ?? cat;
   }
+  
   
 }
 

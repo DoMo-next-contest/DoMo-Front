@@ -67,6 +67,7 @@ Future<void> _showStyledDialog({
   List<String> _categories = [];
   String _selectedCategory = '기타';
   List<Subtask> _generatedSubtasks = [];
+  int? _projectId;          // <-- add this
 
   @override
   void initState() {
@@ -251,21 +252,53 @@ Future<void> _showStyledDialog({
   }
   */
   Future<void> _onGenerateAI() async {
+  // 1) Validate required fields
+  if (_nameController.text.isEmpty ||
+      _dateController.text.isEmpty ||
+      _detailsController.text.isEmpty ||
+      _requirementController.text.isEmpty) {
+    await _showStyledDialog(
+      title: 'Incomplete Fields',
+      message: 'Please fill in all fields before generating via AI.',
+    );
+    return;
+  }
+
   showDialog(
     context: context,
     barrierDismissible: false,
     builder: (_) => const Center(child: CircularProgressIndicator()),
   );
+
   try {
-    final generated = await TaskService().generateSubtasksWithAI(7);
-    await TaskService().updateSubtasks(7, generated);
+    // 2) Create the project on the backend
+    final newTask = Task(
+      id: 0, // server will assign
+      name: _nameController.text,
+      deadline: _selectedDeadline!,
+      category: _selectedCategory,
+      requirements: _detailsController.text,
+      description: _requirementController.text,
+    );
+    final pid = await TaskService().createTask(newTask);
+    _projectId = pid;
+
+    // 3) Generate subtasks via AI for that project
+    final generated = await TaskService().generateSubtasksWithAI(pid);
+    await TaskService().updateSubtasks(pid, generated);
+
+    // 4) Close loader, update state
     Navigator.pop(context);
-    
     setState(() {
       _generatedSubtasks = generated;
-      _listVersion++;               // ← bump here
+      _listVersion++;
     });
-  
+
+    // 5) Inform user
+    await _showStyledDialog(
+      title: 'AI 생성 완료',
+      message: '프로젝트와 하위작업이 생성되었습니다.',
+    );
   } catch (e) {
     Navigator.pop(context);
     ScaffoldMessenger.of(context).showSnackBar(
@@ -274,39 +307,49 @@ Future<void> _showStyledDialog({
   }
 }
 
+
   Future<void> _onGenerateSubtaskPressed() async {
-  if (_nameController.text.isEmpty ||
-      _dateController.text.isEmpty ||
-      _detailsController.text.isEmpty ||
-      _requirementController.text.isEmpty) {
+  // 1) Make sure we have an AI‐created project
+  if (_projectId == null) {
     await _showStyledDialog(
-      title: 'Incomplete Fields',
-      message: 'Please fill in all fields before generating a task.',
+      title: '프로젝트 없음',
+      message: '먼저 AI 버튼으로 프로젝트를 생성해주세요.',
       buttonText: 'OK',
     );
     return;
   }
 
-  
+  // 2) Make sure we actually have generated subtasks
+  if (_generatedSubtasks.isEmpty) {
+    await _showStyledDialog(
+      title: '하위작업 없음',
+      message: '먼저 AI로 하위작업을 생성해주세요.',
+      buttonText: 'OK',
+    );
+    return;
+  }
 
-
-  final newTask = Task(
-    id: 99,
-    name: _nameController.text,
-    deadline: _selectedDeadline!,
-    category: _selectedCategory,
-    requirements: _detailsController.text,
-    description: _requirementController.text,
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => const Center(child: CircularProgressIndicator()),
   );
 
   try {
-    await TaskService().createTask(newTask);
+    // 3) Push each subtask to the server for the existing project
+    for (final sub in _generatedSubtasks) {
+      await TaskService().createSubtasks(_projectId!, sub);
+    }
+
+    Navigator.pop(context); // dismiss loader
     await _showStyledDialog(
       title: '저장 성공',
-      message: '태스크 생성되었습니다.',
+      message: '하위작업이 프로젝트에 저장되었습니다.',
     );
     Navigator.pushReplacementNamed(context, '/project');
+
   } catch (e) {
+    Navigator.pop(context);
     await _showStyledDialog(
       title: '저장 실패',
       message: '에러: $e',
@@ -899,7 +942,7 @@ Future<void> _editSubtask(Subtask sub, int index) async {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     decoration: BoxDecoration(
-                      color: const Color(0x1E1D1B20),
+                      color: const Color(0xFFC78E48),
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: const [
                         BoxShadow(
@@ -908,13 +951,13 @@ Future<void> _editSubtask(Subtask sub, int index) async {
                             offset: Offset(0, 5))
                       ],
                     ),
-                    child: const Center(
-                      child: Opacity(
-                        opacity: 0.38,
-                        child: Text(
-                          '프로젝트 저장하기',
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.w700),
+                    child: Center(
+                      child: Text(
+                        '프로젝트 저장하기',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,    // ← fully white text
                         ),
                       ),
                     ),

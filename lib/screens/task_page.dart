@@ -679,6 +679,7 @@ Future<void> _addSubtaskDialog() async {
           // 3) Refresh from server (optional but safer):
           final fresh = await TaskService().getSubtasks(currentTask.id);
           setState(() => currentTask.subtasks = fresh);
+          
         } catch (e) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('저장 실패: $e')),
@@ -705,36 +706,33 @@ Future<void> _addSubtaskDialog() async {
                     left: 20,
                     right: 90, // leave room for the pill on the right
                     child: SizedBox(
-                      height: 32, // enough to fit your 24pt text
-                      child:
-                          _isEditing
-                              ? TextField(
-                                controller: _nameController,
-                                decoration: const InputDecoration(
-                                  border: InputBorder.none,
-                                  isDense: true,
-                                  contentPadding: EdgeInsets.zero,
-                                ),
-                                style: const TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w700,
-                                  height: 1.12,
-                                ),
-                                onChanged: (v) => currentTask.name = v,
-                              )
-                              : Align(
-                                alignment: Alignment.centerLeft,
-                                child: Text(
-                                  currentTask.name,
-                                  style: const TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.w700,
-                                    height: 1.12,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
+                      height: 32,
+                      child: TextField(
+                        controller: _nameController,
+                        enabled: _isEditing,
+                        maxLines: 1,
+                        textAlignVertical: TextAlignVertical.center,
+                        decoration: InputDecoration(
+                          hintText: _isEditing ? null : '프로젝트 이름',
+                          border: InputBorder.none,
+                          isDense: true,
+                          contentPadding: EdgeInsets.zero,
+                          // when not editing, show it as plain text style
+                          hintStyle: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w700,
+                            height: 1.12,
+                            color: Colors.black,
+                          ),
+                        ),
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w700,
+                          height: 1.12,
+                          color: _isEditing ? Colors.black : Colors.black,
+                        ),
+                        onChanged: (v) => currentTask.name = v,
+                      ),
                     ),
                   ),
                   Positioned(
@@ -766,43 +764,27 @@ Future<void> _addSubtaskDialog() async {
   left: 20,
   right: 20,
   child: SizedBox(
-    height: 32,   // same height as your title field
-    child: _isEditing
-      ? TextField(
-          controller: _descController,
-          decoration: const InputDecoration(
-            border: InputBorder.none,
-            isDense: true,
-            contentPadding: EdgeInsets.zero,
-            hintText: '설명이 없습니다',
-          ),
-          style: const TextStyle(
-            color: Color(0xFF767E8C),
-            fontSize: 12,
-            fontFamily: 'Barlow',
-            fontWeight: FontWeight.w400,
-            height: 1.25,
-          ),
-          onChanged: (v) => currentTask.description = v,
-        )
-      : Align(
-          alignment: Alignment.centerLeft,
-          child: Text(
-            currentTask.description.isEmpty
-              ? '설명이 없습니다'
-              : currentTask.description,
-            style: const TextStyle(
-              color: Color(0xFF767E8C),
-              fontSize: 12,
-              fontFamily: 'Barlow',
-              fontWeight: FontWeight.w400,
-              height: 1.25,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
+  height: 32,
+  child: TextField(
+    controller: _descController,
+    maxLines: 1,                                    // lock to single line
+    textAlignVertical: TextAlignVertical.center,    // center vertically
+    decoration: const InputDecoration(
+      hintText: '설명을 입력하세요',
+      border: InputBorder.none,
+      isDense: true,
+      contentPadding: EdgeInsets.zero,              // no extra padding
+    ),
+    style: const TextStyle(
+      color: Color(0xFF767E8C),
+      fontSize: 12,
+      fontFamily: 'Barlow',
+      fontWeight: FontWeight.w400,
+      height: 1.25,
+    ),
+    onChanged: (v) => currentTask.description = v,
   ),
+),
 ),
 
 
@@ -938,22 +920,29 @@ Future<void> _addSubtaskDialog() async {
                                                   value: sub.isDone,
                                                   onChanged: (checked) async {
                                                     final newValue = checked!;
-                                                    // 1) optimistic update
                                                     setState(() {
                                                       sub.isDone = newValue;
                                                       currentTask.touch();
                                                     });
-                                                    // 2) send to server
+
                                                     try {
                                                       if (newValue) {
-                                                        // mark done
                                                         await TaskService().setSubtaskDone(sub.id);
                                                       } else {
-                                                        // mark undone
                                                         await TaskService().setSubtaskUndone(sub.id);
                                                       }
+
+                                                      // ** New: compute and push overall progress **
+                                                      
+                                                      final doneCount = currentTask.subtasks.where((s) => s.isDone).length;
+                                                      final total    = currentTask.subtasks.length;
+                                                      final rate     = total == 0 ? 0.0 : doneCount / total;
+
+                                                      await TaskService().updateProgressRate(currentTask.id, rate);
+                                                      //await TaskService().updateProgressRate(currentTask.id, progress);
+
                                                     } catch (e) {
-                                                      // 3) revert on failure
+                                                      // roll back on failure
                                                       setState(() {
                                                         sub.isDone = !newValue;
                                                       });
@@ -1246,6 +1235,8 @@ Future<void> _addSubtaskDialog() async {
                               builder: (ctx, setLocalState) {
                                 return GestureDetector(
                                   onTap: () async {
+                                    //TaskService().updateProgressRate(currentTask.id, currentTask.progress + 10);
+                                    
                                     // 1) 난이도 선택 dialog
                                     String level = '상';
                                     final chosen = await showDialog<String>(
@@ -1270,7 +1261,7 @@ Future<void> _addSubtaskDialog() async {
                                       ),
                                     );
                                     if (chosen == null) return; // user cancelled
-
+                                    
                                     // 2) Call API
                                     setState(() => _isCompleting = true);
                                     try {
@@ -1291,6 +1282,7 @@ Future<void> _addSubtaskDialog() async {
                                     } finally {
                                       setState(() => _isCompleting = false);
                                     }
+                                    
                                   },
                                   child: Container(
                                     height: 48,
