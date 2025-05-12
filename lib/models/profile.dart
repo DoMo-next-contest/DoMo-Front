@@ -6,8 +6,8 @@ class Profile {
   String username;
   String email;
   int coins;
-  String? subtaskPreference;
-  String? timePreference;
+  String? subtaskPreference; // user‐facing Korean label
+  String? timePreference;    // user‐facing Korean label
   List<String>? categories;
 
   Profile({
@@ -33,47 +33,97 @@ class Profile {
     List<String>? categories,
   }) {
     return Profile(
-      id: id ?? this.id,
-      name: name ?? this.name,
-      username: username ?? this.username,
-      email: email ?? this.email,
-      coins: coins ?? this.coins,
-      subtaskPreference: subtaskPreference ?? this.subtaskPreference,
-      timePreference: timePreference ?? this.timePreference,
-      categories: categories ?? this.categories,
+      id:                 id ?? this.id,
+      name:               name ?? this.name,
+      username:           username ?? this.username,
+      email:              email ?? this.email,
+      coins:              coins ?? this.coins,
+      subtaskPreference:  subtaskPreference ?? this.subtaskPreference,
+      timePreference:     timePreference  ?? this.timePreference,
+      categories:         categories      ?? this.categories,
     );
   }
 
+  /// Map JSON from `/api/user/info` → our fields
   factory Profile.fromJson(Map<String, dynamic> json) {
+    // raw API codes:
+    final rawDetail = json['detailPreference'] as String?;
+    final rawPace   = json['workPace']         as String?;
+
     return Profile(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      username: json['loginId'] as String,
-      email: json['email'] as String,
-      coins: (json['coins'] as num?)?.toInt() ?? 0,
-      subtaskPreference: json['subtaskPreference'] as String?,
-      timePreference: json['timePreference'] as String?,
-      categories: (json['categories'] as List<dynamic>?)?.cast<String>(),
+      id:                  (json['id'] ?? '').toString(),
+      name:                (json['name'] ?? '').toString(),
+      username:            (json['loginId'] ?? '').toString(),
+      email:               (json['email'] ?? '').toString(),
+      coins:               (json['userCoin'] as num?)?.toInt() ?? 0,
+      subtaskPreference:   rawDetail == null
+                               ? null
+                               : _detailLabelFromApi(rawDetail),
+      timePreference:      rawPace   == null
+                               ? null
+                               : _timeLabelFromApi(rawPace),
+      categories:          (json['categories'] as List<dynamic>?)
+                               ?.map((e) => e.toString())
+                               .toList(),
     );
   }
 
+  /// Helpers to translate API codes → Korean labels
+  static String _detailLabelFromApi(String code) {
+    switch (code) {
+      case 'MANY_TASKS':   return '구체적으로';
+      case 'BALANCED_TASKS': return '보통으로';
+      case 'FEW_TASKS':    return '대략적으로';
+      default:             return code;
+    }
+  }
+  static String _timeLabelFromApi(String code) {
+    switch (code) {
+      case 'TIGHT':     return '타이트하게';
+      case 'BALANCED':  return '적당하게';
+      case 'RELAXED':   return '여유롭게';
+      default:          return code;
+    }
+  }
+
+  /// Convert back to JSON (e.g. for PUT) if needed
   Map<String, dynamic> toJson() {
-    final map = <String, dynamic>{
-      'id': id,
-      'name': name,
-      'username': username,
-      'email': email,
-      'coins': coins,
+    return {
+      'id':                id,
+      'loginId':           username,
+      'name':              name,
+      'email':             email,
+      'userCoin':          coins,
+      if (subtaskPreference != null)
+        'detailPreference': _detailCodeForLabel(subtaskPreference!),
+      if (timePreference    != null)
+        'workPace':          _paceCodeForLabel(timePreference!),
+      if (categories        != null)
+        'categories':        categories,
     };
-    if (subtaskPreference != null) map['subtaskPreference'] = subtaskPreference;
-    if (timePreference    != null) map['timePreference']    = timePreference;
-    if (categories        != null) map['categories']        = categories;
-    return map;
+  }
+
+  static String _detailCodeForLabel(String label) {
+    switch (label) {
+      case '구체적으로':   return 'MANY_TASKS';
+      case '보통으로':     return 'BALANCED_TASKS';
+      case '대략적으로':   return 'FEW_TASKS';
+      default:             return label;
+    }
+  }
+  static String _paceCodeForLabel(String label) {
+    switch (label) {
+      case '타이트하게':   return 'TIGHT';
+      case '적당하게':     return 'BALANCED';
+      case '여유롭게':     return 'RELAXED';
+      default:             return label;
+    }
   }
 
   @override
   String toString() {
-    return 'Profile(id: $id, username: $username, coins: $coins)';
+    return 'Profile(id: $id, username: $username, coins: $coins, '
+           'subtaskPreference: $subtaskPreference, timePreference: $timePreference)';
   }
 
   @override

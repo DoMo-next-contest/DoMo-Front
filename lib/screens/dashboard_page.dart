@@ -5,6 +5,7 @@ import 'package:flutter_3d_controller/flutter_3d_controller.dart';
 import 'package:model_viewer_plus/model_viewer_plus.dart';
 import 'package:domo/models/task.dart';
 import 'package:domo/widgets/bottom_nav_bar.dart';
+import 'package:domo/services/character_service.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({Key? key}) : super(key: key);
@@ -15,6 +16,8 @@ class DashboardPage extends StatefulWidget {
 
 class DashboardPageState extends State<DashboardPage> {
   final Flutter3DController _controller = Flutter3DController();
+  String? _modelSrc;
+  bool _loadingModel = true;
 
   @override
   void initState() {
@@ -24,6 +27,17 @@ class DashboardPageState extends State<DashboardPage> {
         debugPrint('✅ Model loaded successfully');
       }
     });
+    CharacterService.fetchModelUrl()
+        .then((url) {
+          setState(() {
+            _modelSrc = url;
+            _loadingModel = false;
+          });
+        })
+        .catchError((err) {
+          debugPrint('❌ Error fetching model URL: $err');
+          setState(() => _loadingModel = false);
+        });
   }
 
   @override
@@ -52,25 +66,27 @@ class DashboardPageState extends State<DashboardPage> {
                 children: [
                   // 3D 캐릭터
                   Positioned(
-                    top: 220,
-                    left: 0,
-                    right: 0,
-                    child: Center(
-                      child: SizedBox(
-                        width: 300,
-                        height: 300,
-                        child: ModelViewer(
-                          src: 'assets/glb/character.glb',
-                          alt: '3D model of Cutie',
-                          autoRotate: true,
-                          cameraControls: true,
-                          disableZoom: true,
-                          disablePan: true,
-                          backgroundColor: Colors.transparent,
-                        ),
-                      ),
+                  top: 220,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: SizedBox(
+                      width: 300,
+                      height: 300,
+                      child: _loadingModel
+                          ? const CircularProgressIndicator()
+                          : ModelViewer(
+                              src: _modelSrc!,
+                              alt: '3D model of Cutie',
+                              autoRotate: true,
+                              cameraControls: true,
+                              disableZoom: true,
+                              disablePan: true,
+                              backgroundColor: Colors.transparent,
+                            ),
                     ),
                   ),
+                ),
 
                   // 인사말
                   const Positioned(
