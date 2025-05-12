@@ -190,15 +190,10 @@ class DecorPageState extends State<DecorPage> {
               ),
 
               // Bottom nav
-              Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    child: SizedBox(
-                      height: 68,
-                      child: BottomNavBar(activeIndex: 3),
-                    ),
-                  ),
+              SizedBox(
+                height: 68,
+                child: BottomNavBar(activeIndex: 3),
+              ),
             ],
           ),
         ),
