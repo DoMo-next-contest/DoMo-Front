@@ -9,6 +9,7 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:domo/widgets/bottom_nav_bar.dart';
 
 
+
 class AddPage extends StatefulWidget {
   const AddPage({super.key});
 
@@ -109,6 +110,10 @@ Future<void> _showStyledDialog({
     _detailsController.dispose();
     _subtaskController.dispose();
     _requirementController.dispose();
+    if (_projectId != null && !_hasSaved) {
+      // fire-and-forget, no UI blocking
+      TaskService().deleteProject(_projectId!);
+    }
     super.dispose();
   }
 
@@ -162,7 +167,7 @@ Future<void> _showStyledDialog({
                     todayDecoration: BoxDecoration(
                       color: Color(0xFFC78E48), shape: BoxShape.circle),
                     selectedDecoration: BoxDecoration(
-                      color: const Color(0xFFF2AC57), shape: BoxShape.circle),
+                      color: Color(0xFFF2AC57), shape: BoxShape.circle),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -487,514 +492,509 @@ Future<void> _editSubtask(Subtask sub, int index) async {
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-    onWillPop: () async {
-      // if we created a project but never saved it, delete it before popping
-      if (_projectId != null && !_hasSaved) {
-        try {
-          await TaskService().deleteProject(_projectId!);
-        } catch (_) { /* swallow errors if you like */ }
-      }
-      return true; // allow the pop to actually happen
-    },
-    
-    
-    child: Scaffold(
-      backgroundColor: Colors.transparent,
-      body: SafeArea(
-        child: Container(
-          width: double.infinity,
-          height: double.infinity,
-          padding: const EdgeInsets.all(0),
-          decoration: const BoxDecoration(color: Colors.white),
-          child: Stack(
-            children: [
-              // Close button
-              Positioned(
-                right: 5,
-                top: 13.5,
-                child: IconButton(
-                  icon: const Icon(Icons.close, color: Color(0xFF767E8C)),
-                  onPressed: () =>
-                      Navigator.pushReplacementNamed(context, '/dashboard'),
-                ),
-              ),
-
-              // Title
-              const Positioned(
-                left: 20,
-                top: 30,
-                child: Text(
-                  '새 프로젝트 추가',
-                  style: TextStyle(
-                    color: Color(0xFF1E1E1E),
-                    fontSize: 24,
-                    fontWeight: FontWeight.w700,
-                    height: 1,
-                    letterSpacing: -0.64,
+      onWillPop: () async {
+        if (_projectId != null && !_hasSaved) {
+            TaskService().deleteProject(_projectId!);
+        }
+        return true;
+      },
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: SafeArea(
+          child: Container(
+            width: double.infinity,
+            height: double.infinity,
+            padding: const EdgeInsets.all(0),
+            decoration: const BoxDecoration(color: Colors.white),
+            child: Stack(
+              children: [
+                // Close button
+                Positioned(
+                  right: 5,
+                  top: 13.5,
+                  child: IconButton(
+                    icon: const Icon(Icons.close, color: Color(0xFF767E8C)),
+                    onPressed: () =>
+                        Navigator.pushReplacementNamed(context, '/dashboard'),
                   ),
                 ),
-              ),
 
-              // Form area
-              Positioned(
-                top: 100,
-                left: 0,
-                right: 0,
-                bottom: 135,
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Name & details
-                      Container(
-                        height: 140,
-                        padding: const EdgeInsets.all(12),
-                        decoration: ShapeDecoration(
-                          color: Colors.white,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8)),
-                          shadows: const [
-                            BoxShadow(
-                                color: Color(0x19000000),
-                                blurRadius: 16,
-                                offset: Offset(0, 2))
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            TextField(
-                              controller: _nameController,
-                              decoration: const InputDecoration(
-                                isDense: true,
-                                contentPadding: EdgeInsets.zero,
-                                hintText: '프로젝트 이름',
-                                border: InputBorder.none,
-                              ),
-                              style: const TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.w500),
-                            ),
-                            const SizedBox(height: 8),
-                            const Divider(color: Color(0x4CB1B1B1)),
-                            const SizedBox(height: 8),
-                            Expanded(
-                              child: TextField(
-                                controller: _detailsController,
-                                decoration: const InputDecoration.collapsed(
-                                    hintText: '프로젝트 설명'),
+                // Title
+                const Positioned(
+                  left: 20,
+                  top: 30,
+                  child: Text(
+                    '새 프로젝트 추가',
+                    style: TextStyle(
+                      color: Color(0xFF1E1E1E),
+                      fontSize: 24,
+                      fontWeight: FontWeight.w700,
+                      height: 1,
+                      letterSpacing: -0.64,
+                    ),
+                  ),
+                ),
+
+                // Form area
+                Positioned(
+                  top: 100,
+                  left: 0,
+                  right: 0,
+                  bottom: 135,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Name & details
+                        Container(
+                          height: 140,
+                          padding: const EdgeInsets.all(12),
+                          decoration: ShapeDecoration(
+                            color: Colors.white,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8)),
+                            shadows: const [
+                              BoxShadow(
+                                  color: Color(0x19000000),
+                                  blurRadius: 16,
+                                  offset: Offset(0, 2))
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              TextField(
+                                controller: _nameController,
+                                decoration: const InputDecoration(
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.zero,
+                                  hintText: '프로젝트 이름',
+                                  border: InputBorder.none,
+                                ),
                                 style: const TextStyle(
-                                    fontSize: 16, fontWeight: FontWeight.w400),
+                                    fontSize: 16, fontWeight: FontWeight.w500),
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      // Date picker
-                      Container(
-                        height: 48,
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        decoration: ShapeDecoration(
-                          color: Colors.white,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(6)),
-                          shadows: const [
-                            BoxShadow(
-                                color: Color(0x19000000),
-                                blurRadius: 16,
-                                offset: Offset(0, 2))
-                          ],
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.calendar_today, color: Color(0xFFC78E48)),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                _dateController.text.isEmpty
-                                    ? 'YYYY / MM / DD'
-                                    : _dateController.text,
-                                style: const TextStyle(
-                                    fontSize: 16, fontWeight: FontWeight.w400),
+                              const SizedBox(height: 8),
+                              const Divider(color: Color(0x4CB1B1B1)),
+                              const SizedBox(height: 8),
+                              Expanded(
+                                child: TextField(
+                                  controller: _detailsController,
+                                  decoration: const InputDecoration.collapsed(
+                                      hintText: '프로젝트 설명'),
+                                  style: const TextStyle(
+                                      fontSize: 16, fontWeight: FontWeight.w400),
+                                ),
                               ),
-                            ),
-                            InkWell(onTap: _selectDeadlineDate, child: const Icon(Icons.edit, size: 20)),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      // Category chips
-                      SizedBox(
-                        height: 56,
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: _categories
-                                .map((lbl) => Padding(
-                                      padding: const EdgeInsets.only(right: 10),
-                                      child: _buildChip(lbl),
-                                    ))
-                                .toList(),
+                            ],
                           ),
                         ),
-                      ),
 
-                      const SizedBox(height: 12),
+                        const SizedBox(height: 20),
 
-                      // Requirements
-                      const Text(
-                        '하위작업 요구사항',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: ShapeDecoration(
-                          color: Colors.white,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8)),
-                          shadows: const [
-                            BoxShadow(
-                                color: Color(0x19000000),
-                                blurRadius: 16,
-                                offset: Offset(0, 2))
-                          ],
+                        // Date picker
+                        Container(
+                          height: 48,
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          decoration: ShapeDecoration(
+                            color: Colors.white,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(6)),
+                            shadows: const [
+                              BoxShadow(
+                                  color: Color(0x19000000),
+                                  blurRadius: 16,
+                                  offset: Offset(0, 2))
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.calendar_today, color: Color(0xFFC78E48)),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  _dateController.text.isEmpty
+                                      ? 'YYYY / MM / DD'
+                                      : _dateController.text,
+                                  style: const TextStyle(
+                                      fontSize: 16, fontWeight: FontWeight.w400),
+                                ),
+                              ),
+                              InkWell(onTap: _selectDeadlineDate, child: const Icon(Icons.edit, size: 20)),
+                            ],
+                          ),
                         ),
-                        child: TextField(
-                          controller: _requirementController,
-                          maxLines: null,
-                          decoration: const InputDecoration.collapsed(
-                              hintText: '포함했으면 하는 하위작업 등'),
+
+                        const SizedBox(height: 12),
+
+                        // Category chips
+                        SizedBox(
+                          height: 56,
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: _categories
+                                  .map((lbl) => Padding(
+                                        padding: const EdgeInsets.only(right: 10),
+                                        child: _buildChip(lbl),
+                                      ))
+                                  .toList(),
+                            ),
+                          ),
                         ),
+
+                        const SizedBox(height: 12),
+
+                        // Requirements
+                        const Text(
+                          '하위작업 요구사항',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: ShapeDecoration(
+                            color: Colors.white,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8)),
+                            shadows: const [
+                              BoxShadow(
+                                  color: Color(0x19000000),
+                                  blurRadius: 16,
+                                  offset: Offset(0, 2))
+                            ],
+                          ),
+                          child: TextField(
+                            controller: _requirementController,
+                            maxLines: null,
+                            decoration: const InputDecoration.collapsed(
+                                hintText: '포함했으면 하는 하위작업 등'),
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        const Text(
+                          '하위작업 ',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+                        ),
+                        const SizedBox(height: 12),
+                        // Generated subtasks
+
+                        if (_generatedSubtasks.isNotEmpty) ...[
+    ReorderableListView(
+      key: ValueKey(_listVersion),
+      buildDefaultDragHandles: false,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      onReorder: (oldIndex, newIndex) {
+        setState(() {
+          final max = _generatedSubtasks.length;
+          if (newIndex > max) newIndex = max;
+          if (newIndex > oldIndex) newIndex--;
+          final moved = _generatedSubtasks.removeAt(oldIndex);
+          _generatedSubtasks.insert(newIndex, moved);
+          for (var i = 0; i < _generatedSubtasks.length; i++) {
+            _generatedSubtasks[i].order = i + 1;
+          }
+        });
+      },
+      children: List.generate(_generatedSubtasks.length + 1, (i) {
+        // ① “새 하위작업 추가” 버튼
+        if (i == _generatedSubtasks.length) {
+          return Container(
+            key: const ValueKey('add-subtask'),
+            margin: const EdgeInsets.only(bottom: 12),
+            height: 75,
+            decoration: ShapeDecoration(
+              color: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shadows: const [
+                BoxShadow(color: Color(0x19000000), blurRadius: 16, offset: Offset(0, 2))
+              ],
+            ),
+            child: InkWell(
+              onTap: () async {
+                final titleCtrl = TextEditingController();
+                final hoursCtrl = TextEditingController();
+                final minsCtrl = TextEditingController();
+                await showDialog(
+                  context: context,
+                  barrierColor: Colors.black26,
+                  builder: (_) => Dialog(
+                    insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 200),
+                    backgroundColor: Colors.transparent,
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: ShapeDecoration(
+                        color: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        shadows: const [
+                          BoxShadow(color: Color(0x22000000), blurRadius: 16, offset: Offset(0,4))
+                        ],
                       ),
-
-                      const SizedBox(height: 20),
-
-                      const Text(
-                        '하위작업 ',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '새 하위작업 추가',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFFF2AC57),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          TextField(
+                            controller: titleCtrl,
+                            decoration: InputDecoration(
+                              labelText: '제목',
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextField(
+                                  controller: hoursCtrl,
+                                  keyboardType: TextInputType.number,
+                                  decoration: InputDecoration(
+                                    labelText: '시간(시)',
+                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: TextField(
+                                  controller: minsCtrl,
+                                  keyboardType: TextInputType.number,
+                                  decoration: InputDecoration(
+                                    labelText: '분',
+                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                style: TextButton.styleFrom(foregroundColor: Colors.black),
+                                child: const Text('취소'),
+                              ),
+                              const SizedBox(width: 8),
+                              ElevatedButton(
+                                onPressed: () {
+                                  final title = titleCtrl.text.trim();
+                                  final h = int.tryParse(hoursCtrl.text) ?? 0;
+                                  final m = int.tryParse(minsCtrl.text) ?? 0;
+                                  if (title.isEmpty) return;
+                                  setState(() {
+                                    _generatedSubtasks.add(Subtask(
+                                      id: _generatedSubtasks.length + 1,
+                                      order: _generatedSubtasks.length + 1,
+                                      title: title,
+                                      expectedDuration: Duration(hours: h, minutes: m),
+                                    ));
+                                    _listVersion++;
+                                  });
+                                  Navigator.pop(context);
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFF2AC57),
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                ),
+                                child: const Text('저장', style: TextStyle(fontWeight: FontWeight.w600)),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
-                       const SizedBox(height: 12),
-                      // Generated subtasks
-
-                      if (_generatedSubtasks.isNotEmpty) ...[
-  ReorderableListView(
-    key: ValueKey(_listVersion),
-    buildDefaultDragHandles: false,
-    shrinkWrap: true,
-    physics: const NeverScrollableScrollPhysics(),
-    onReorder: (oldIndex, newIndex) {
-      setState(() {
-        final max = _generatedSubtasks.length;
-        if (newIndex > max) newIndex = max;
-        if (newIndex > oldIndex) newIndex--;
-        final moved = _generatedSubtasks.removeAt(oldIndex);
-        _generatedSubtasks.insert(newIndex, moved);
-        for (var i = 0; i < _generatedSubtasks.length; i++) {
-          _generatedSubtasks[i].order = i + 1;
+                    ),
+                  ),
+                );
+              },
+              child: Center(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Icon(Icons.add, color: Color(0xFFF2AC57)),
+                    SizedBox(width: 8),
+                    Text(
+                      '새 하위작업 추가',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Color(0xFFF2AC57)),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
         }
-      });
-    },
-    children: List.generate(_generatedSubtasks.length + 1, (i) {
-      // ① “새 하위작업 추가” 버튼
-      if (i == _generatedSubtasks.length) {
+
+        // ② 기존 생성된 하위작업 항목
+        final sub = _generatedSubtasks[i];
         return Container(
-          key: const ValueKey('add-subtask'),
+          key: ValueKey(sub.id),
           margin: const EdgeInsets.only(bottom: 12),
           height: 75,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: ShapeDecoration(
             color: Colors.white,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             shadows: const [
-              BoxShadow(color: Color(0x19000000), blurRadius: 16, offset: Offset(0, 2))
+              BoxShadow(color: Color(0x19000000), blurRadius: 16, offset: Offset(0, 2)),
             ],
           ),
-          child: InkWell(
-            onTap: () async {
-              final titleCtrl = TextEditingController();
-              final hoursCtrl = TextEditingController();
-              final minsCtrl = TextEditingController();
-              await showDialog(
-                context: context,
-                barrierColor: Colors.black26,
-                builder: (_) => Dialog(
-                  insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 200),
-                  backgroundColor: Colors.transparent,
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: ShapeDecoration(
-                      color: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      shadows: const [
-                        BoxShadow(color: Color(0x22000000), blurRadius: 16, offset: Offset(0,4))
-                      ],
+          child: Row(
+            children: [
+              ReorderableDragStartListener(
+                index: i,
+                child: const Padding(
+                  padding: EdgeInsets.only(right: 12),
+                  child: Icon(Icons.drag_handle, size: 24),
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      sub.title,
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          '새 하위작업 추가',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: const Color(0xFFF2AC57),
-                          ),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                      decoration: ShapeDecoration(
+                        color: const Color(0x19BF622C),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                      ),
+                      child: Text(
+                        '${sub.expectedDuration.inHours}H ${sub.expectedDuration.inMinutes.remainder(60)}M',
+                        style: const TextStyle(
+                          color: Color(0xFFBF622C),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
                         ),
-                        const SizedBox(height: 16),
-                        TextField(
-                          controller: titleCtrl,
-                          decoration: InputDecoration(
-                            labelText: '제목',
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.edit, size: 24),
+                onPressed: () => _editSubtask(sub, i),
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete_outline, size: 24),
+                onPressed: () => setState(() => _generatedSubtasks.removeAt(i)),
+              ),
+            ],
+          ),
+        );
+      }),
+    ),
+  ],
+
+
+                        // AI button
+                        DottedBorder(
+                          borderType: BorderType.RRect,
+                          radius: const Radius.circular(8),
+                          dashPattern: const [6, 4],
+                          color: Colors.black,
+                          strokeWidth: 1,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Container(
+                              height: 69,
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: _onGenerateAI,
+                                child: Center(
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: const [
+                                      Icon(Icons.auto_awesome,
+                                          color: Color(0xFFF2AC57)),
+                                      SizedBox(width: 8),
+                                      Opacity(
+                                          opacity: 0.5,
+                                          child: Text('AI로 하위작업 생성하기',
+                                              style: TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w500))),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                         const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextField(
-                                controller: hoursCtrl,
-                                keyboardType: TextInputType.number,
-                                decoration: InputDecoration(
-                                  labelText: '시간(시)',
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: TextField(
-                                controller: minsCtrl,
-                                keyboardType: TextInputType.number,
-                                decoration: InputDecoration(
-                                  labelText: '분',
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context),
-                              style: TextButton.styleFrom(foregroundColor: Colors.black),
-                              child: const Text('취소'),
-                            ),
-                            const SizedBox(width: 8),
-                            ElevatedButton(
-                              onPressed: () {
-                                final title = titleCtrl.text.trim();
-                                final h = int.tryParse(hoursCtrl.text) ?? 0;
-                                final m = int.tryParse(minsCtrl.text) ?? 0;
-                                if (title.isEmpty) return;
-                                setState(() {
-                                  _generatedSubtasks.add(Subtask(
-                                    id: _generatedSubtasks.length + 1,
-                                    order: _generatedSubtasks.length + 1,
-                                    title: title,
-                                    expectedDuration: Duration(hours: h, minutes: m),
-                                  ));
-                                  _listVersion++;
-                                });
-                                Navigator.pop(context);
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFF2AC57),
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                              ),
-                              child: const Text('저장', style: TextStyle(fontWeight: FontWeight.w600)),
-                            ),
-                          ],
-                        ),
                       ],
                     ),
                   ),
                 ),
-              );
-            },
-            child: Center(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: const [
-                  Icon(Icons.add, color: Color(0xFFF2AC57)),
-                  SizedBox(width: 8),
-                  Text(
-                    '새 하위작업 추가',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Color(0xFFF2AC57)),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      }
-
-      // ② 기존 생성된 하위작업 항목
-      final sub = _generatedSubtasks[i];
-      return Container(
-        key: ValueKey(sub.id),
-        margin: const EdgeInsets.only(bottom: 12),
-        height: 75,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: ShapeDecoration(
-          color: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          shadows: const [
-            BoxShadow(color: Color(0x19000000), blurRadius: 16, offset: Offset(0, 2)),
-          ],
-        ),
-        child: Row(
-          children: [
-            ReorderableDragStartListener(
-              index: i,
-              child: const Padding(
-                padding: EdgeInsets.only(right: 12),
-                child: Icon(Icons.drag_handle, size: 24),
-              ),
-            ),
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    sub.title,
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                    decoration: ShapeDecoration(
-                      color: const Color(0x19BF622C),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                    ),
-                    child: Text(
-                      '${sub.expectedDuration.inHours}H ${sub.expectedDuration.inMinutes.remainder(60)}M',
-                      style: const TextStyle(
-                        color: Color(0xFFBF622C),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
+                // Save button
+                Positioned(
+                  left: 50,
+                  right: 50,
+                  bottom: 80,
+                  child: GestureDetector(
+                    onTap: _onGenerateSubtaskPressed,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFC78E48),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: const [
+                          BoxShadow(
+                              color: Color(0x19000000),
+                              blurRadius: 10,
+                              offset: Offset(0, 5))
+                        ],
                       ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            IconButton(
-              icon: const Icon(Icons.edit, size: 24),
-              onPressed: () => _editSubtask(sub, i),
-            ),
-            IconButton(
-              icon: const Icon(Icons.delete_outline, size: 24),
-              onPressed: () => setState(() => _generatedSubtasks.removeAt(i)),
-            ),
-          ],
-        ),
-      );
-    }),
-  ),
-],
-
-
-                      // AI button
-                      DottedBorder(
-                        borderType: BorderType.RRect,
-                        radius: const Radius.circular(8),
-                        dashPattern: const [6, 4],
-                        color: Colors.black,
-                        strokeWidth: 1,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Container(
-                            height: 69,
-                            color: Colors.transparent,
-                            child: InkWell(
-                              onTap: _onGenerateAI,
-                              child: Center(
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: const [
-                                    Icon(Icons.auto_awesome,
-                                        color: Color(0xFFF2AC57)),
-                                    SizedBox(width: 8),
-                                    Opacity(
-                                        opacity: 0.5,
-                                        child: Text('AI로 하위작업 생성하기',
-                                            style: TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w500))),
-                                  ],
-                                ),
-                              ),
-                            ),
+                      child: Center(
+                        child: Text(
+                          '프로젝트 저장하기',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,    // ← fully white text
                           ),
                         ),
                       ),
-                      const SizedBox(height: 12),
-                    ],
+                    ),
                   ),
                 ),
-              ),
-              // Save button
-              Positioned(
-                left: 50,
-                right: 50,
-                bottom: 80,
-                child: GestureDetector(
-                  onTap: _onGenerateSubtaskPressed,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFC78E48),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: const [
-                        BoxShadow(
-                            color: Color(0x19000000),
-                            blurRadius: 10,
-                            offset: Offset(0, 5))
-                      ],
-                    ),
-                    child: Center(
-                      child: Text(
-                        '프로젝트 저장하기',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,    // ← fully white text
-                        ),
+
+                // Bottom nav
+                Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      child: SizedBox(
+                        height: 68,
+                        child: BottomNavBar(activeIndex: 2),
                       ),
                     ),
-                  ),
-                ),
-              ),
-
-              // Bottom nav
-              Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    child: SizedBox(
-                      height: 68,
-                      child: BottomNavBar(activeIndex: 2),
-                    ),
-                  ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
-    ),
     );
   }
 }

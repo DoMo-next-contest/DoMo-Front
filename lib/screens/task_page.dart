@@ -9,7 +9,7 @@ import 'package:domo/utils/mobile_frame.dart';
 import 'package:domo/services/task_service.dart';
 
 class TaskPage extends StatefulWidget {
-  const TaskPage({Key? key}) : super(key: key);
+  const TaskPage({super.key});
   @override
   TaskPageState createState() => TaskPageState();
 }
@@ -31,7 +31,7 @@ class TaskPageState extends State<TaskPage> {
   final TextEditingController _descController = TextEditingController();
 
   late String selectedCategory;
-  DateTime _focusedDay = DateTime.now();
+  final DateTime _focusedDay = DateTime.now();
 
   @override
   void didChangeDependencies() {
@@ -313,7 +313,7 @@ class TaskPageState extends State<TaskPage> {
                         shape: BoxShape.circle,
                       ),
                       selectedDecoration: BoxDecoration(
-                        color: const Color(0xFFF2AC57),
+                        color: Color(0xFFF2AC57),
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -1150,7 +1150,7 @@ Future<void> _addSubtaskDialog() async {
                                     ),
                                   ),
                                 ),
-                              );;
+                              );
                             },
                           ),
                         ),
@@ -1190,11 +1190,11 @@ Future<void> _addSubtaskDialog() async {
                                           children: [
                                             OutlinedButton(
                                               onPressed: () => Navigator.pop(context, false),
-                                              child: const Text('취소'),
                                               style: OutlinedButton.styleFrom(
                                                 side: BorderSide(color: Colors.grey[400]!),
                                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                               ),
+                                              child: const Text('취소'),
                                             ),
                                             ElevatedButton(
                                               onPressed: () async {

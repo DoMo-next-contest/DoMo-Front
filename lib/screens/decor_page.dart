@@ -12,7 +12,7 @@ class DecorItem {
 }
 
 class DecorPage extends StatefulWidget {
-  const DecorPage({Key? key, required this.profile}) : super(key: key);
+  const DecorPage({super.key, required this.profile});
 
   final Profile profile;
 

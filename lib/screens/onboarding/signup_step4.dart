@@ -8,7 +8,7 @@ import 'package:domo/services/profile_service.dart';
 
 class SignupStep4 extends StatefulWidget {
   final Profile profile;
-  const SignupStep4({Key? key, required this.profile}) : super(key: key);
+  const SignupStep4({super.key, required this.profile});
 
   @override
   _SignupStep4State createState() => _SignupStep4State();

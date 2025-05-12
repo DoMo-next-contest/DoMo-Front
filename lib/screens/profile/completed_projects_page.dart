@@ -7,7 +7,7 @@ import 'package:domo/services/task_service.dart';
 import 'package:domo/widgets/bottom_nav_bar.dart';
 
 class CompletedProjectsPage extends StatefulWidget {
-  const CompletedProjectsPage({Key? key}) : super(key: key);
+  const CompletedProjectsPage({super.key});
 
   @override
   _CompletedProjectsPageState createState() => _CompletedProjectsPageState();
@@ -110,8 +110,11 @@ class _CompletedProjectsPageState extends State<CompletedProjectsPage> {
                       return GestureDetector(
                         onTap: () {
                           setState(() {
-                            if (on) selectedCategories.remove(cat);
-                            else selectedCategories.add(cat);
+                            if (on) {
+                              selectedCategories.remove(cat);
+                            } else {
+                              selectedCategories.add(cat);
+                            }
                           });
                         },
                         child: Container(
