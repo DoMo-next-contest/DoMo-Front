@@ -10,7 +10,7 @@ import 'package:domo/widgets/bottom_nav_bar.dart';
 
 
 class ProjectPage extends StatefulWidget {
-  const ProjectPage({Key? key}) : super(key: key);
+  const ProjectPage({super.key});
 
   @override
   ProjectPageState createState() => ProjectPageState();
@@ -92,10 +92,11 @@ Future<void> _loadTasksFromBackend() async {
     return GestureDetector(
       onTap: () {
         setState(() {
-          if (isOn)
+          if (isOn) {
             selectedCategories.remove(label);
-          else
+          } else {
             selectedCategories.add(label);
+          }
         });
       },
       child: Container(

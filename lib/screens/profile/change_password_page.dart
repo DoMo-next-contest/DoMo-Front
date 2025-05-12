@@ -7,7 +7,7 @@ import 'package:domo/widgets/custom_button.dart';
 import 'package:domo/widgets/bottom_nav_bar.dart';
 
 class ChangePasswordPage extends StatefulWidget {
-  const ChangePasswordPage({Key? key}) : super(key: key);
+  const ChangePasswordPage({super.key});
 
   @override
   _ChangePasswordPageState createState() => _ChangePasswordPageState();
@@ -74,7 +74,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
           child: Column(
             children: [
               // ───────── Header ─────────
-              Container(
+              SizedBox(
                 width: 375,
                 height: 72,
                 child: Stack(

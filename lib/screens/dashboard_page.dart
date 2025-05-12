@@ -8,7 +8,7 @@ import 'package:domo/widgets/bottom_nav_bar.dart';
 import 'package:domo/services/character_service.dart';
 
 class DashboardPage extends StatefulWidget {
-  const DashboardPage({Key? key}) : super(key: key);
+  const DashboardPage({super.key});
 
   @override
   DashboardPageState createState() => DashboardPageState();
@@ -94,7 +94,7 @@ class DashboardPageState extends State<DashboardPage> {
                     left: 0,
                     right: 0,
                     child: Text(
-                      '반가워요, 예슬님!',
+                      '반가워요!',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Color(0xFF1E1E1E),

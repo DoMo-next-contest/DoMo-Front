@@ -8,7 +8,7 @@ import 'package:domo/services/profile_service.dart';
 
 class SignupStep2 extends StatefulWidget {
   final Profile profile;
-  const SignupStep2({Key? key, required this.profile}) : super(key: key);
+  const SignupStep2({super.key, required this.profile});
 
   @override
   _SignupStep2State createState() => _SignupStep2State();
@@ -18,7 +18,7 @@ class _SignupStep2State extends State<SignupStep2> {
   // 0="구체적으로", 1="보통으로", 2="대략적으로"
   double _sliderValue = 0;
   static const List<String> _labels = ['구체적으로', '보통으로', '대략적으로'];
-  bool _isLoading = false;
+  final bool _isLoading = false;
 
   Future<void> _onNext() async {
   widget.profile.subtaskPreference = _labels[_sliderValue.toInt()];

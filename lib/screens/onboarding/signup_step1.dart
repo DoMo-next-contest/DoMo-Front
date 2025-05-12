@@ -7,7 +7,7 @@ import 'package:domo/models/profile.dart';
 
 
 class SignupStep1 extends StatefulWidget {
-  const SignupStep1({Key? key}) : super(key: key);
+  const SignupStep1({super.key});
 
   @override
   State<SignupStep1> createState() => _SignupStep1State();

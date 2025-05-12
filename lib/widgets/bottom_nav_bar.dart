@@ -5,9 +5,9 @@ class BottomNavBar extends StatelessWidget {
   final int activeIndex; // 0=홈,1=프로젝트,2=추가,3=캐릭터,4=프로필
 
   const BottomNavBar({
-    Key? key,
+    super.key,
     required this.activeIndex,
-  }) : super(key: key);
+  });
 
   static const _icons = [
     Icons.home,

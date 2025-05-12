@@ -8,7 +8,7 @@ import 'package:domo/services/profile_service.dart';
 
 class SignupStep3 extends StatefulWidget {
   final Profile profile;
-  const SignupStep3({Key? key, required this.profile}) : super(key: key);
+  const SignupStep3({super.key, required this.profile});
 
   @override
   _SignupStep3State createState() => _SignupStep3State();
@@ -17,7 +17,7 @@ class SignupStep3 extends StatefulWidget {
 class _SignupStep3State extends State<SignupStep3> {
   double _sliderValue = 0;
   static const List<String> _labels = ['타이트하게', '적당하게', '여유롭게'];
-  bool _isLoading = false;
+  final bool _isLoading = false;
 
   Future<void> _onNext() async {
   widget.profile.timePreference = _labels[_sliderValue.toInt()];

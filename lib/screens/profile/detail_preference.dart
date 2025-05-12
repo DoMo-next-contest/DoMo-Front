@@ -8,7 +8,7 @@ import 'package:domo/widgets/bottom_nav_bar.dart';
 
 class DetailPreferencePage extends StatefulWidget {
   final Profile profile;
-  const DetailPreferencePage({Key? key, required this.profile}) : super(key: key);
+  const DetailPreferencePage({super.key, required this.profile});
 
   @override
   _DetailPreferencePageState createState() => _DetailPreferencePageState();

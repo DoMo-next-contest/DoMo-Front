@@ -9,7 +9,7 @@ import 'package:domo/widgets/bottom_nav_bar.dart';
 
 class TimePreferencePage extends StatefulWidget {
   final Profile profile;
-  const TimePreferencePage({Key? key, required this.profile}) : super(key: key);
+  const TimePreferencePage({super.key, required this.profile});
 
   @override
   _TimePreferencePageState createState() => _TimePreferencePageState();
@@ -72,7 +72,7 @@ class _TimePreferencePageState extends State<TimePreferencePage> {
           child: Column(
             children: [
               // ───────── Header ─────────
-              Container(
+              SizedBox(
                 width: 375,
                 height: 72,
                 child: Stack(

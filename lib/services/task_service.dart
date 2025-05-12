@@ -25,14 +25,14 @@ class TaskService {
   final url = Uri.parse('$baseUrl/api/project');
 
   // 3) Reverse-map UI category -> raw backend tag
-  const _reverseTagMap = {
+  const reverseTagMap = {
     '업무': 'WORK',
     '학업': 'STUDY',
     '일상': 'LIFE',
     '운동': 'EXERCISE',
     '자기계발': 'SELF_IMPROVEMENT',
   };
-  final rawTag = _reverseTagMap[task.category] ?? task.category;
+  final rawTag = reverseTagMap[task.category] ?? task.category;
 
   // 4) Build request body exactly per API schema
   final body = <String, dynamic>{

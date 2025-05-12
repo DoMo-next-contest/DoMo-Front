@@ -9,7 +9,8 @@ import 'package:domo/screens/profile/change_password_page.dart';
 import 'package:domo/widgets/bottom_nav_bar.dart';
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({Key? key}) : super(key: key);
+  const ProfilePage({super.key});
+
   @override
   _ProfilePageState createState() => _ProfilePageState();
 }
