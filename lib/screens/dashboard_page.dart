@@ -7,6 +7,7 @@ import 'package:domo/models/task.dart';
 import 'package:domo/widgets/bottom_nav_bar.dart';
 import 'package:domo/services/character_service.dart';
 import 'package:domo/services/task_service.dart';
+import 'package:model_viewer_plus/model_viewer_plus.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -36,6 +37,7 @@ class DashboardPageState extends State<DashboardPage> {
     CharacterService.fetchModelUrl()
       .then((url) {
         setState(() {
+          //_modelSrc = url;
           _modelSrc = 'https://modelviewer.dev/shared-assets/models/Astronaut.glb';
           _loadingModel = false;
         });
@@ -46,7 +48,6 @@ class DashboardPageState extends State<DashboardPage> {
       });
 
    
-  
   }
 
   @override
@@ -58,8 +59,7 @@ class DashboardPageState extends State<DashboardPage> {
     );
     final double progress = recent.progress;
     */
-    _recentFuture = _service.fetchRecent();
-
+    
     return Scaffold(
       backgroundColor: Colors.transparent, // MobileFrame 배경 보이도록
       body: SafeArea(
@@ -78,27 +78,35 @@ class DashboardPageState extends State<DashboardPage> {
                 children: [
                   // 3D 캐릭터
                   Positioned(
-                  top: 220,
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: SizedBox(
-                      width: 300,
-                      height: 300,
-                      child: _loadingModel
+                    top: 220,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: SizedBox(
+                        width: 300,
+                        height: 300,
+                        child: _loadingModel
                           ? const CircularProgressIndicator()
-                          : ModelViewer(
-                              src: _modelSrc!,
-                              alt: '3D model of Cutie',
-                              autoRotate: true,
-                              cameraControls: true,
-                              disableZoom: true,
-                              disablePan: true,
-                              backgroundColor: Colors.transparent,
-                            ),
+                          : (_modelSrc != null
+                              ? ModelViewer(key: ValueKey(_modelSrc),        // ← rebuild on URL change
+                                                          
+                                                    src: _modelSrc!,
+                                                    alt: '3D model of Cutie',
+                                                    autoRotate: true,
+                                                    cameraControls: true,
+                                                    disableZoom: true,
+                                                    disablePan: true,
+                                                    backgroundColor: Colors.transparent,
+                                                    poster: 'assets/png/cutie.png',
+                                                    loading: Loading.eager,
+                                                    reveal: Reveal.auto,
+                                                    shadowIntensity: 0.4,
+                                                    )
+
+                              : Center(child: Text('Failed to load model URL'))),
+                      ),
                     ),
                   ),
-                ),
 
                   // 인사말
                   const Positioned(
@@ -259,15 +267,17 @@ class DashboardPageState extends State<DashboardPage> {
                 ),
 
                   // Bottom navigation
+                  
+                  // Bottom nav
                   Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    child: SizedBox(
-                      height: 68,
-                      child: BottomNavBar(activeIndex: 0),
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      child: SizedBox(
+                        height: 68,
+                        child: BottomNavBar(activeIndex: 0),
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),

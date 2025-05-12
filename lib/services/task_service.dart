@@ -518,6 +518,43 @@ Future<void> updateSubtaskActualTime(int subTaskId, int minutes) async {
     }
   }
 
+    Future<List<Task>> getCompletedProjects() async {
+  // 1) Grab the token you saved in ProfileService
+  final storage = FlutterSecureStorage();
+  final token = await storage.read(key: 'accessToken');
+  if (token == null) {
+    throw Exception('No access token found – are you logged in?');
+  }
+
+  // 2) Fire the GET with Authorization header
+  final uri = Uri.parse('$baseUrl/api/project/completed');
+  debugPrint('GET $uri with token $token');
+  final response = await http.get(
+    uri,
+    headers: {
+      'Authorization': 'Bearer $token',
+      'Accept': 'application/json',
+    },
+  );
+
+  // 3) Log for debugging
+  debugPrint('← ${response.statusCode}: ${response.body}');
+
+  final jsonString = utf8.decode(response.bodyBytes);
+
+  // 4) Error‐out on non-200
+  if (response.statusCode != 200) {
+    throw Exception(
+      'Failed to load completed projects [${response.statusCode}]: ${response.body}',
+    );
+  }
+
+  // 5) Decode and map
+  final List<dynamic> data = jsonDecode(jsonString);
+  return data
+      .map((e) => Task.fromJson(e as Map<String, dynamic>))
+      .toList();
+}
   
 }
 

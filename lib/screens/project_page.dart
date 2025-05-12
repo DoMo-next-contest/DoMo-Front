@@ -52,7 +52,9 @@ Future<void> _loadTasksFromBackend() async {
     
     setState(() {
       _tasks = tasks.where((t) => t.progress <= 1.0).toList();
+      //change to when it is marked completed
     });
+    
     
    
   } catch (e) {

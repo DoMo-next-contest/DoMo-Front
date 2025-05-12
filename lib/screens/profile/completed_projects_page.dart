@@ -36,18 +36,17 @@ class _CompletedProjectsPageState extends State<CompletedProjectsPage> {
   }
 
   Future<void> _loadTasks() async {
-    try {
-      final all = await TaskService().getTasks();
-      // keep only fully completed
-      setState(() {
-        _tasks = all.where((t) => t.progress > 1.0).toList();
-        _isLoading = false;
-      });
-    } catch (e) {
-      debugPrint('❌ error loading completed tasks: $e');
-      setState(() => _isLoading = false);
-    }
+  try {
+    final completed = await TaskService().getCompletedProjects();
+    setState(() {
+      _tasks     = completed;
+      _isLoading = false;
+    });
+  } catch (e) {
+    debugPrint('❌ error loading completed tasks: $e');
+    setState(() => _isLoading = false);
   }
+}
 
   @override
   Widget build(BuildContext context) {

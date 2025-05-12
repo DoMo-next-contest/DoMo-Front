@@ -5,7 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class CharacterService {
-  static const _baseUrl = 'http://ec2-15-165-74-79.ap-northeast-2.compute.amazonaws.com:8080';
+  //static const _baseUrl = 'http://ec2-15-165-74-79.ap-northeast-2.compute.amazonaws.com:8080';
+  static const _baseUrl = 'https://15.165.74.79.nip.io';
   static final _storage = FlutterSecureStorage();
 
   /// Fetches your GLB URL, with debug logging & flexible JSON parsing.

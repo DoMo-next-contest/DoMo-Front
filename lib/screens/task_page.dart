@@ -1235,7 +1235,7 @@ Future<void> _addSubtaskDialog() async {
                               builder: (ctx, setLocalState) {
                                 return GestureDetector(
                                   onTap: () async {
-                                    //TaskService().updateProgressRate(currentTask.id, currentTask.progress + 10);
+                                    //TaskService().updateProgressRate(currentTask.id, currentTask.progress -50);
                                     
                                     // 1) 난이도 선택 dialog
                                     String level = '상';
@@ -1285,10 +1285,17 @@ Future<void> _addSubtaskDialog() async {
                                     
                                   },
                                   child: Container(
-                                    height: 48,
+                                    height: 38,
                                     decoration: ShapeDecoration(
                                       color: const Color(0xFFC78E48),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                      shadows: const [
+                                        BoxShadow(
+                                          color: Color(0x19000000),
+                                          blurRadius: 8,
+                                          offset: Offset(0, 2),
+                                        ),
+                                      ],
                                     ),
                                     alignment: Alignment.center,
                                     child: _isCompleting
