@@ -1,11 +1,9 @@
 // lib/screens/profile/detail_preference.dart
 
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:domo/models/profile.dart';
 import 'package:domo/services/profile_service.dart';
 import 'package:domo/widgets/custom_button.dart';
-import 'package:domo/screens/profile/profile_page.dart'; // pop 시 결과 전달용
 import 'package:domo/widgets/bottom_nav_bar.dart';
 
 class DetailPreferencePage extends StatefulWidget {
@@ -17,51 +15,49 @@ class DetailPreferencePage extends StatefulWidget {
 }
 
 class _DetailPreferencePageState extends State<DetailPreferencePage> {
-  double _sliderValue = 1;
-  bool _isLoading = false;
   static const labels = ['구체적으로', '보통으로', '대략적으로'];
+  late double _sliderValue;
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _sliderValue = labels.indexOf(widget.profile.subtaskPreference ?? '보통으로').toDouble().clamp(0, 2);
+    _sliderValue = labels
+      .indexOf(widget.profile.subtaskPreference ?? '보통으로')
+      .clamp(0, labels.length - 1)
+      .toDouble();
   }
 
   String _toApiValue(String label) {
     switch (label) {
       case '구체적으로': return 'MANY_TASKS';
-      case '보통으로':   return 'NORMAL_TASKS';
+      case '보통으로':   return 'BALANCED_TASKS';
       case '대략적으로': return 'FEW_TASKS';
-      default:           return 'NORMAL_TASKS';
+      default:           return 'BALANCED_TASKS';
     }
   }
 
   Future<void> _onApply() async {
-  final newLabel = labels[_sliderValue.toInt()];
+    final newLabel = labels[_sliderValue.toInt()];
+    if (newLabel == widget.profile.subtaskPreference) {
+      Navigator.pop(context, widget.profile);
+      return;
+    }
+    setState(() => _isLoading = true);
+    try {
+      await ProfileService()
+        .updateDetailPreference(_toApiValue(newLabel))
+        .timeout(const Duration(seconds: 10));
 
-  // 1) If it’s the same as before, skip the PATCH and just pop
-  if (newLabel == widget.profile.subtaskPreference) {
-    Navigator.pop(context, widget.profile);
-    return;
+      final updated = widget.profile.copyWith(subtaskPreference: newLabel);
+      Navigator.pop(context, updated);
+    } catch (e) {
+      ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text('오류: $e')));
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
-
-  // 2) Otherwise, do the normal update flow
-  setState(() => _isLoading = true);
-  final apiValue = _toApiValue(newLabel);
-  try {
-    await ProfileService()
-      .updateDetailPreference(apiValue)
-      .timeout(const Duration(seconds: 10));
-    widget.profile.subtaskPreference = newLabel;
-    Navigator.pop(context, widget.profile);
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('오류: $e')),
-    );
-  } finally {
-    setState(() => _isLoading = false);
-  }
-}
 
 
   @override
@@ -75,8 +71,8 @@ class _DetailPreferencePageState extends State<DetailPreferencePage> {
           decoration: const BoxDecoration(color: Colors.white),
           child: Column(
             children: [
-              // ───────── Header ─────────
-              SizedBox(
+              // Header with back button
+              Container(
                 width: 375,
                 height: 72,
                 child: Stack(
@@ -101,7 +97,7 @@ class _DetailPreferencePageState extends State<DetailPreferencePage> {
                 ),
               ),
 
-              // ───────── Content ─────────
+              // Main content
               Expanded(
                 child: Container(
                   width: 335,
@@ -109,7 +105,7 @@ class _DetailPreferencePageState extends State<DetailPreferencePage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // 제목 + 슬라이더
+                      // Title + Slider
                       Column(
                         children: [
                           SizedBox(
@@ -117,16 +113,11 @@ class _DetailPreferencePageState extends State<DetailPreferencePage> {
                             child: const Text(
                               '입력한 프로젝트가 어느 정도로\n세분화되길 바라시나요?',
                               textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w700,
-                                height: 1.40,
-                              ),
+                              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, height: 1.40),
                             ),
                           ),
                           const SizedBox(height: 68),
-
-                          // 슬라이더 영역
+                          // Slider section
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -165,19 +156,18 @@ class _DetailPreferencePageState extends State<DetailPreferencePage> {
                         ],
                       ),
 
-                      
-                      // 변경사항 적용 버튼
+                      // Apply button
                       SizedBox(
                         width: double.infinity,
                         height: 48,
                         child: _isLoading
-                            ? const Center(child: CircularProgressIndicator())
-                            : Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  CustomButton(text: '변경사항 적용', onPressed: _onApply),
-                                ],
-                              ),
+                          ? const Center(child: CircularProgressIndicator())
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                CustomButton(text: '변경사항 적용', onPressed: _onApply),
+                              ],
+                            ),
                       ),
                       const SizedBox(height: 40),
                     ],
@@ -185,11 +175,8 @@ class _DetailPreferencePageState extends State<DetailPreferencePage> {
                 ),
               ),
 
-              // ───────── Bottom Nav ─────────
-              SizedBox(
-                height: 68,
-                child: BottomNavBar(activeIndex: 4),
-              ),
+              // Bottom nav
+              SizedBox(height: 68, child: BottomNavBar(activeIndex: 4)),
             ],
           ),
         ),
