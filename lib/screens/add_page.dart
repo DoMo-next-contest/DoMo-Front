@@ -264,8 +264,8 @@ Future<void> _showStyledDialog({
       _detailsController.text.isEmpty ||
       _requirementController.text.isEmpty) {
     await _showStyledDialog(
-      title: 'Incomplete Fields',
-      message: 'Please fill in all fields before generating via AI.',
+      title: '필수 항목 미입력',
+      message: 'AI 생성을 진행하기 전에 모든 필드를 입력해 주세요.',
     );
     return;
   }

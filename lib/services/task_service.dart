@@ -490,6 +490,34 @@ Future<void> updateSubtaskActualTime(int subTaskId, int minutes) async {
     }
   }
 
+  Future<Task> fetchRecent() async {
+    // 1) read your token
+    final storage = FlutterSecureStorage();
+    final token   = await storage.read(key: 'accessToken');
+    if (token == null) throw Exception('Not logged in');
+
+    // 2) build your URI
+    final uri = Uri.parse('$baseUrl/api/project/recent');
+
+    // 3) make the GET with Authorization header
+    final response = await http.get(
+      uri,
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    // 4) handle the response
+    if (response.statusCode == 200) {
+      return Task.fromRecentJson(json.decode(response.body));
+    } else {
+      throw Exception(
+        'Failed to load recent project (${response.statusCode})'
+      );
+    }
+  }
+
   
 }
 

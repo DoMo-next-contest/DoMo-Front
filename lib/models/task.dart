@@ -275,6 +275,22 @@ class Task {
     };
     return reverseMap[cat] ?? cat;
   }
+
+  factory Task.fromRecentJson(Map<String, dynamic> json) {
+    final rawTag = json['projectTagName'] as String? ?? '';
+    final uiCategory = rawToUi[rawTag] ?? rawTag;
+
+    return Task(
+      id: 0,
+      name: json['projectName'] as String,
+      deadline: DateTime.now(),      // or some sensible default
+      category: uiCategory,          // <- here
+      description: '',
+      requirements: '',
+      subtasks: const [],
+      progress: 0.5,
+    )..lastActivity = DateTime.now();
+  }
   
   
 }
