@@ -5,6 +5,7 @@ import 'package:domo/widgets/step_progress.dart';
 import 'package:domo/widgets/custom_button.dart';
 import 'package:domo/models/profile.dart';
 import 'package:domo/services/profile_service.dart';
+import 'package:domo/services/task_service.dart';
 
 class SignupStep4 extends StatefulWidget {
   final Profile profile;
@@ -69,8 +70,9 @@ List<String> _mapTags(List<String>? rawTags) {
     '자기계발': 'SELF_IMPROVEMENT',
   };
 
-  return rawTags.map((k) => mapping[k] ?? k).toList();
+  return rawTags.map((k) => mapping.containsKey(k) ? mapping[k]! : k).toList();
 }
+
 
 
   Future<void> _onDone() async {
@@ -98,6 +100,53 @@ List<String> _mapTags(List<String>? rawTags) {
     );
   } finally {
     if (mounted) setState(() => _isLoading = false);
+  }
+}
+
+Future<void> _showAddCategoryDialog() async {
+  String newCategory = '';
+  final controller = TextEditingController();
+
+  await showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('새 카테고리 추가'),
+      content: TextField(
+        controller: controller,
+        autofocus: true,
+        decoration: const InputDecoration(hintText: '카테고리 이름'),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('취소'),
+        ),
+        TextButton(
+          onPressed: () {
+            newCategory = controller.text.trim();
+            Navigator.pop(context);
+          },
+          child: const Text('추가'),
+        ),
+      ],
+    ),
+  );
+
+  if (newCategory.isNotEmpty) {
+    try {
+      setState(() => _isLoading = true);
+      await TaskService().createProjectTag(newCategory); // 🔗 Call backend API
+      setState(() {
+        _allCategories.add(newCategory);
+        _selected.add(newCategory);
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('카테고리 추가 실패: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 }
 
@@ -218,9 +267,7 @@ List<String> _mapTags(List<String>? rawTags) {
 
                           // "카테고리 추가" button
                           GestureDetector(
-                            onTap: () {
-                              // TODO: 새 카테고리 추가 로직
-                            },
+                            onTap: _showAddCategoryDialog,
                             child: Container(
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 16, vertical: 8),
