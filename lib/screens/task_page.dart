@@ -1220,7 +1220,7 @@ Future<void> _addSubtaskDialog() async {
                                 decoration: ShapeDecoration(
                                   color: Colors.white,
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                  shadows: const [BoxShadow(color: Color(0x19000000), blurRadius: 8, offset: Offset(0,2))],
+                                  shadows: const [BoxShadow(color: Color(0x19000000), blurRadius: 16, offset: Offset(0,2))],
                                 ),
                                 alignment: Alignment.center,
                                 child: const Text('프로젝트 삭제하기', style: TextStyle(color: Color(0xFFC78E48), fontWeight: FontWeight.w500)),
@@ -1229,66 +1229,179 @@ Future<void> _addSubtaskDialog() async {
                           ),
                           const SizedBox(width: 10),
                           // 프로젝트 완료하기
+                          // Inside your Row of buttons:
                           Expanded(
                             child: StatefulBuilder(
-                              // We wrap in a StatefulBuilder only if you want local setState here—otherwise just use the outer state
                               builder: (ctx, setLocalState) {
                                 return GestureDetector(
-                                  onTap: () async {
-                                    //TaskService().updateProgressRate(currentTask.id, currentTask.progress -50);
-                                    
-                                    // 1) 난이도 선택 dialog
-                                    String level = '상';
-                                    final chosen = await showDialog<String>(
-                                      context: context,
-                                      builder: (dCtx) => AlertDialog(
-                                        title: const Text('난이도 입력'),
-                                        content: StatefulBuilder(
-                                          builder: (c2, dialogSetState) {
-                                            return DropdownButton<String>(
-                                              value: level,
-                                              items: ['상','중','하']
-                                                  .map((l) => DropdownMenuItem(value: l, child: Text(l)))
-                                                  .toList(),
-                                              onChanged: (v) => dialogSetState(() => level = v!),
-                                            );
-                                          },
-                                        ),
-                                        actions: [
-                                          TextButton(onPressed: () => Navigator.pop(dCtx, null), child: const Text('취소')),
-                                          TextButton(onPressed: () => Navigator.pop(dCtx, level), child: const Text('확인')),
-                                        ],
-                                      ),
-                                    );
-                                    if (chosen == null) return; // user cancelled
-                                    
-                                    // 2) Call API
-                                    setState(() => _isCompleting = true);
-                                    try {
-                                      final reward = await TaskService()
-                                          .completeAndRewardProject(
-                                            projectId: currentTask.id, 
-                                            level: chosen,
-                                          )
-                                          .timeout(const Duration(seconds: 10));
+                                  onTap: _isCompleting
+                                      ? null
+                                      : () async {
+                                          // 1) 확인 다이얼로그 띄우기
+                                          final confirm = await showDialog<bool>(
+                                            context: context,
+                                            barrierColor: Colors.black26,
+                                            builder: (_) => Dialog(
+                                              backgroundColor: Colors.white,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(20),
+                                              ),
+                                              insetPadding: const EdgeInsets.symmetric(
+                                                horizontal: 30,
+                                                vertical: 200,
+                                              ),
+                                              child: Padding(
+                                                padding: const EdgeInsets.all(16),
+                                                child: Column(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    const Text(
+                                                      '프로젝트 완료',
+                                                      style: TextStyle(
+                                                        fontSize: 18,
+                                                        fontWeight: FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 12),
+                                                    const Text('이 프로젝트를 정말 완료하시겠습니까?'),
+                                                    const SizedBox(height: 16),
+                                                    Row(
+                                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                      children: [
+                                                        OutlinedButton(
+                                                          onPressed: () => Navigator.pop(context, false),
+                                                          style: OutlinedButton.styleFrom(
+                                                            side: BorderSide(color: Colors.grey[400]!),
+                                                            shape: RoundedRectangleBorder(
+                                                              borderRadius: BorderRadius.circular(12),
+                                                            ),
+                                                          ),
+                                                          child: const Text('취소'),
+                                                        ),
+                                                        ElevatedButton(
+                                                          onPressed: () => Navigator.pop(context, true),
+                                                          style: ElevatedButton.styleFrom(
+                                                            backgroundColor: const Color(0xFFC78E48),
+                                                            shape: RoundedRectangleBorder(
+                                                              borderRadius: BorderRadius.circular(12),
+                                                            ),
+                                                          ),
+                                                          child: const Text(
+                                                            '확인',
+                                                            style: TextStyle(color: Colors.white),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          );
 
-                                      // 3) Remove from list, show reward, navigate
-                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('획득 보상: $reward')));
-                                      Navigator.pushReplacementNamed(context, '/project'); 
-                                    } catch (e) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(content: Text('오류: $e')),
-                                      );
-                                    } finally {
-                                      setState(() => _isCompleting = false);
-                                    }
-                                    
-                                  },
+                                          if (confirm != true) return;
+
+                                          // 2) API 호출 & 로딩 처리
+                                          setLocalState(() => _isCompleting = true);
+                                          try {
+                                            // (선택) predictLevel 에러 무시
+                                            try {
+                                              await TaskService().predictLevel(currentTask.id);
+                                            } catch (_) {}
+
+                                            final result = await TaskService()
+                                                .completeProject(currentTask.id)
+                                                .timeout(const Duration(seconds: 10));
+
+                                            final message = result['message'] as String? ?? '완료 성공';
+                                            final coin    = result['coin']    as int?    ?? 0;
+
+                                            // 3) 결과 다이얼로그
+                                            await showDialog<void>(
+  context: context,
+  barrierColor: Colors.black26,
+  builder: (_) => Dialog(
+    backgroundColor: Colors.white,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(20),
+    ),
+    insetPadding: const EdgeInsets.symmetric(horizontal: 30, vertical: 200),
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // 1) Top icon
+          Icon(
+            Icons.check_circle_outline,
+            size: 64,
+            color: Color(0xFFC78E48),
+          ),
+          const SizedBox(height: 16),
+
+          // 2) Message
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // 3) Coin count
+          Text(
+            '획득 코인: $coin',
+            style: const TextStyle(fontSize: 16),
+          ),
+          const SizedBox(height: 24),
+
+          // 4) Full-width confirm button
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFC78E48),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                elevation: 8,
+              ),
+              child: const Text(
+                '확인',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  ),
+);
+
+                                            Navigator.pushReplacementNamed(context, '/project');
+                                          } catch (e) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(content: Text('오류 발생: $e')),
+                                            );
+                                          } finally {
+                                            setLocalState(() => _isCompleting = false);
+                                          }
+                                        },
                                   child: Container(
                                     height: 38,
                                     decoration: ShapeDecoration(
                                       color: const Color(0xFFC78E48),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
                                       shadows: const [
                                         BoxShadow(
                                           color: Color(0x19000000),
@@ -1299,19 +1412,27 @@ Future<void> _addSubtaskDialog() async {
                                     ),
                                     alignment: Alignment.center,
                                     child: _isCompleting
-                                      ? const SizedBox(
-                                          width: 20, height: 20,
-                                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                                        )
-                                      : const Text(
-                                          '프로젝트 완료하기',
-                                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
-                                        ),
+                                        ? const SizedBox(
+                                            width: 20,
+                                            height: 20,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.white,
+                                            ),
+                                          )
+                                        : const Text(
+                                            '프로젝트 완료하기',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
                                   ),
                                 );
                               },
                             ),
                           ),
+
                         ],
                       ),
                     ),

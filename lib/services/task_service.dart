@@ -518,18 +518,88 @@ Future<void> updateSubtaskActualTime(int subTaskId, int minutes) async {
     }
   }
 
-    Future<List<Task>> getCompletedProjects() async {
-  // 1) Grab the token you saved in ProfileService
+  Future<List<Task>> getCompletedProjects() async {
+    // 1) Grab the token you saved in ProfileService
+    final storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'accessToken');
+    if (token == null) {
+      throw Exception('No access token found – are you logged in?');
+    }
+
+    // 2) Fire the GET with Authorization header
+    final uri = Uri.parse('$baseUrl/api/project/completed');
+    debugPrint('GET $uri with token $token');
+    final response = await http.get(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      },
+    );
+
+    // 3) Log for debugging
+    debugPrint('← ${response.statusCode}: ${response.body}');
+
+    final jsonString = utf8.decode(response.bodyBytes);
+
+    // 4) Error‐out on non-200
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Failed to load completed projects [${response.statusCode}]: ${response.body}',
+      );
+    }
+
+    // 5) Decode and map
+    final List<dynamic> data = jsonDecode(jsonString);
+    return data
+        .map((e) => Task.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+    
+  Future<void> predictLevel(int projectId) async {
+    // 1) Grab token
+    final storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'accessToken');
+    if (token == null) {
+      throw Exception('No access token found – are you logged in?');
+    }
+
+    // 2) Fire GET
+    final uri = Uri.parse('$baseUrl/api/gpt/$projectId/predict-level');
+    debugPrint('GET $uri with token $token');
+    final response = await http.post(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      },
+    );
+
+    // 3) Log for debugging
+    debugPrint('← ${response.statusCode}: ${response.body}');
+
+    // 4) Error‐out if not 200
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Failed to trigger level prediction [${response.statusCode}]: ${response.body}',
+      );
+    }
+
+    // 5) Nothing to return
+  }
+
+  Future<Map<String, dynamic>> completeProject(int projectId) async {
+  // 1) Grab token
   final storage = FlutterSecureStorage();
   final token = await storage.read(key: 'accessToken');
   if (token == null) {
     throw Exception('No access token found – are you logged in?');
   }
 
-  // 2) Fire the GET with Authorization header
-  final uri = Uri.parse('$baseUrl/api/project/completed');
-  debugPrint('GET $uri with token $token');
-  final response = await http.get(
+  // 2) Fire PUT
+  final uri = Uri.parse('$baseUrl/api/project/$projectId/complete');
+  debugPrint('PUT $uri with token $token');
+  final response = await http.put(
     uri,
     headers: {
       'Authorization': 'Bearer $token',
@@ -537,24 +607,19 @@ Future<void> updateSubtaskActualTime(int subTaskId, int minutes) async {
     },
   );
 
-  // 3) Log for debugging
+  // 3) Log
   debugPrint('← ${response.statusCode}: ${response.body}');
+  final body = utf8.decode(response.bodyBytes);
 
-  final jsonString = utf8.decode(response.bodyBytes);
-
-  // 4) Error‐out on non-200
   if (response.statusCode != 200) {
     throw Exception(
-      'Failed to load completed projects [${response.statusCode}]: ${response.body}',
+      'Failed to complete project [${response.statusCode}]: $body',
     );
   }
 
-  // 5) Decode and map
-  final List<dynamic> data = jsonDecode(jsonString);
-  return data
-      .map((e) => Task.fromJson(e as Map<String, dynamic>))
-      .toList();
+  // 4) Decode and return the JSON as a Map
+  return jsonDecode(body) as Map<String, dynamic>;
 }
-  
+
 }
 
