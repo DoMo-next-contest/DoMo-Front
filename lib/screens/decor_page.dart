@@ -4,6 +4,19 @@ import 'package:flutter_3d_controller/flutter_3d_controller.dart';
 import 'package:model_viewer_plus/model_viewer_plus.dart';
 import 'package:domo/widgets/bottom_nav_bar.dart';
 
+
+import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:share_plus/share_plus.dart';
+import 'package:cross_file/cross_file.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'dart:html' as html;
+
+
 class DecorItem {
   final String modelSrc;
   final String thumbnail; // 그리드용 미리보기 이미지 경로
@@ -88,6 +101,56 @@ class DecorPageState extends State<DecorPage> {
     });
   }
 
+  Future<void> _saveThumbnail() async {
+    // 1) find DecorItem for currentModelSrc
+    final item = availableDecors.firstWhere(
+      (d) => d.modelSrc == currentModelSrc,
+      orElse: () => availableDecors.first,
+    );
+
+    // 2) load bytes
+    final byteData = await rootBundle.load(item.thumbnail);
+    final bytes = byteData.buffer.asUint8List();
+
+    // --- WEB: trigger download via an <a> tag ---
+    if (kIsWeb) {
+      final blob = html.Blob([bytes], 'image/png');
+      final url = html.Url.createObjectUrlFromBlob(blob);
+      final anchor = html.AnchorElement(href: url)
+        ..setAttribute('download', 'decor.png')
+        ..click();
+      html.Url.revokeObjectUrl(url);
+      return;
+    }
+
+    // --- MOBILE: request permissions ---
+    if (Platform.isAndroid) {
+      final status = await Permission.storage.request();
+      if (!status.isGranted) return;
+    } else if (Platform.isIOS) {
+      final status = await Permission.photosAddOnly.request();
+      if (!status.isGranted) return;
+    }
+
+    // 3) save to gallery/downloads
+    await ImageGallerySaver.saveImage(
+      bytes,
+      quality: 100,
+      name: 'decor_${DateTime.now().millisecondsSinceEpoch}',
+    );
+
+    // 4) also write a temp file so we can share it
+    final tmpDir = await getTemporaryDirectory();
+    final filePath = '${tmpDir.path}/decor.png';
+    final file = await File(filePath).writeAsBytes(bytes);
+
+    // 5) pop up the native share sheet
+    await Share.shareXFiles(
+      [ XFile(file.path) ],
+      text: '내가 고른 데코!',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -107,10 +170,16 @@ class DecorPageState extends State<DecorPage> {
               Padding(
                 padding: const EdgeInsets.only(top: 16, left: 16, right: 16),
                 child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     IconButton(
                       icon: const Icon(Icons.arrow_back, color: Colors.black),
                       onPressed: () => Navigator.pop(context),
+                    ),
+              
+                    IconButton(
+                      icon: const Icon(Icons.share, color: Colors.black),
+                      onPressed: _saveThumbnail,
                     ),
                   ],
                 ),
