@@ -1,311 +1,213 @@
+// lib/screens/decor/decor_page.dart
+
 import 'package:flutter/material.dart';
-import 'package:domo/models/profile.dart';
-import 'package:flutter_3d_controller/flutter_3d_controller.dart';
+import 'package:domo/models/item.dart';
+import 'package:domo/services/item_service.dart';
 import 'package:model_viewer_plus/model_viewer_plus.dart';
 import 'package:domo/widgets/bottom_nav_bar.dart';
 
-
-import 'dart:io';
-import 'dart:typed_data';
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:flutter/services.dart' show rootBundle;
-import 'package:share_plus/share_plus.dart';
-import 'package:cross_file/cross_file.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:image_gallery_saver/image_gallery_saver.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'dart:html' as html;
-
-
-class DecorItem {
-  final String modelSrc;
-  final String thumbnail; // 그리드용 미리보기 이미지 경로
-
-  DecorItem({required this.modelSrc, required this.thumbnail});
-}
-
 class DecorPage extends StatefulWidget {
-  const DecorPage({super.key, required this.profile});
-
-  final Profile profile;
+  const DecorPage({Key? key}) : super(key: key);
 
   @override
   DecorPageState createState() => DecorPageState();
 }
 
 class DecorPageState extends State<DecorPage> {
-  final Flutter3DController _controller = Flutter3DController();
-
-  // 모델 + 썸네일 정보
-  final List<DecorItem> availableDecors = [
-    DecorItem(
-      modelSrc: 'https://modelviewer.dev/shared-assets/models/Astronaut.glb',
-      thumbnail: 'assets/png/cutie.png',
-    ),
-    DecorItem(
-      modelSrc: 'https://modelviewer.dev/shared-assets/models/RobotExpressive.glb',
-      thumbnail: 'assets/png/car.png',
-    ),
-    DecorItem(
-      modelSrc: 'assets/glb/tiger_with_car.glb',
-      thumbnail: 'assets/png/car.png',
-    ),
-    DecorItem(
-      modelSrc: 'assets/glb/tiger_with_car.glb',
-      thumbnail: 'assets/png/car.png',
-    ),
-    DecorItem(
-      modelSrc: 'assets/glb/tiger_with_car.glb',
-      thumbnail: 'assets/png/car.png',
-    ),
-    DecorItem(
-      modelSrc: 'assets/glb/tiger_with_car.glb',
-      thumbnail: 'assets/png/car.png',
-    ),
-    DecorItem(
-      modelSrc: 'assets/glb/tiger_with_car.glb',
-      thumbnail: 'assets/png/car.png',
-    ),
-    DecorItem(
-      modelSrc: 'assets/glb/tiger_with_car.glb',
-      thumbnail: 'assets/png/car.png',
-    ),
-    DecorItem(
-      modelSrc: 'assets/glb/tiger_with_car.glb',
-      thumbnail: 'assets/png/car.png',
-    ),
-    DecorItem(
-      modelSrc: 'assets/glb/tiger_with_car.glb',
-      thumbnail: 'assets/png/car.png',
-    ),
-    DecorItem(
-      modelSrc: 'assets/glb/tiger_with_car.glb',
-      thumbnail: 'assets/png/car.png',
-    ),
-    DecorItem(
-      modelSrc: 'assets/glb/tiger_with_car.glb',
-      thumbnail: 'assets/png/car.png',
-    )
-  ];
-
-  // 현재 표시할 모델 경로
-  String currentModelSrc = 'assets/glb/character.glb';
+  String? _currentModelSrc;
+  bool _loadingData = true, _isSpinning = false;
+  int _coins = 0;
+  List<Item> _allItems = [];
+  Set<int> _ownedItemIds = {};
 
   @override
   void initState() {
     super.initState();
-    _controller.onModelLoaded.addListener(() {
-      if (_controller.onModelLoaded.value) {
-        debugPrint('✅ Model loaded: $currentModelSrc');
-      }
-    });
+    _loadInitialData();
   }
 
-  Future<void> _saveThumbnail() async {
-    // 1) find DecorItem for currentModelSrc
-    final item = availableDecors.firstWhere(
-      (d) => d.modelSrc == currentModelSrc,
-      orElse: () => availableDecors.first,
-    );
+  Future<void> _loadInitialData() async {
+    try {
+      final all       = await ItemService.getAllItems();
+      final ownedIds  = await ItemService.getOwnedItemIds();
+      final coins     = await ItemService.getUserCoins();
+      final defaultIt = await ItemService.getItemById(9);
 
-    // 2) load bytes
-    final byteData = await rootBundle.load(item.thumbnail);
-    final bytes = byteData.buffer.asUint8List();
-
-    // --- WEB: trigger download via an <a> tag ---
-    if (kIsWeb) {
-      final blob = html.Blob([bytes], 'image/png');
-      final url = html.Url.createObjectUrlFromBlob(blob);
-      final anchor = html.AnchorElement(href: url)
-        ..setAttribute('download', 'decor.png')
-        ..click();
-      html.Url.revokeObjectUrl(url);
-      return;
+      setState(() {
+        _allItems        = all;
+        _ownedItemIds    = ownedIds;
+        _coins           = coins;
+        _currentModelSrc = defaultIt.imageUrl;
+        _loadingData     = false;
+      });
+    } catch (e, st) {
+      debugPrint('❌ Init error: $e\n$st');
     }
+  }
 
-    // --- MOBILE: request permissions ---
-    if (Platform.isAndroid) {
-      final status = await Permission.storage.request();
-      if (!status.isGranted) return;
-    } else if (Platform.isIOS) {
-      final status = await Permission.photosAddOnly.request();
-      if (!status.isGranted) return;
+  Future<void> _onDrawPressed() async {
+    if (_isSpinning) return;
+    setState(() => _isSpinning = true);
+
+    try {
+      // 1) snapshot old owned IDs
+      final before = Set<int>.from(_ownedItemIds);
+
+      // 2) trigger draw
+      await ItemService.drawItem();
+
+      // 3) immediately re-fetch coins
+      final updatedCoins = await ItemService.getUserCoins();
+      setState(() => _coins = updatedCoins);
+
+      // 4) re-fetch owned IDs and diff to find new ID
+      final after    = await ItemService.getOwnedItemIds();
+      final newIds   = after.difference(before);
+      if (newIds.isEmpty) throw Exception('새 아이템을 찾을 수 없어요.');
+      final newId    = newIds.first;
+
+      // 5) immediately update model from local cache
+      final localNew = _allItems.firstWhere((i) => i.id == newId);
+      setState(() {
+        _ownedItemIds.add(newId);
+        _currentModelSrc = localNew.imageUrl;
+      });
+
+      // 6) optional: inform server you “equipped” it
+      await ItemService.equipItem(newId);
+
+      // 7) celebrate
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('🎉 새로운 데코 획득!'),
+          content: Text('${localNew.name} 데코를 획득했습니다!'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('확인')),
+          ],
+        ),
+      );
+    } catch (e) {
+      final msg = e.toString().replaceFirst('Exception: ', '');
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+      debugPrint('❌ Draw error: $e');
+    } finally {
+      setState(() => _isSpinning = false);
     }
+  }
 
-    // 3) save to gallery/downloads
-    await ImageGallerySaver.saveImage(
-      bytes,
-      quality: 100,
-      name: 'decor_${DateTime.now().millisecondsSinceEpoch}',
-    );
-
-    // 4) also write a temp file so we can share it
-    final tmpDir = await getTemporaryDirectory();
-    final filePath = '${tmpDir.path}/decor.png';
-    final file = await File(filePath).writeAsBytes(bytes);
-
-    // 5) pop up the native share sheet
-    await Share.shareXFiles(
-      [ XFile(file.path) ],
-      text: '내가 고른 데코!',
-    );
+  Future<void> _onEquipTapped(int itemId) async {
+    if (!_ownedItemIds.contains(itemId)) return;
+    try {
+      await ItemService.equipItem(itemId);
+      final item = _allItems.firstWhere((i) => i.id == itemId);
+      setState(() => _currentModelSrc = item.imageUrl);
+    } catch (e) {
+      debugPrint('❌ Equip error: $e');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_loadingData) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: Center(
-        child: Container(
-          width: 393,
-          height: 852,
-          clipBehavior: Clip.antiAlias,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Column(
-            children: [
-              // Top bar
-              Padding(
-                padding: const EdgeInsets.only(top: 16, left: 16, right: 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back, color: Colors.black),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-              
-                    IconButton(
-                      icon: const Icon(Icons.share, color: Colors.black),
-                      onPressed: _saveThumbnail,
-                    ),
-                  ],
-                ),
-              ),
+      body: Column(
+        children: [
+          const SizedBox(height: 16),
 
-              // Main 3D model viewer (with key)
-              SizedBox(
-                width: double.infinity,
-                height: 270,
-                child: Center(
-                  child: SizedBox(
-                    width: 300,
-                    height: 300,
-                    child: ModelViewer(
-                      key: ValueKey(currentModelSrc),
-                      src: currentModelSrc,
-                      alt: '3D model',
+          // 3D 모델 뷰어 (Key forces reload on URL change)
+          Expanded(
+            flex: 3,
+            child: Center(
+              child: _currentModelSrc != null
+                  ? ModelViewer(
+                      key: ValueKey(_currentModelSrc),
+                      src: _currentModelSrc!,
+                      alt: '3D 데코 모델',
                       autoRotate: true,
                       cameraControls: true,
                       disableZoom: true,
                       disablePan: true,
                       backgroundColor: Colors.transparent,
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 8),
-
-              // Coins & 버튼
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    const Icon(Icons.monetization_on,
-                        color: Color(0xFFF2AC57)),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${widget.profile.coins} 코인',
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFF2AC57),
-                        foregroundColor: Colors.white,           // ← forces white text/icons
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      onPressed: () { /* … */ },
-                      child: const Text('새로운 데코 얻기 (40)'),
-                    ),
-
-                  ],
-                ),
-              ),
-
-              
-
-              const SizedBox(height: 8),
-
-              // 하단 그리드: 썸네일 표시
-              Expanded(
-                child: Container(
-                  color: const Color(0xFFFFF5E5),
-                  padding: const EdgeInsets.all(16),
-                  child: GridView.builder(
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                    ),
-                    itemCount: availableDecors.length,
-                    itemBuilder: (_, index) {
-                      final item = availableDecors[index];
-                      final isSelected = item.modelSrc == currentModelSrc;
-                      return GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            currentModelSrc = item.modelSrc;
-                          });
-                        },
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? Colors.amber.shade100
-                                : Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Color(0x19000000),
-                                blurRadius: 8,
-                                offset: Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.asset(
-                              item.thumbnail,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-
-              // Bottom nav
-              SizedBox(
-                height: 68,
-                child: BottomNavBar(activeIndex: 3),
-              ),
-            ],
+                    )
+                  : const CircularProgressIndicator(),
+            ),
           ),
-        ),
+
+          // 코인 & 뽑기 버튼
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                const Icon(Icons.monetization_on, color: Color(0xFFF2AC57)),
+                const SizedBox(width: 4),
+                Text('$_coins 코인'),
+                const SizedBox(width: 14),
+                ElevatedButton(
+                  onPressed: _isSpinning ? null : _onDrawPressed,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFF2AC57),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  child: _isSpinning
+                      ? const SizedBox(
+                          width: 20, height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Text('새로운 데코 얻기 (50)'),
+                ),
+              ],
+            ),
+          ),
+
+          // 전체 아이템 그리드 (잠긴 항목은 락/어둡게)
+          Expanded(
+            flex: 4,
+            child: Container(
+              color: const Color(0xFFFFF5E5),
+              padding: const EdgeInsets.all(16),
+              child: GridView.builder(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3, crossAxisSpacing: 12, mainAxisSpacing: 12
+                ),
+                itemCount: _allItems.length,
+                itemBuilder: (ctx, i) {
+                  final item       = _allItems[i];
+                  final isOwned    = _ownedItemIds.contains(item.id);
+                  final isSelected = item.imageUrl == _currentModelSrc;
+
+                  return GestureDetector(
+                    onTap: isOwned ? () => _onEquipTapped(item.id) : null,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        border: isSelected ? Border.all(color: Colors.amber, width: 2) : null,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Stack(fit: StackFit.expand, children: [
+                          Image.network(item.image2dUrl, fit: BoxFit.cover),
+                          if (!isOwned)
+                            Container(
+                              color: Colors.black.withOpacity(0.5),
+                              alignment: Alignment.center,
+                              child: const Icon(Icons.lock, color: Colors.white70, size: 32),
+                            ),
+                        ]),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+
+          // Bottom nav
+          SizedBox(height: 68, child: BottomNavBar(activeIndex: 3)),
+        ],
       ),
     );
   }

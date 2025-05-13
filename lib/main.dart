@@ -119,7 +119,7 @@ class MyApp extends StatelessWidget {
           final profile =
               (maybeProfile is Profile) ? maybeProfile : _defaultProfile;
           return MaterialPageRoute(
-            builder: (_) => DecorPage(profile: profile),
+            builder: (_) => DecorPage(),
             settings: settings,
           );
         }
