@@ -142,7 +142,7 @@ class DecorPageState extends State<DecorPage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                const Icon(Icons.monetization_on, color: Color(0xFFF2AC57)),
+                Image.asset('assets/png/coin.png', width: 20, height: 20),
                 const SizedBox(width: 4),
                 Text('$_coins 코인'),
                 const SizedBox(width: 14),
