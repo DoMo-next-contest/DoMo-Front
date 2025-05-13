@@ -240,4 +240,11 @@ class ProfileService {
       throw Exception('회원탈퇴 실패 (${resp.statusCode}): ${resp.body}');
     }
   }
+  Future<void> logout() async {
+    // TODO: remove access & refresh tokens from secure storage/shared_preferences
+    // 예시:
+    // final prefs = await SharedPreferences.getInstance();
+    // await prefs.remove('accessToken');
+    // await prefs.remove('refreshToken');
+  }
 }

@@ -277,6 +277,22 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                     const SizedBox(height: 24),
 
+                    Center(
+                    child: TextButton(
+                      onPressed: () async {
+                        // 1) 로그아웃 처리 (토큰 삭제 등)
+                        await ProfileService().logout();
+                        // 2) 로그인 화면으로 이동
+                        Navigator.pushReplacementNamed(context, '/login');
+                      },
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.black, // 필요에 따라 색상 변경
+                      ),
+                      child: const Text('로그아웃'),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
                     // Membership withdrawal
                     Center(
                       child: TextButton(
