@@ -8,6 +8,8 @@ import 'package:domo/widgets/bottom_nav_bar.dart';
 import 'package:domo/services/character_service.dart';
 import 'package:domo/services/task_service.dart';
 import 'package:model_viewer_plus/model_viewer_plus.dart';
+import 'package:domo/services/profile_service.dart';
+import 'package:domo/models/profile.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -22,6 +24,8 @@ class DashboardPageState extends State<DashboardPage> {
   bool _loadingModel = true;
   final _service = TaskService(); 
   late Future<Task> _recentFuture;
+  late Future<Profile> _profileFuture;
+  
 
   @override
   void initState() {
@@ -33,6 +37,7 @@ class DashboardPageState extends State<DashboardPage> {
     });
 
      _recentFuture = _service.fetchRecent();
+     _profileFuture = ProfileService().fetchProfile();
     
     CharacterService.fetchModelUrl()
       .then((url) {
@@ -108,22 +113,42 @@ class DashboardPageState extends State<DashboardPage> {
                     ),
                   ),
 
-                  // 인사말
-                  const Positioned(
-                    top: 150,
-                    left: 0,
-                    right: 0,
-                    child: Text(
-                      '반가워요!',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Color(0xFF1E1E1E),
-                        fontSize: 32,
-                        fontWeight: FontWeight.w700,
-                        height: 1.12,
-                        letterSpacing: -0.64,
-                      ),
-                    ),
+                  // 인사말: FutureBuilder로 profile.name을 가져오기
+                  FutureBuilder<Profile>(
+                    future: _profileFuture,
+                    builder: (ctx, snap) {
+                      if (snap.connectionState != ConnectionState.done) {
+                        // 로딩 중에는 빈 공간 혹은 스피너
+                        return const Positioned(
+                          top: 150,
+                          left: 0,
+                          right: 0,
+                          child: Center(child: CircularProgressIndicator()),
+                        );
+                      }
+                      if (snap.hasError) {
+                        return Positioned(
+                          top: 150,
+                          left: 0,
+                          right: 0,
+                          child: Center(child: Text('Error: ${snap.error}')),
+                        );
+                      }
+                      final profile = snap.data!;
+                      return Positioned(
+                        top: 150,
+                        left: 0,
+                        right: 0,
+                        child: Text(
+                          '반가워요, ${profile.name}님!',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Color(0xFF1E1E1E),
+                            fontSize: 32,
+                          ),
+                        ),
+                      );
+                    },
                   ),
 
                   FutureBuilder<Task>(

@@ -45,7 +45,7 @@ class WelcomePageState extends State<WelcomeScreen> {
                     width: 300,
                     height: 300,
                     child: ModelViewer(
-                      src: 'assets/character.glb',
+                      src: 'https://modelviewer.dev/shared-assets/models/Astronaut.glb',
                       alt: '3D model of Cutie',
                       autoRotate: true,
                       cameraControls: true,
