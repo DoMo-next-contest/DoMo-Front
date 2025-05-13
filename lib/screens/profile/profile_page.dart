@@ -280,9 +280,6 @@ class _ProfilePageState extends State<ProfilePage> {
                     Center(
                     child: TextButton(
                       onPressed: () async {
-                        // 1) 로그아웃 처리 (토큰 삭제 등)
-                        await ProfileService().logout();
-                        // 2) 로그인 화면으로 이동
                         Navigator.pushReplacementNamed(context, '/login');
                       },
                       style: TextButton.styleFrom(

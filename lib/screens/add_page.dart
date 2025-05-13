@@ -571,10 +571,15 @@ Future<void> _editSubtask(Subtask sub, int index) async {
                                   isDense: true,
                                   contentPadding: EdgeInsets.zero,
                                   hintText: '프로젝트 이름',
+                                  hintStyle: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                    color: Color(0x80000000),
+                                  ),
                                   border: InputBorder.none,
                                 ),
                                 style: const TextStyle(
-                                    fontSize: 16, fontWeight: FontWeight.w500),
+                                    fontSize: 16, fontWeight: FontWeight.w500,)
                               ),
                               const SizedBox(height: 8),
                               const Divider(color: Color(0x4CB1B1B1)),
@@ -583,7 +588,13 @@ Future<void> _editSubtask(Subtask sub, int index) async {
                                 child: TextField(
                                   controller: _detailsController,
                                   decoration: const InputDecoration.collapsed(
-                                      hintText: '프로젝트 설명'),
+                                      hintText: '프로젝트 설명',
+                                      hintStyle: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w400,
+                                        color: Color(0x80000000),
+                                      ),
+                                    ),
                                   style: const TextStyle(
                                       fontSize: 16, fontWeight: FontWeight.w400),
                                 ),
@@ -616,10 +627,15 @@ Future<void> _editSubtask(Subtask sub, int index) async {
                               Expanded(
                                 child: Text(
                                   _dateController.text.isEmpty
-                                      ? 'YYYY / MM / DD'
-                                      : _dateController.text,
-                                  style: const TextStyle(
-                                      fontSize: 16, fontWeight: FontWeight.w400),
+                                    ? 'YYYY / MM / DD'
+                                    : _dateController.text,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w400,
+                                    color: _dateController.text.isEmpty
+                                      ? Color(0x80000000)   // placeholder일 때만 반투명
+                                      : Color(0xFF1E1E1E),  // 실제 날짜는 진한 색
+                                  ),
                                 ),
                               ),
                               InkWell(onTap: _selectDeadlineDate, child: const Icon(Icons.edit, size: 20)),
@@ -670,7 +686,12 @@ Future<void> _editSubtask(Subtask sub, int index) async {
                             controller: _requirementController,
                             maxLines: null,
                             decoration: const InputDecoration.collapsed(
-                                hintText: '포함했으면 하는 하위작업 등'),
+                                hintText: '포함했으면 하는 하위작업 등',
+                                hintStyle: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w400,
+                                  color: Color(0x80000000),
+                                ),),
                           ),
                         ),
 
