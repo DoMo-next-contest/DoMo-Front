@@ -51,7 +51,7 @@ Future<void> _loadTasksFromBackend() async {
     final tasks = await TaskService().getTasks();
     
     setState(() {
-      _tasks = tasks.where((t) => t.progress <= 1.0).toList();
+      _tasks = tasks.where((t) => t.completed != true).toList();
       //change to when it is marked completed
     });
     

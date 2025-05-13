@@ -589,38 +589,71 @@ Future<void> updateSubtaskActualTime(int subTaskId, int minutes) async {
     // 5) Nothing to return
   }
 
-  Future<Map<String, dynamic>> completeProject(int projectId) async {
-  // 1) Grab token
-  final storage = FlutterSecureStorage();
-  final token = await storage.read(key: 'accessToken');
-  if (token == null) {
-    throw Exception('No access token found – are you logged in?');
-  }
+  Future<void> expectedTime(int projectId) async {
+    // 1) Grab token
+    final storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'accessToken');
+    if (token == null) {
+      throw Exception('No access token found – are you logged in?');
+    }
 
-  // 2) Fire PUT
-  final uri = Uri.parse('$baseUrl/api/project/$projectId/complete');
-  debugPrint('PUT $uri with token $token');
-  final response = await http.put(
-    uri,
-    headers: {
-      'Authorization': 'Bearer $token',
-      'Accept': 'application/json',
-    },
-  );
-
-  // 3) Log
-  debugPrint('← ${response.statusCode}: ${response.body}');
-  final body = utf8.decode(response.bodyBytes);
-
-  if (response.statusCode != 200) {
-    throw Exception(
-      'Failed to complete project [${response.statusCode}]: $body',
+    // 2) Fire GET
+    final uri = Uri.parse('$baseUrl/api/project/$projectId/expected-time');
+    debugPrint('GET $uri with token $token');
+    final response = await http.put(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      },
     );
-  }
 
-  // 4) Decode and return the JSON as a Map
-  return jsonDecode(body) as Map<String, dynamic>;
-}
+    // 3) Log for debugging
+    debugPrint('← ${response.statusCode}: ${response.body}');
+
+    // 4) Error‐out if not 200
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Failed to send expected time [${response.statusCode}]: ${response.body}',
+      );
+    }
+
+    // 5) Nothing to return
+    }
+
+    Future<Map<String, dynamic>> completeProject(int projectId) async {
+    // 1) Grab token
+    final storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'accessToken');
+    if (token == null) {
+      throw Exception('No access token found – are you logged in?');
+    }
+
+    // 2) Fire PUT
+    final uri = Uri.parse('$baseUrl/api/project/$projectId/complete');
+    debugPrint('PUT $uri with token $token');
+    final response = await http.put(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    // 3) Log
+    debugPrint('← ${response.statusCode}: ${response.body}');
+    final body = utf8.decode(response.bodyBytes);
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Failed to complete project [${response.statusCode}]: $body',
+      );
+    }
+
+    // 4) Decode and return the JSON as a Map
+    return jsonDecode(body) as Map<String, dynamic>;
+  }
 
 }
 

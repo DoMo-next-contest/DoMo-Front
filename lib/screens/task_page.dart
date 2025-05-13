@@ -1228,6 +1228,8 @@ Future<void> _addSubtaskDialog() async {
                             ),
                           ),
                           const SizedBox(width: 10),
+
+
                           // 프로젝트 완료하기
                           // Inside your Row of buttons:
                           Expanded(
@@ -1307,84 +1309,100 @@ Future<void> _addSubtaskDialog() async {
                                             // (선택) predictLevel 에러 무시
                                             try {
                                               await TaskService().predictLevel(currentTask.id);
-                                            } catch (_) {}
+                                              debugPrint('predictLevel succeeded');
+                                            } catch (_) {
+
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(content: Text('레벨 예측 실패:')),
+                                              );
+                                            }
+
+                                            try {
+                                              await TaskService().expectedTime(currentTask.id);
+                                              debugPrint('predictLevel succeeded');
+                                              } catch (_) {
+
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  SnackBar(content: Text('레벨 예측 실패1:')),
+                                                );
+                                            }
 
                                             final result = await TaskService()
-                                                .completeProject(currentTask.id)
-                                                .timeout(const Duration(seconds: 10));
+                                                .completeProject(currentTask.id);
+                                          
 
                                             final message = result['message'] as String? ?? '완료 성공';
-                                            final coin    = result['coin']    as int?    ?? 0;
+                                            final coin    = result['coin']    as int    ?? 0;
 
                                             // 3) 결과 다이얼로그
                                             await showDialog<void>(
-  context: context,
-  barrierColor: Colors.black26,
-  builder: (_) => Dialog(
-    backgroundColor: Colors.white,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(20),
-    ),
-    insetPadding: const EdgeInsets.symmetric(horizontal: 30, vertical: 200),
-    child: Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // 1) Top icon
-          Icon(
-            Icons.check_circle_outline,
-            size: 64,
-            color: Color(0xFFC78E48),
-          ),
-          const SizedBox(height: 16),
+                                            context: context,
+                                            barrierColor: Colors.black26,
+                                            builder: (_) => Dialog(
+                                              backgroundColor: Colors.white,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(20),
+                                              ),
+                                              insetPadding: const EdgeInsets.symmetric(horizontal: 30, vertical: 200),
+                                              child: Padding(
+                                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                                                child: Column(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    // 1) Top icon
+                                                    Icon(
+                                                      Icons.check_circle_outline,
+                                                      size: 64,
+                                                      color: Color(0xFFC78E48),
+                                                    ),
+                                                    const SizedBox(height: 16),
 
-          // 2) Message
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 12),
+                                                    // 2) Message
+                                                    Text(
+                                                      message,
+                                                      textAlign: TextAlign.center,
+                                                      style: const TextStyle(
+                                                        fontSize: 20,
+                                                        fontWeight: FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 12),
 
-          // 3) Coin count
-          Text(
-            '획득 코인: $coin',
-            style: const TextStyle(fontSize: 16),
-          ),
-          const SizedBox(height: 24),
+                                                    // 3) Coin count
+                                                    Text(
+                                                      '획득 코인: $coin',
+                                                      style: const TextStyle(fontSize: 16),
+                                                    ),
+                                                    const SizedBox(height: 24),
 
-          // 4) Full-width confirm button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFC78E48),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                elevation: 8,
-              ),
-              child: const Text(
-                '확인',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 16,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    ),
-  ),
-);
+                                                    // 4) Full-width confirm button
+                                                    SizedBox(
+                                                      width: double.infinity,
+                                                      child: ElevatedButton(
+                                                        onPressed: () => Navigator.pop(context),
+                                                        style: ElevatedButton.styleFrom(
+                                                          backgroundColor: const Color(0xFFC78E48),
+                                                          shape: RoundedRectangleBorder(
+                                                            borderRadius: BorderRadius.circular(12),
+                                                          ),
+                                                          padding: const EdgeInsets.symmetric(vertical: 14),
+                                                          elevation: 8,
+                                                        ),
+                                                        child: const Text(
+                                                          '확인',
+                                                          style: TextStyle(
+                                                            color: Colors.white,
+                                                            fontWeight: FontWeight.w500,
+                                                            fontSize: 16,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          );
 
                                             Navigator.pushReplacementNamed(context, '/project');
                                           } catch (e) {

@@ -285,6 +285,7 @@ Future<void> _showStyledDialog({
       category: _selectedCategory,
       requirements: _detailsController.text,
       description: _requirementController.text,
+      completed: false,
     );
     final pid = await TaskService().createTask(newTask);
     _projectId = pid;
@@ -801,6 +802,7 @@ Future<void> _editSubtask(Subtask sub, int index) async {
                                       order: _generatedSubtasks.length + 1,
                                       title: title,
                                       expectedDuration: Duration(hours: h, minutes: m),
+                                      tag: 'DEFAULT',
                                     ));
                                     _listVersion++;
                                   });

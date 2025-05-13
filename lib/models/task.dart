@@ -161,6 +161,7 @@ class Task {
   String category;
   DateTime lastActivity;
   double progress;
+  bool completed;
 
   Task({
     required this.id,
@@ -171,6 +172,7 @@ class Task {
     this.requirements = '',
     this.subtasks = const [],
     this.progress = 0.0,
+    required this.completed,
   }) : lastActivity = DateTime.now();
 
   /*
@@ -230,6 +232,7 @@ class Task {
       progress: ((json['projectProgressRate'] as num?)?.toDouble() ?? 0.0) / 100.0,
       description: json['projectDescription'] as String? ?? '',
       requirements: json['projectRequirements'] as String? ?? '',
+      completed: json['completed'],
       subtasks: (json['subtasks'] as List<dynamic>?)
               ?.map((e) => Subtask.fromJson(e as Map<String, dynamic>))
               .toList() ??
@@ -289,6 +292,7 @@ class Task {
       requirements: '',
       subtasks: const [],
       progress: 0.5,
+      completed: json['completed'],
     )..lastActivity = DateTime.now();
   }
   
@@ -304,6 +308,7 @@ List<Task> globalTaskList = [
     category: '업무',
     description: '',
     requirements: '',
+    completed: true,
     subtasks: [
       Subtask(
         order:0,
@@ -335,6 +340,7 @@ extension TaskJson on Task {
     category: json['category'],
     requirements: '',
     description: '',
+    completed: json['completed'],
     
     subtasks: (json['subtasks'] as List)
       .map((s) => SubtaskJson.fromJson(s))
