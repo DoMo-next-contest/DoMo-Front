@@ -45,7 +45,7 @@ class WelcomePageState extends State<WelcomeScreen> {
                     width: 300,
                     height: 300,
                     child: ModelViewer(
-                      src: "https://next-domo-assets.s3.ap-northeast-2.amazonaws.com/items/tiger.glb",
+                      src: 'https://next-domo-assets.s3.ap-northeast-2.amazonaws.com/items/tiger.glb',
                       alt: '3D model of Cutie',
                       autoRotate: true,
                       cameraControls: true,
