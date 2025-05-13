@@ -383,63 +383,93 @@ class TaskPageState extends State<TaskPage> {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFFF2AC57))),
             const SizedBox(height: 16),
 
-            // 제목
-            TextField(
-              controller: titleCtrl,
-              decoration: InputDecoration(
-                labelText: '제목',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              ),
-            ),
-            const SizedBox(height: 12),
+            // 하위작업 이름
+Column(
+  crossAxisAlignment: CrossAxisAlignment.start,
+  children: [
+    const Text(
+      '하위작업 이름',
+      style: TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        color: Colors.black,
+      ),
+    ),
+    const SizedBox(height: 8),
+    TextField(
+      controller: titleCtrl,
+      decoration: InputDecoration(
+        labelText: '제목',
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      ),
+    ),
+  ],
+),
+const SizedBox(height: 16),
 
-            // 실제 시간 → 시 / 분 split
-            Row(children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('시간(시)', style: TextStyle(fontSize: 12, color: Colors.grey[700])),
-                    const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey[400]!),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: TextField(
-                        controller: hoursCtrl,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration.collapsed(hintText: ''),
-                      ),
-                    ),
-                  ],
+// 실제 소요시간
+Column(
+  crossAxisAlignment: CrossAxisAlignment.start,
+  children: [
+    const Text(
+      '실제 소요시간',
+      style: TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        color: Colors.black,
+      ),
+    ),
+    const SizedBox(height: 8),
+    Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('시간(시)', style: TextStyle(fontSize: 12, color: Colors.grey[700])),
+              const SizedBox(height: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey[400]!),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: TextField(
+                  controller: hoursCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration.collapsed(hintText: ''),
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('분', style: TextStyle(fontSize: 12, color: Colors.grey[700])),
-                    const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey[400]!),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: TextField(
-                        controller: minutesCtrl,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration.collapsed(hintText: ''),
-                      ),
-                    ),
-                  ],
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('분', style: TextStyle(fontSize: 12, color: Colors.grey[700])),
+              const SizedBox(height: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey[400]!),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: TextField(
+                  controller: minutesCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration.collapsed(hintText: ''),
                 ),
               ),
-            ]),
+            ],
+          ),
+        ),
+      ],
+    ),
+  ],
+),
             const SizedBox(height: 24),
 
             // 버튼

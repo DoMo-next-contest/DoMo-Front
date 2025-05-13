@@ -261,8 +261,7 @@ Future<void> _showStyledDialog({
   // 1) Validate required fields
   if (_nameController.text.isEmpty ||
       _dateController.text.isEmpty ||
-      _detailsController.text.isEmpty ||
-      _requirementController.text.isEmpty) {
+      _detailsController.text.isEmpty) {
     await _showStyledDialog(
       title: '필수 항목 미입력',
       message: 'AI 생성을 진행하기 전에 모든 필드를 입력해 주세요.',
@@ -283,8 +282,8 @@ Future<void> _showStyledDialog({
       name: _nameController.text,
       deadline: _selectedDeadline!,
       category: _selectedCategory,
-      requirements: _detailsController.text,
-      description: _requirementController.text,
+      requirements: _requirementController.text,
+      description: _detailsController.text,
       completed: false,
     );
     final pid = await TaskService().createTask(newTask);
@@ -768,36 +767,64 @@ Future<void> _editSubtask(Subtask sub, int index) async {
                             ),
                           ),
                           const SizedBox(height: 16),
-                          TextField(
-                            controller: titleCtrl,
-                            decoration: InputDecoration(
-                              labelText: '제목',
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Expanded(
-                                child: TextField(
-                                  controller: hoursCtrl,
-                                  keyboardType: TextInputType.number,
-                                  decoration: InputDecoration(
-                                    labelText: '시간(시)',
-                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                                  ),
+                              const Text(
+                                '하위작업 이름', // ✅ Section label above title
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black,
                                 ),
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: TextField(
-                                  controller: minsCtrl,
-                                  keyboardType: TextInputType.number,
-                                  decoration: InputDecoration(
-                                    labelText: '분',
-                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                                  ),
+                              const SizedBox(height: 8),
+                              TextField(
+                                controller: titleCtrl,
+                                decoration: InputDecoration(
+                                  labelText: '제목',
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                                 ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                '예상 소요시간', // ✅ Section label above time inputs
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: TextField(
+                                      controller: hoursCtrl,
+                                      keyboardType: TextInputType.number,
+                                      decoration: InputDecoration(
+                                        labelText: '시간(시)',
+                                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: TextField(
+                                      controller: minsCtrl,
+                                      keyboardType: TextInputType.number,
+                                      decoration: InputDecoration(
+                                        labelText: '분',
+                                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
