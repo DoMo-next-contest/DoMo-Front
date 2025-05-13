@@ -26,13 +26,53 @@ class DecorPageState extends State<DecorPage> {
   // 모델 + 썸네일 정보
   final List<DecorItem> availableDecors = [
     DecorItem(
-      modelSrc: 'assets/glb/character.glb',
+      modelSrc: 'https://modelviewer.dev/shared-assets/models/Astronaut.glb',
       thumbnail: 'assets/png/cutie.png',
+    ),
+    DecorItem(
+      modelSrc: 'https://modelviewer.dev/shared-assets/models/RobotExpressive.glb',
+      thumbnail: 'assets/png/car.png',
     ),
     DecorItem(
       modelSrc: 'assets/glb/tiger_with_car.glb',
       thumbnail: 'assets/png/car.png',
     ),
+    DecorItem(
+      modelSrc: 'assets/glb/tiger_with_car.glb',
+      thumbnail: 'assets/png/car.png',
+    ),
+    DecorItem(
+      modelSrc: 'assets/glb/tiger_with_car.glb',
+      thumbnail: 'assets/png/car.png',
+    ),
+    DecorItem(
+      modelSrc: 'assets/glb/tiger_with_car.glb',
+      thumbnail: 'assets/png/car.png',
+    ),
+    DecorItem(
+      modelSrc: 'assets/glb/tiger_with_car.glb',
+      thumbnail: 'assets/png/car.png',
+    ),
+    DecorItem(
+      modelSrc: 'assets/glb/tiger_with_car.glb',
+      thumbnail: 'assets/png/car.png',
+    ),
+    DecorItem(
+      modelSrc: 'assets/glb/tiger_with_car.glb',
+      thumbnail: 'assets/png/car.png',
+    ),
+    DecorItem(
+      modelSrc: 'assets/glb/tiger_with_car.glb',
+      thumbnail: 'assets/png/car.png',
+    ),
+    DecorItem(
+      modelSrc: 'assets/glb/tiger_with_car.glb',
+      thumbnail: 'assets/png/car.png',
+    ),
+    DecorItem(
+      modelSrc: 'assets/glb/tiger_with_car.glb',
+      thumbnail: 'assets/png/car.png',
+    )
   ];
 
   // 현재 표시할 모델 경로
@@ -79,7 +119,7 @@ class DecorPageState extends State<DecorPage> {
               // Main 3D model viewer (with key)
               SizedBox(
                 width: double.infinity,
-                height: 250,
+                height: 270,
                 child: Center(
                   child: SizedBox(
                     width: 300,
