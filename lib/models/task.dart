@@ -284,14 +284,14 @@ class Task {
     final uiCategory = rawToUi[rawTag] ?? rawTag;
 
     return Task(
-      id: 0,
+      id: json['projectId'] as int,
       name: json['projectName'] as String,
-      deadline: DateTime.now(),      // or some sensible default
+      deadline: DateTime.parse(json['projectDeadline'] as String),      // or some sensible default
       category: uiCategory,          // <- here
-      description: '',
+      description: json['projectDescription'],
       requirements: '',
       subtasks: const [],
-      progress: 0.5,
+      progress: ((json['projectProgressRate'] as num?)?.toDouble() ?? 0.0) / 100.0,
       completed: json['completed'],
     )..lastActivity = DateTime.now();
   }
