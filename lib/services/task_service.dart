@@ -5,7 +5,6 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:domo/models/task.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:http/http.dart' as http;
 
 
 class TaskService {
@@ -137,14 +136,15 @@ class TaskService {
 
     final url = Uri.parse('$baseUrl/api/subtasks/$projectId/subtasks');
 
-    final Map<String, dynamic> obj = {
-      'subTaskName':         sub.title,
-      'subTaskExpectedTime': sub.expectedDuration.inMinutes,
-      'subTaskOrder':        sub.order,
-    };
-
-    // wrap it in a List
-    final bodyJson = jsonEncode([ obj ]);
+    // Build the single‐element list the API expects
+    final bodyJson = jsonEncode([
+      {
+        'subTaskName':         sub.title,
+        'subTaskExpectedTime': sub.expectedDuration.inMinutes,
+        'subTaskOrder':        sub.order,
+        'subTaskTag':          sub.tag,  // ← include the tag field
+      }
+    ]);
 
     final resp = await http.post(
       url,
@@ -157,9 +157,10 @@ class TaskService {
 
     if (resp.statusCode < 200 || resp.statusCode >= 300) {
       final msg = utf8.decode(resp.bodyBytes);
-      throw Exception('Failed to create subtasks [${resp.statusCode}]: $msg');
+      throw Exception('Failed to create subtask [${resp.statusCode}]: $msg');
     }
   }
+
 
   /// Delete a project by its ID.
   Future<void> deleteProject(int projectId) async {
