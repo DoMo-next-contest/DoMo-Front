@@ -17,7 +17,7 @@ class _CompletedProjectsPageState extends State<CompletedProjectsPage> {
   List<Task> _tasks = [];
   bool _isLoading = true;
 
-  // filters & sort state just like ProjectPage
+  // 필터 & 정렬 상태
   List<String> get categories => Task.allCategories;
   Set<String> selectedCategories = {...Task.allCategories};
 
@@ -28,28 +28,27 @@ class _CompletedProjectsPageState extends State<CompletedProjectsPage> {
   void initState() {
     super.initState();
     _loadTasks();
-    Task.loadCategories().then((_) {
-      setState(() => selectedCategories = {...Task.allCategories});
-    }).catchError((_) {
-      setState(() => selectedCategories = {...Task.allCategories});
-    });
+    Task.loadCategories()
+      .then((_) => setState(() => selectedCategories = {...Task.allCategories}))
+      .catchError((_) => setState(() => selectedCategories = {...Task.allCategories}));
   }
 
   Future<void> _loadTasks() async {
-  try {
-    final completed = await TaskService().getCompletedProjects();
-    setState(() {
-      _tasks     = completed;
-      _isLoading = false;
-    });
-  } catch (e) {
-    debugPrint('❌ error loading completed tasks: $e');
-    setState(() => _isLoading = false);
+    try {
+      final completed = await TaskService().getCompletedProjects();
+      setState(() {
+        _tasks = completed;
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('❌ error loading completed tasks: $e');
+      setState(() => _isLoading = false);
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {
+    // 필터 & 정렬 적용
     final filtered = _tasks.where((t) => selectedCategories.contains(t.category)).toList();
     switch (_selectedSort) {
       case '가나다순':
@@ -67,8 +66,7 @@ class _CompletedProjectsPageState extends State<CompletedProjectsPage> {
           color: Colors.white,
           child: Stack(
             children: [
-
-              // — Title —
+              // 1) 제목
               const Positioned(
                 left: 20,
                 top: 30,
@@ -85,7 +83,7 @@ class _CompletedProjectsPageState extends State<CompletedProjectsPage> {
                 ),
               ),
 
-              // — 1) Filter chips —
+              // 2) 필터 칩
               Positioned(
                 left: 0,
                 right: 0,
@@ -109,11 +107,8 @@ class _CompletedProjectsPageState extends State<CompletedProjectsPage> {
                       return GestureDetector(
                         onTap: () {
                           setState(() {
-                            if (on) {
-                              selectedCategories.remove(cat);
-                            } else {
-                              selectedCategories.add(cat);
-                            }
+                            if (on) selectedCategories.remove(cat);
+                            else selectedCategories.add(cat);
                           });
                         },
                         child: Container(
@@ -139,7 +134,7 @@ class _CompletedProjectsPageState extends State<CompletedProjectsPage> {
                 ),
               ),
 
-              // — 2) Sort dropdown —
+              // 3) 정렬 드롭다운
               Positioned(
                 left: 16,
                 top: 130,
@@ -148,9 +143,8 @@ class _CompletedProjectsPageState extends State<CompletedProjectsPage> {
                   color: Colors.white,
                   elevation: 4,
                   onSelected: (v) => setState(() => _selectedSort = v),
-                  itemBuilder: (_) => _sortOptions.map((opt) {
-                    return PopupMenuItem(value: opt, child: Text(opt));
-                  }).toList(),
+                  itemBuilder: (_) =>
+                      _sortOptions.map((opt) => PopupMenuItem(value: opt, child: Text(opt))).toList(),
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
@@ -171,7 +165,7 @@ class _CompletedProjectsPageState extends State<CompletedProjectsPage> {
                 ),
               ),
 
-              // — 3) Completed project list —
+              // 4) 프로젝트 리스트
               Positioned(
                 left: 0, right: 0, top: 170, bottom: 82,
                 child: _isLoading
@@ -181,55 +175,84 @@ class _CompletedProjectsPageState extends State<CompletedProjectsPage> {
                         itemCount: filtered.length,
                         itemBuilder: (ctx, idx) {
                           final t = filtered[idx];
-                          final date = '${t.deadline.month.toString().padLeft(2,'0')}/'
-                              '${t.deadline.day.toString().padLeft(2,'0')}';
+                          final date =
+                              '${t.deadline.month.toString().padLeft(2, '0')}/'
+                              '${t.deadline.day.toString().padLeft(2, '0')}';
                           return Padding(
                             padding: const EdgeInsets.symmetric(vertical: 16),
-                            child: Container(
-                              height: 90,
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-                              decoration: ShapeDecoration(
-                                color: Colors.white,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                shadows: const [BoxShadow(color: Color(0x19000000), blurRadius: 16, offset: Offset(0,2))],
-                              ),
-                              child: Row(
-                                children: [
-                                  // task name & tag
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Text(t.name,
-                                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                                          maxLines: 1, overflow: TextOverflow.ellipsis,
-                                        ),
-                                        const SizedBox(height: 12),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                          decoration: ShapeDecoration(
-                                            color: const Color(0xBFF2AC57),
-                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                          ),
-                                          child: Text(t.category,
-                                            style: const TextStyle(fontSize: 12, color: Color(0xFFF5F5F5)),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                            child: Material(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(16),
+                                splashColor: Colors.grey.withOpacity(0.2),
+                                onTap: () {
+                                  Navigator.pushNamed(context, '/task', arguments: t);
+                                },
+                                child: Container(
+                                  height: 90,
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+                                  decoration: ShapeDecoration(
+                                    color: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16)),
+                                    shadows: const [
+                                      BoxShadow(
+                                          color: Color(0x19000000),
+                                          blurRadius: 16,
+                                          offset: Offset(0, 2)),
+                                    ],
                                   ),
+                                  child: Row(
+                                    children: [
+                                      // 이름 + 카테고리 태그
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              t.name,
+                                              style: const TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w500),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            const SizedBox(height: 12),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(
+                                                  horizontal: 8, vertical: 4),
+                                              decoration: ShapeDecoration(
+                                                color: const Color(0xBFF2AC57),
+                                                shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(16)),
+                                              ),
+                                              child: Text(
+                                                t.category,
+                                                style: const TextStyle(
+                                                    fontSize: 12,
+                                                    color: Color(0xFFF5F5F5)),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
 
-                                  // date badge
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                    decoration: ShapeDecoration(
-                                      color: const Color(0x331D1B20),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                    ),
-                                    child: Text(date, style: const TextStyle(fontSize: 11)),
+                                      // 날짜 배지
+                                      Container(
+                                        padding:
+                                            const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        decoration: ShapeDecoration(
+                                          color: const Color(0x331D1B20),
+                                          shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(16)),
+                                        ),
+                                        child: Text(date, style: const TextStyle(fontSize: 11)),
+                                      ),
+                                    ],
                                   ),
-                                ],
+                                ),
                               ),
                             ),
                           );
@@ -237,9 +260,11 @@ class _CompletedProjectsPageState extends State<CompletedProjectsPage> {
                       ),
               ),
 
-              // — 4) Bottom nav —
+              // 5) 하단 내비게이션
               const Positioned(
-                left: 0, right: 0, bottom: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
                 child: SizedBox(height: 68, child: BottomNavBar(activeIndex: 4)),
               ),
             ],
