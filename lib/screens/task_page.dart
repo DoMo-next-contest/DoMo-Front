@@ -688,41 +688,40 @@ Future<void> _addSubtaskDialog() async {
                                   ),
                             ),
                           ),
+                          if (!currentTask.completed)
                           Positioned(
-  right: 16,
-  top: 16,
-  child: IconButton(
-    icon: Icon(_isEditing ? Icons.check : Icons.edit),
-    onPressed: () async {
-      if (_isEditing) {
-        // 1) Sync any name/desc edits you did via controllers:
-        currentTask.name = _nameController.text;
-        currentTask.description = _descController.text;
+                            right: 16,
+                            top: 16,
+                            child: IconButton(
+                              icon: Icon(_isEditing ? Icons.check : Icons.edit),
+                              onPressed: () async {
+                                if (_isEditing) {
+                                  // 1) Sync any name/desc edits you did via controllers:
+                                  currentTask.name = _nameController.text;
+                                  currentTask.description = _descController.text;
 
-        // 2) Send the *entire* subtask list back:
-        try {
-          await TaskService().updateSubtasks(currentTask.id, currentTask.subtasks);
-          await TaskService().updateProject(currentTask);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('저장되었습니다')),
-          );
-          // 3) Refresh from server (optional but safer):
-          final fresh = await TaskService().getSubtasks(currentTask.id);
-          setState(() => currentTask.subtasks = fresh);
-          
-        } catch (e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('저장 실패: $e')),
-          );
-        }
-
-
-      }
-      // 4) Finally, toggle edit mode
-      setState(() => _isEditing = !_isEditing);
-    },
-  ),
-),
+                                  // 2) Send the *entire* subtask list back:
+                                  try {
+                                    await TaskService().updateSubtasks(currentTask.id, currentTask.subtasks);
+                                    await TaskService().updateProject(currentTask);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('저장되었습니다')),
+                                    );
+                                    // 3) Refresh from server (optional but safer):
+                                    final fresh = await TaskService().getSubtasks(currentTask.id);
+                                    setState(() => currentTask.subtasks = fresh);
+                                    
+                                  } catch (e) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('저장 실패: $e')),
+                                    );
+                                  }
+                                }
+                                // 4) Finally, toggle edit mode
+                                setState(() => _isEditing = !_isEditing);
+                              },
+                            ),
+                          ),
 
 
                         ],
@@ -790,32 +789,47 @@ Future<void> _addSubtaskDialog() async {
                   ),
 
                   Positioned(
-  top: 120,   // adjust as needed
-  left: 20,
-  right: 20,
-  child: SizedBox(
-  height: 32,
-  child: TextField(
-    controller: _descController,
-    maxLines: 1,                                    // lock to single line
-    textAlignVertical: TextAlignVertical.center,    // center vertically
-    decoration: const InputDecoration(
-      hintText: '설명을 입력하세요',
-      border: InputBorder.none,
-      isDense: true,
-      contentPadding: EdgeInsets.zero,              // no extra padding
-    ),
-    style: const TextStyle(
-      color: Color(0xFF767E8C),
-      fontSize: 12,
-      fontFamily: 'Barlow',
-      fontWeight: FontWeight.w400,
-      height: 1.25,
-    ),
-    onChanged: (v) => currentTask.description = v,
-  ),
-),
-),
+                    top: 120,
+                    left: 20,
+                    right: 20,
+                    child: _isEditing
+                      ? SizedBox(
+                          height: 32,
+                          child: TextField(
+                            controller: _descController,
+                            maxLines: 1,
+                            textAlignVertical: TextAlignVertical.center,
+                            decoration: const InputDecoration(
+                              hintText: '설명을 입력하세요',
+                              border: InputBorder.none,
+                              isDense: true,
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                            style: const TextStyle(
+                              color: Color(0xFF767E8C),
+                              fontSize: 13.5,
+                              fontFamily: 'Barlow',
+                              fontWeight: FontWeight.w400,
+                              height: 1.25,
+                            ),
+                            onChanged: (v) => currentTask.description = v,
+                          ),
+                        )
+                      : Container(
+                          height: 32,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            currentTask.description,
+                            style: const TextStyle(
+                              color: Color(0xFF767E8C),
+                              fontSize: 12,
+                              fontFamily: 'Barlow',
+                              fontWeight: FontWeight.w400,
+                              height: 1.25,
+                            ),
+                          ),
+                        ),
+                  ),
 
 
                   // deadline

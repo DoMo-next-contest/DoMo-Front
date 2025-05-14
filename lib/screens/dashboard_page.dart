@@ -129,6 +129,7 @@ class DashboardPageState extends State<DashboardPage> {
                           '반가워요, ${profile.name}님!',
                           textAlign: TextAlign.center,
                           style: const TextStyle(
+                            fontFamily: 'Inter',
                             color: Color(0xFF1E1E1E),
                             fontSize: 32,
                           ),
@@ -151,34 +152,71 @@ class DashboardPageState extends State<DashboardPage> {
                       // 2) Error *or* completed==true → show “새 프로젝트 만들기”
                       if (snap.hasError || (snap.hasData && snap.data!.completed)) {
                         return Positioned(
-                          left: 30, right: 30, bottom: 140,
-                          child: InkWell(
+                          left: 30,
+                          right: 30,
+                          bottom: 140,
+                          child: Material(
+                            color: Colors.white,
                             borderRadius: BorderRadius.circular(16),
-                            onTap: () => Navigator.pushReplacementNamed(context, '/add'),
-                            child: Container(
-                              height: 81,
-                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
-                              decoration: ShapeDecoration(
-                                color: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                shadows: const [
-                                  BoxShadow(
-                                    color: Color(0x19000000),
-                                    blurRadius: 16,
-                                    offset: Offset(0, 2),
-                                  )
-                                ],
-                              ),
-                              child: const Center(
-                                child: Text(
-                                  '새 프로젝트 만들기',
-                                  style: TextStyle(
-                                    color: Color(0xFF21272A),
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                            elevation: 4,
+                            clipBehavior: Clip.antiAlias,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(16),
+                              onTap: () => Navigator.pushReplacementNamed(context, '/add'),
+                              child: Container(
+                                height: 80, // 카드 높이
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // ① 한 줄 텍스트
+                                    Text(
+                                      '최근 접속한 프로젝트가 없습니다.',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontFamily: 'Inter',
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF1E1E1E),
+                                      ),
+                                    ),
+
+                                    const Spacer(), // 텍스트와 버튼 사이 공간
+
+                                    // ② 오른쪽 하단 버튼
+                                    Align(
+                                      alignment: Alignment.bottomRight,
+                                      child: TextButton(
+                                        onPressed: () => Navigator.pushReplacementNamed(context, '/add'),
+                                        style: TextButton.styleFrom(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          minimumSize: Size.zero,
+                                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const Text(
+                                              '새로운 프로젝트',
+                                              style: TextStyle(
+                                                fontFamily: 'Inter',
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w500,
+                                                color: Color(0xFFBF622C),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 4),
+                                            const Icon(
+                                              Icons.open_in_new,
+                                              size: 20,
+                                              color: Color(0xFFBF622C),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),
@@ -227,12 +265,13 @@ class DashboardPageState extends State<DashboardPage> {
                                           color: Color(0xFF21272A),
                                           fontSize: 16,
                                           fontWeight: FontWeight.w600,
+                                          fontFamily: 'Inter',
                                         ),
                                       ),
                                     ),
                                     const SizedBox(width: 12),
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                       decoration: ShapeDecoration(
                                         color: const Color(0xFFF2AC57),
                                         shape: RoundedRectangleBorder(

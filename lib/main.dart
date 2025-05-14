@@ -52,7 +52,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'DoMo App',
-      theme: ThemeData(primarySwatch: Colors.green),
+      theme: ThemeData(primarySwatch: Colors.green, fontFamily: 'Inter',),
       debugShowCheckedModeBanner: false,
       initialRoute: '/',
 

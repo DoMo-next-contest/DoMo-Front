@@ -1,6 +1,6 @@
 // lib/services/profile_service.dart
 
-import 'dart:convert';
+import 'dart:convert';           // ← 추가: utf8 디코딩
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -32,7 +32,9 @@ class ProfileService {
     final uri = Uri.parse('$baseUrl/api/user/signup');
     final resp = await http.post(
       uri,
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',  // ← charset 명시
+      },
       body: jsonEncode({
         'loginId': username,
         'password': password,
@@ -42,7 +44,10 @@ class ProfileService {
     );
     if (resp.statusCode == 200 || resp.statusCode == 201) {
       final token = resp.headers['authorization'];
-      if (token != null) await _storage.write(key: 'accessToken', value: token);
+      if (token != null) {
+        await _storage.write(key: 'accessToken', value: token);
+      }
+      // 반환할 Profile 은 서버 응답이 아닌 로컬 입력값 사용
       return Profile(
         id:       '',
         name:     name,
@@ -50,7 +55,7 @@ class ProfileService {
         email:    email,
       );
     }
-    throw Exception('회원가입 실패 (${resp.statusCode}): ${resp.body}');
+    throw Exception('회원가입 실패 (${resp.statusCode}): ${utf8.decode(resp.bodyBytes)}');
   }
 
   /// Log in an existing user, store JWT, and return their profile
@@ -61,7 +66,9 @@ class ProfileService {
     final uri = Uri.parse('$baseUrl/api/user/login');
     final resp = await http.post(
       uri,
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',  // ← charset 명시
+      },
       body: jsonEncode({
         'loginId': loginId,
         'password': password,
@@ -70,11 +77,11 @@ class ProfileService {
     if (resp.statusCode == 200) {
       final token   = resp.headers['authorization'];
       final refresh = resp.headers['refresh'];
-      if (token   != null) await _storage.write(key: 'accessToken', value: token);
+      if (token   != null) await _storage.write(key: 'accessToken',  value: token);
       if (refresh != null) await _storage.write(key: 'refreshToken', value: refresh);
       return fetchProfile();
     }
-    throw Exception('로그인 실패 (${resp.statusCode}): ${resp.body}');
+    throw Exception('로그인 실패 (${resp.statusCode}): ${utf8.decode(resp.bodyBytes)}');
   }
 
   /// GET /api/user/info
@@ -86,15 +93,17 @@ class ProfileService {
       uri,
       headers: {
         'Authorization': token,
-        'Accept':        'application/json',
+        'Accept':        'application/json; charset=utf-8',  // ← charset 명시
       },
     );
 
     if (resp.statusCode == 200) {
-      final data = jsonDecode(resp.body) as Map<String, dynamic>;
+      // 반드시 UTF-8 로 디코딩해서 JSON 파싱
+      final decoded = utf8.decode(resp.bodyBytes);
+      final data    = jsonDecode(decoded) as Map<String, dynamic>;
       return Profile.fromJson(data);
     } else {
-      throw Exception('프로필 로드 실패 (${resp.statusCode}): ${resp.body}');
+      throw Exception('프로필 로드 실패 (${resp.statusCode}): ${utf8.decode(resp.bodyBytes)}');
     }
   }
 
@@ -102,12 +111,18 @@ class ProfileService {
   Future<int> fetchCoin() async {
     final token = await _bearerToken();
     final uri   = Uri.parse('$baseUrl/api/user/coin');
-    final resp  = await http.get(uri, headers: {'Authorization': token});
+    final resp  = await http.get(
+      uri,
+      headers: {
+        'Authorization': token,
+        'Accept':        'application/json; charset=utf-8',
+      },
+    );
     if (resp.statusCode == 200) {
-      final body = jsonDecode(resp.body);
+      final body = jsonDecode(utf8.decode(resp.bodyBytes));
       return (body['userCoin'] as num).toInt();
     }
-    throw Exception('코인 조회 실패 (${resp.statusCode}): ${resp.body}');
+    throw Exception('코인 조회 실패 (${resp.statusCode}): ${utf8.decode(resp.bodyBytes)}');
   }
 
   /// Submit full onboarding preferences
@@ -121,7 +136,7 @@ class ProfileService {
     final resp  = await http.post(
       uri,
       headers: {
-        'Content-Type':  'application/json',
+        'Content-Type':  'application/json; charset=utf-8',
         'Authorization': token,
       },
       body: jsonEncode({
@@ -131,41 +146,41 @@ class ProfileService {
       }),
     );
     if (resp.statusCode != 200) {
-      throw Exception('온보딩 제출 실패 (${resp.statusCode}): ${resp.body}');
+      throw Exception('온보딩 제출 실패 (${resp.statusCode}): ${utf8.decode(resp.bodyBytes)}');
     }
   }
 
   /// PATCH /api/user/detail-preference
   Future<void> updateDetailPreference(String detailPreference) async {
-    final uri   = Uri.parse('$baseUrl/api/user/users/detail-preference');
     final token = await _bearerToken();
+    final uri   = Uri.parse('$baseUrl/api/user/users/detail-preference');
     final resp  = await http.patch(
       uri,
       headers: {
-        'Content-Type':  'application/json',
+        'Content-Type':  'application/json; charset=utf-8',
         'Authorization': token,
       },
       body: jsonEncode({'detailPreference': detailPreference}),
     );
     if (resp.statusCode != 200) {
-      throw Exception('세분화 선호도 수정 실패 (${resp.statusCode}): ${resp.body}');
+      throw Exception('세분화 선호도 수정 실패 (${resp.statusCode}): ${utf8.decode(resp.bodyBytes)}');
     }
   }
 
   /// PATCH /api/user/work-pace
   Future<void> updateTimePreference(String timePreference) async {
-    final uri   = Uri.parse('$baseUrl/api/user/users/work-pace');
     final token = await _bearerToken();
+    final uri   = Uri.parse('$baseUrl/api/user/users/work-pace');
     final resp  = await http.patch(
       uri,
       headers: {
-        'Content-Type':  'application/json',
+        'Content-Type':  'application/json; charset=utf-8',
         'Authorization': token,
       },
       body: jsonEncode({'workPace': timePreference}),
     );
     if (resp.statusCode != 200) {
-      throw Exception('시간 선호도 수정 실패 (${resp.statusCode}): ${resp.body}');
+      throw Exception('시간 선호도 수정 실패 (${resp.statusCode}): ${utf8.decode(resp.bodyBytes)}');
     }
   }
 
@@ -179,7 +194,7 @@ class ProfileService {
     final resp  = await http.put(
       uri,
       headers: {
-        'Content-Type':  'application/json',
+        'Content-Type':  'application/json; charset=utf-8',
         'Authorization': token,
       },
       body: jsonEncode({
@@ -188,7 +203,7 @@ class ProfileService {
       }),
     );
     if (resp.statusCode != 200) {
-      throw Exception('비밀번호 변경 실패 (${resp.statusCode}): ${resp.body}');
+      throw Exception('비밀번호 변경 실패 (${resp.statusCode}): ${utf8.decode(resp.bodyBytes)}');
     }
   }
 
@@ -196,9 +211,15 @@ class ProfileService {
   Future<void> drawItem() async {
     final token = await _bearerToken();
     final uri   = Uri.parse('$baseUrl/api/user/draw');
-    final resp  = await http.put(uri, headers: {'Authorization': token});
+    final resp  = await http.put(
+      uri,
+      headers: {
+        'Authorization': token,
+        'Accept':        'application/json; charset=utf-8',
+      },
+    );
     if (resp.statusCode != 200) {
-      throw Exception('아이템 뽑기 실패 (${resp.statusCode}): ${resp.body}');
+      throw Exception('아이템 뽑기 실패 (${resp.statusCode}): ${utf8.decode(resp.bodyBytes)}');
     }
   }
 
@@ -222,29 +243,31 @@ class ProfileService {
     final uri   = Uri.parse('$baseUrl/api/user/character/url');
     final resp  = await http.get(
       uri,
-      headers: {'Authorization': token},
+      headers: {
+        'Authorization': token,
+        'Accept':        'application/json; charset=utf-8',
+      },
     );
     if (resp.statusCode == 200) {
-      final data = jsonDecode(resp.body) as Map<String, dynamic>;
+      final data = jsonDecode(utf8.decode(resp.bodyBytes)) as Map<String, dynamic>;
       return data['characterUrl'] as String;
     }
-    throw Exception('캐릭터 URL 조회 실패 (${resp.statusCode}): ${resp.body}');
+    throw Exception('캐릭터 URL 조회 실패 (${resp.statusCode}): ${utf8.decode(resp.bodyBytes)}');
   }
 
   /// Delete (withdraw) the user’s account
   Future<void> deleteAccount() async {
     final token = await _bearerToken();
     final uri   = Uri.parse('$baseUrl/api/user/delete');
-    final resp  = await http.delete(uri, headers: {'Authorization': token});
+    final resp  = await http.delete(
+      uri,
+      headers: {
+        'Authorization': token,
+        'Accept':        'application/json; charset=utf-8',
+      },
+    );
     if (resp.statusCode != 200) {
-      throw Exception('회원탈퇴 실패 (${resp.statusCode}): ${resp.body}');
+      throw Exception('회원탈퇴 실패 (${resp.statusCode}): ${utf8.decode(resp.bodyBytes)}');
     }
-  }
-  Future<void> logout() async {
-    // TODO: remove access & refresh tokens from secure storage/shared_preferences
-    // 예시:
-    // final prefs = await SharedPreferences.getInstance();
-    // await prefs.remove('accessToken');
-    // await prefs.remove('refreshToken');
   }
 }

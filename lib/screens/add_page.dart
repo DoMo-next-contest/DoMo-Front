@@ -70,6 +70,7 @@ Future<void> _showStyledDialog({
   List<Subtask> _generatedSubtasks = [];
   int? _projectId;          // <-- add this
   bool   _hasSaved = false;
+  bool get _hasAIGenerated => _generatedSubtasks.isNotEmpty;
 
   @override
   void initState() {
@@ -269,6 +270,7 @@ Future<void> _showStyledDialog({
     return;
   }
 
+  // 로딩 인디케이터 띄우기
   showDialog(
     context: context,
     barrierDismissible: false,
@@ -276,42 +278,47 @@ Future<void> _showStyledDialog({
   );
 
   try {
-    // 2) Create the project on the backend
-    final newTask = Task(
-      id: 0, // server will assign
-      name: _nameController.text,
-      deadline: _selectedDeadline!,
-      category: _selectedCategory,
-      requirements: _requirementController.text,
-      description: _detailsController.text,
-      completed: false,
-    );
-    final pid = await TaskService().createTask(newTask);
-    _projectId = pid;
+    // 2) _projectId가 아직 없으면(최초 실행)만 프로젝트 생성
+    if (_projectId == null) {
+      final newTask = Task(
+        id: 0, // 서버에서 할당
+        name: _nameController.text,
+        deadline: _selectedDeadline!,
+        category: _selectedCategory,
+        requirements: _requirementController.text,
+        description: _detailsController.text,
+        completed: false,
+      );
+      _projectId = await TaskService().createTask(newTask);
+    }
 
-    // 3) Generate subtasks via AI for that project
-    final generated = await TaskService().generateSubtasksWithAI(pid);
-    await TaskService().updateSubtasks(pid, generated);
+    // 3) 동일한 프로젝트 ID로 AI 하위작업 생성 (혹은 재생성)
+    final generated = await TaskService().generateSubtasksWithAI(_projectId!);
 
-    // 4) Close loader, update state
+    // 4) 서버에 하위작업 리스트 덮어쓰기
+    await TaskService().updateSubtasks(_projectId!, generated);
+
+    // 5) 로딩 닫고 UI 업데이트
     Navigator.pop(context);
     setState(() {
       _generatedSubtasks = generated;
       _listVersion++;
     });
 
-    // 5) Inform user
+    // 6) 완료 다이얼로그
     await _showStyledDialog(
       title: 'AI 생성 완료',
-      message: '프로젝트와 하위작업이 생성되었습니다.',
+      message: '하위작업이 생성되었습니다.',
     );
   } catch (e) {
+    // 에러 처리
     Navigator.pop(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('AI 생성 실패: $e')),
     );
   }
 }
+
 
 
   Future<void> _onGenerateSubtaskPressed() async {
@@ -350,7 +357,7 @@ Future<void> _showStyledDialog({
     Navigator.pop(context); // dismiss loader
     await _showStyledDialog(
       title: '저장 성공',
-      message: '하위작업이 프로젝트에 저장되었습니다.',
+      message: '프로젝트가 저장되었습니다.',
     );
     Navigator.pushReplacementNamed(context, '/project');
 
@@ -584,9 +591,12 @@ Future<void> _editSubtask(Subtask sub, int index) async {
                               const Divider(color: Color(0x4CB1B1B1)),
                               const SizedBox(height: 8),
                               Expanded(
-                                child: TextField(
-                                  controller: _detailsController,
-                                  decoration: const InputDecoration.collapsed(
+                                child: Container(
+                                  child: TextField(
+                                    controller: _detailsController,
+                                    keyboardType: TextInputType.multiline,
+                                    maxLines: null,  // 필요한 만큼 줄을 늘림
+                                    decoration: const InputDecoration.collapsed(
                                       hintText: '프로젝트 설명',
                                       hintStyle: TextStyle(
                                         fontSize: 16,
@@ -594,10 +604,11 @@ Future<void> _editSubtask(Subtask sub, int index) async {
                                         color: Color(0x80000000),
                                       ),
                                     ),
-                                  style: const TextStyle(
-                                      fontSize: 16, fontWeight: FontWeight.w400),
+                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+                                  ),
                                 ),
                               ),
+
                             ],
                           ),
                         ),
@@ -685,7 +696,7 @@ Future<void> _editSubtask(Subtask sub, int index) async {
                             controller: _requirementController,
                             maxLines: null,
                             decoration: const InputDecoration.collapsed(
-                                hintText: '포함했으면 하는 하위작업 등',
+                                hintText: '예) 데모 영상 촬영을 포함하기, 개발 시간 넉넉하게 잡기',
                                 hintStyle: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w400,
@@ -975,16 +986,23 @@ Future<void> _editSubtask(Subtask sub, int index) async {
                                 child: Center(
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
-                                    children: const [
+                                    children: [
                                       Icon(Icons.auto_awesome,
                                           color: Color(0xFFF2AC57)),
                                       SizedBox(width: 8),
                                       Opacity(
-                                          opacity: 0.5,
-                                          child: Text('AI로 하위작업 생성하기',
-                                              style: TextStyle(
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.w500))),
+                                        opacity: 0.7,
+                                        child: Text(
+                                          _hasAIGenerated
+                                              ? 'AI로 하위작업 다시 생성하기'
+                                              : 'AI로 하위작업 생성하기',
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w500,
+                                            color: Color(0xFFBF622C),
+                                          ),
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),
