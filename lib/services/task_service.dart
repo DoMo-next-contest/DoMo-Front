@@ -511,7 +511,8 @@ Future<void> updateSubtaskActualTime(int subTaskId, int minutes) async {
 
     // 4) handle the response
     if (response.statusCode == 200) {
-      return Task.fromRecentJson(json.decode(response.body));
+      final decodedBody = utf8.decode(response.bodyBytes); // ✅ ensures proper UTF-8
+      return Task.fromRecentJson(jsonDecode(decodedBody));
     } else {
       throw Exception(
         'Failed to load recent project (${response.statusCode})'

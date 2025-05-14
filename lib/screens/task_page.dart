@@ -387,92 +387,92 @@ class TaskPageState extends State<TaskPage> {
             const SizedBox(height: 16),
 
             // 하위작업 이름
-Column(
-  crossAxisAlignment: CrossAxisAlignment.start,
-  children: [
-    const Text(
-      '하위작업 이름',
-      style: TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
-        color: Colors.black,
-      ),
-    ),
-    const SizedBox(height: 8),
-    TextField(
-      controller: titleCtrl,
-      decoration: InputDecoration(
-        labelText: '제목',
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      ),
-    ),
-  ],
-),
-const SizedBox(height: 16),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '하위작업 이름',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: titleCtrl,
+                  decoration: InputDecoration(
+                    labelText: '제목',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
 
-// 실제 소요시간
-Column(
-  crossAxisAlignment: CrossAxisAlignment.start,
-  children: [
-    const Text(
-      '실제 소요시간',
-      style: TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
-        color: Colors.black,
-      ),
-    ),
-    const SizedBox(height: 8),
-    Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('시간(시)', style: TextStyle(fontSize: 12, color: Colors.grey[700])),
-              const SizedBox(height: 4),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey[400]!),
-                  borderRadius: BorderRadius.circular(12),
+            // 실제 소요시간
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '실제 소요시간',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
+                  ),
                 ),
-                child: TextField(
-                  controller: hoursCtrl,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration.collapsed(hintText: ''),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('시간(시)', style: TextStyle(fontSize: 12, color: Colors.grey[700])),
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey[400]!),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: TextField(
+                              controller: hoursCtrl,
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration.collapsed(hintText: ''),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('분', style: TextStyle(fontSize: 12, color: Colors.grey[700])),
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey[400]!),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: TextField(
+                              controller: minutesCtrl,
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration.collapsed(hintText: ''),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('분', style: TextStyle(fontSize: 12, color: Colors.grey[700])),
-              const SizedBox(height: 4),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey[400]!),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: TextField(
-                  controller: minutesCtrl,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration.collapsed(hintText: ''),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    ),
-  ],
-),
+              ],
+            ),
             const SizedBox(height: 24),
 
             // 버튼
@@ -654,6 +654,11 @@ Future<void> _addSubtaskDialog() async {
     ),
   );
 }
+
+bool _areAllSubtasksComplete(Task task) {
+  return task.subtasks.every((s) => s.isDone == true); // ✅ CORRECT
+}
+
 
 
   @override
@@ -1272,6 +1277,70 @@ Future<void> _addSubtaskDialog() async {
                                   onTap: _isCompleting
                                       ? null
                                       : () async {
+                                          if (!_areAllSubtasksComplete(currentTask)) {
+  await showDialog<void>(
+    context: context,
+    barrierColor: Colors.black26,
+    builder: (_) => Dialog(
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 30, vertical: 200),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.warning_amber_rounded,
+              size: 48,
+              color: Color(0xFFC78E48),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              '하위작업 미완료',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              '모든 하위작업을 완료해야\n프로젝트를 마칠 수 있습니다.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 15),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFC78E48),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                child: const Text(
+                  '확인',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+  return;
+}
+
                                           // 1) 확인 다이얼로그 띄우기
                                           final confirm = await showDialog<bool>(
                                             context: context,

@@ -232,7 +232,7 @@ class DashboardPageState extends State<DashboardPage> {
                                     ),
                                     const SizedBox(width: 12),
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                       decoration: ShapeDecoration(
                                         color: const Color(0xFFF2AC57),
                                         shape: RoundedRectangleBorder(
