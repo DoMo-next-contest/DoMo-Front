@@ -655,5 +655,27 @@ Future<void> updateSubtaskActualTime(int subTaskId, int minutes) async {
     return jsonDecode(body) as Map<String, dynamic>;
   }
 
+  Future<void> markProjectAsAccessed(int projectId) async {
+    final storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'accessToken');
+    if (token == null) throw Exception('Not logged in');
+
+    final url = Uri.parse('$baseUrl/api/project/$projectId');
+    final resp = await http.get(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      },
+    );
+
+    if (resp.statusCode < 200 || resp.statusCode >= 300) {
+      throw Exception('Failed to access project [$projectId]: ${resp.statusCode} - ${resp.body}');
+    }
+
+    // Optionally print/log if needed for debug
+    print('📥 Accessed project $projectId successfully.');
+  }
+
 }
 

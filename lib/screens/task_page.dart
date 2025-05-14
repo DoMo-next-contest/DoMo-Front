@@ -7,6 +7,7 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:domo/models/task.dart';
 import 'package:domo/utils/mobile_frame.dart';
 import 'package:domo/services/task_service.dart';
+import 'package:domo/services/task_service.dart';
 
 class TaskPage extends StatefulWidget {
   const TaskPage({super.key});
@@ -48,6 +49,8 @@ class TaskPageState extends State<TaskPage> {
     // now you can read both id and name:
     debugPrint('currentTask.id = ${currentTask.id}');
     debugPrint('currentTask.name = ${currentTask.name}');
+
+    TaskService().markProjectAsAccessed(currentTask.id);
 
     selectedCategory = currentTask.category;
     _nameController.text = currentTask.name;
