@@ -11,47 +11,35 @@ class ItemService {
   static const _baseUrl = 'https://15.165.74.79.nip.io';
   static final _storage = FlutterSecureStorage();
 
-  static Future<int> drawItem() async {
-  final token = await _storage.read(key: 'accessToken');
-  if (token == null) throw Exception('No access token; please log in.');
+  static Future<Map<String, dynamic>> drawItem() async {
+    final token = await _storage.read(key: 'accessToken');
+    if (token == null) throw Exception('No access token; please log in.');
 
-  final uri  = Uri.parse('$_baseUrl/api/user/draw');
-  debugPrint('📡 PUT $uri');
-  final resp = await http.put(
-    uri,
-    headers: {
-      'Accept':        'application/json',
-      'Authorization': 'Bearer $token',
-    },
-  );
+    final uri = Uri.parse('$_baseUrl/api/user/draw');
+    debugPrint('📡 PUT $uri');
+    final resp = await http.put(
+      uri,
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
 
-  // 1) Decode raw bytes as UTF-8
-  final raw = utf8.decode(resp.bodyBytes);
-  debugPrint('📨 ${resp.statusCode}: $raw');
+    final raw = utf8.decode(resp.bodyBytes);
+    debugPrint('📨 ${resp.statusCode}: $raw');
 
-  if (resp.statusCode != 200) {
-    throw Exception(raw);
-  }
-
-  final body = raw.trim();
-
-  // 2) If it’s all digits, parse as number
-  if (RegExp(r'^\d+$').hasMatch(body)) {
-    return int.parse(body);
-  }
-
-  // 3) Try JSON-decode if it’s quoted
-  try {
-    final dyn = jsonDecode(body);
-    if (dyn is int) return dyn;
-    if (dyn is String && RegExp(r'^\d+$').hasMatch(dyn)) {
-      return int.parse(dyn);
+    if (resp.statusCode != 200) {
+      throw Exception(raw);
     }
-  } catch (_) {}
 
-  // 4) Otherwise, bubble the (now UTF-8–correct) message
-  throw Exception(body);
-}
+    try {
+      final data = jsonDecode(raw);
+      if (data is Map<String, dynamic>) return data;
+      throw Exception('Unexpected response: $raw');
+    } catch (_) {
+      throw Exception('Invalid JSON response: $raw');
+    }
+  }
 
   /// Equips the given itemId for the user.
   static Future<void> equipItem(int itemId) async {
@@ -165,4 +153,26 @@ class ItemService {
     // 서버가 단순 정수(예: 120)로 응답하므로, jsonDecode 없이 직접 파싱해도 됩니다.
     return int.tryParse(resp.body) ?? 0;
   }
+
+  static Future<Item> fetchRecentEquippedItem() async {
+  final token = await _storage.read(key: 'accessToken');
+  if (token == null) throw Exception('Not logged in');
+
+  final uri = Uri.parse('$_baseUrl/api/user-items/recent');
+  final resp = await http.get(
+    uri,
+    headers: {
+      'Accept': 'application/json',
+      'Authorization': 'Bearer $token',
+    },
+  );
+
+  if (resp.statusCode != 200) {
+    throw Exception('Failed to fetch recent item: ${resp.body}');
+  }
+
+  final data = jsonDecode(utf8.decode(resp.bodyBytes));
+  return Item.fromJson(data); // ✅ Your existing model handles this
+}
+
 }

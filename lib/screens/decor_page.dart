@@ -17,6 +17,7 @@ class DecorPageState extends State<DecorPage> {
   String? _currentModelSrc;
   bool _loadingData = true, _isSpinning = false;
   int _coins = 0;
+
   List<Item> _allItems = [];
   Set<int> _ownedItemIds = {};
 
@@ -24,77 +25,206 @@ class DecorPageState extends State<DecorPage> {
   void initState() {
     super.initState();
     _loadInitialData();
+    
   }
 
   Future<void> _loadInitialData() async {
-    try {
-      final all       = await ItemService.getAllItems();
-      final ownedIds  = await ItemService.getOwnedItemIds();
-      final coins     = await ItemService.getUserCoins();
-      final defaultIt = await ItemService.getItemById(9);
+  try {
+    final all      = await ItemService.getAllItems();
+    final ownedIds = await ItemService.getOwnedItemIds();
+    final coins    = await ItemService.getUserCoins();
 
-      setState(() {
-        _allItems        = all;
-        _ownedItemIds    = ownedIds;
-        _coins           = coins;
-        _currentModelSrc = defaultIt.imageUrl;
-        _loadingData     = false;
-      });
-    } catch (e, st) {
-      debugPrint('❌ Init error: $e\n$st');
+    
+
+    // 1️⃣ Try to load recent equipped model
+    Item defaultIt;
+    try {
+      defaultIt = await ItemService.fetchRecentEquippedItem(); 
+      defaultIt = await ItemService.getItemById(defaultIt.id); 
+    } catch (_) {
+      // 2️⃣ fallback to a hardcoded one if it fails
+      defaultIt = await ItemService.getItemById(7); // fallback model
     }
+
+    setState(() {
+      _allItems        = all;
+      _ownedItemIds    = ownedIds;
+      _coins           = coins;
+      _currentModelSrc = defaultIt.imageUrl;
+      _loadingData     = false;
+    });
+  } catch (e, st) {
+    debugPrint('❌ Init error: $e\n$st');
   }
+}
+
 
   Future<void> _onDrawPressed() async {
-    if (_isSpinning) return;
-    setState(() => _isSpinning = true);
+  if (_isSpinning) return;
 
-    try {
-      // 1) snapshot old owned IDs
-      final before = Set<int>.from(_ownedItemIds);
-
-      // 2) trigger draw
-      await ItemService.drawItem();
-
-      // 3) immediately re-fetch coins
-      final updatedCoins = await ItemService.getUserCoins();
-      setState(() => _coins = updatedCoins);
-
-      // 4) re-fetch owned IDs and diff to find new ID
-      final after    = await ItemService.getOwnedItemIds();
-      final newIds   = after.difference(before);
-      if (newIds.isEmpty) throw Exception('새 아이템을 찾을 수 없어요.');
-      final newId    = newIds.first;
-
-      // 5) immediately update model from local cache
-      final localNew = _allItems.firstWhere((i) => i.id == newId);
-      setState(() {
-        _ownedItemIds.add(newId);
-        _currentModelSrc = localNew.imageUrl;
-      });
-
-      // 6) optional: inform server you “equipped” it
-      await ItemService.equipItem(newId);
-
-      // 7) celebrate
-      showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-          title: const Text('🎉 새로운 데코 획득!'),
-          content: Text('${localNew.name} 데코를 획득했습니다!'),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('확인')),
-          ],
+  // 💰 Check coin balance first
+  if (_coins < 50) {
+    await showDialog<void>(
+      context: context,
+      barrierColor: Colors.black26,
+      builder: (_) => Dialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
         ),
-      );
-    } catch (e) {
-      final msg = e.toString().replaceFirst('Exception: ', '');
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
-      debugPrint('❌ Draw error: $e');
-    } finally {
-      setState(() => _isSpinning = false);
-    }
+        insetPadding: const EdgeInsets.symmetric(horizontal: 30, vertical: 200),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline, size: 48, color: Color(0xFFF2AC57)),
+              const SizedBox(height: 16),
+              const Text(
+                '코인이 부족합니다',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                '데코를 뽑기 위해서는 최소 50코인이 필요합니다.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 15),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFF2AC57),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  child: const Text(
+                    '확인',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    return;
   }
+
+  setState(() => _isSpinning = true);
+
+  try {
+    // 1️⃣ Draw item
+    final result = await ItemService.drawItem();
+    final newId = (result['itemId'] as num).toInt();
+
+    // 2️⃣ Update coin count
+    final oldCoins = _coins;
+    final updatedCoins = await ItemService.getUserCoins();
+    setState(() => _coins = updatedCoins);
+    //animateCoinChange(oldCoins, updatedCoins); // optional coin animation
+
+    // 3️⃣ Update model
+    
+    final localNew = _allItems.firstWhere((i) => i.id == newId);
+    setState(() {
+      _ownedItemIds.add(newId);
+      _currentModelSrc = localNew.imageUrl;
+    });
+    
+
+    // 4️⃣ Equip (non-blocking)
+    try {
+      await ItemService.equipItem(newId);
+    } catch (e) {
+      debugPrint('⚠️ equipItem failed: $e');
+    }
+
+    // ✅ Coin amount now refreshed
+
+    // ⏳ 5️⃣ Delay 5 seconds before celebration
+    //await Future.delayed(const Duration(seconds: 1));
+    
+
+    // 6️⃣ Show celebration dialog
+    await showDialog(
+      context: context,
+      barrierColor: Colors.black26,
+      builder: (_) => Dialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 30, vertical: 200),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.celebration_outlined, size: 48, color: Color(0xFFF2AC57)),
+              const SizedBox(height: 16),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.network(
+                  localNew.image2dUrl,
+                  width: 200,
+                  height: 200,
+                  fit: BoxFit.contain,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                '새로운 데코를 획득했습니다!',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFF2AC57),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  child: const Text(
+                    '확인',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+  } catch (e) {
+    debugPrint('❌ Draw error: $e');
+    // Optional: show fallback toast
+    // final msg = e.toString().replaceFirst('Exception: ', '');
+    // ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  } finally {
+    setState(() => _isSpinning = false);
+  }
+}
+
 
   Future<void> _onEquipTapped(int itemId) async {
     if (!_ownedItemIds.contains(itemId)) return;
@@ -115,7 +245,7 @@ class DecorPageState extends State<DecorPage> {
       backgroundColor: Colors.transparent,
       body: Column(
         children: [
-          const SizedBox(height: 16),
+          const SizedBox(height: 40),
 
           // 3D 모델 뷰어 (Key forces reload on URL change)
           Expanded(
@@ -125,7 +255,7 @@ class DecorPageState extends State<DecorPage> {
                   ? ModelViewer(
                       key: ValueKey(_currentModelSrc),
                       src: _currentModelSrc!,
-                      alt: '3D 데코 모델',
+                      
                       autoRotate: true,
                       cameraControls: true,
                       disableZoom: true,
@@ -143,25 +273,36 @@ class DecorPageState extends State<DecorPage> {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 Image.asset('assets/png/coin.png', width: 20, height: 20),
-                const SizedBox(width: 4),
-                Text('$_coins 코인'),
-                const SizedBox(width: 14),
+                const SizedBox(width: 8),
+               Text(
+                '$_coins 코인',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
+                  color: Colors.black,
+                ),
+              ),
+                const SizedBox(width: 16),
                 ElevatedButton(
                   onPressed: _isSpinning ? null : _onDrawPressed,
                   style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.white, // ✅ sets text & icon color
                     backgroundColor: const Color(0xFFF2AC57),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
                   child: _isSpinning
                       ? const SizedBox(
-                          width: 20, height: 20,
+                          width: 16, height: 16,
                           child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                         )
                       : const Text('새로운 데코 얻기 (50)'),
                 ),
               ],
             ),
+            
           ),
+
+          
 
           // 전체 아이템 그리드 (잠긴 항목은 락/어둡게)
           Expanded(
@@ -170,6 +311,7 @@ class DecorPageState extends State<DecorPage> {
               color: const Color(0xFFFFF5E5),
               padding: const EdgeInsets.all(16),
               child: GridView.builder(
+                
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 3, crossAxisSpacing: 12, mainAxisSpacing: 12
                 ),
