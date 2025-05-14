@@ -75,6 +75,8 @@ class TaskService {
     return data.map((e) => Task.fromJson(e as Map<String, dynamic>)).toList();
   }
 
+  
+
   /// 특정 프로젝트의 하위작업 조회
   Future<List<Subtask>> getSubtasks(int projectId) async {
     final storage = FlutterSecureStorage();
@@ -98,6 +100,28 @@ class TaskService {
     final List<dynamic> data = jsonDecode(respBody);
     return data.map((e) => Subtask.fromJson(e as Map<String, dynamic>)).toList();
   }
+
+  Future<void> deleteProjectTag(int projectTagId) async {
+  final storage = FlutterSecureStorage();
+  final token = await storage.read(key: 'accessToken');
+  if (token == null) throw Exception('Not logged in');
+
+  final uri = Uri.parse('$baseUrl/api/project-tag/$projectTagId');
+  final resp = await http.delete(
+    uri,
+    headers: {
+      'Authorization': 'Bearer $token',
+      'Accept'       : 'application/json; charset=utf-8',
+    },
+  );
+  final respBody = utf8.decode(resp.bodyBytes);
+  debugPrint('deleteProjectTag → ${resp.statusCode}: $respBody');
+
+  if (resp.statusCode != 200 && resp.statusCode != 204) {
+    throw Exception('Failed to delete project tag [${resp.statusCode}]: $respBody');
+  }
+}
+
 
   /// 하위작업 생성
   Future<void> createSubtasks(int projectId, Subtask sub) async {
@@ -188,34 +212,43 @@ class TaskService {
 
   /// 프로젝트 태그 목록 조회
   Future<List<String>> getProjectTags() async {
-    final storage = FlutterSecureStorage();
-    final token = await storage.read(key: 'accessToken');
-    if (token == null) throw Exception('Not logged in');
+  final storage = FlutterSecureStorage();
+  final token = await storage.read(key: 'accessToken');
+  if (token == null) throw Exception('Not logged in');
 
-    final url = Uri.parse('$baseUrl/api/project-tag');
-    final resp = await http.get(
-      url,
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Accept'       : 'application/json; charset=utf-8',
-      },
-    );
-    final respBody = utf8.decode(resp.bodyBytes);
-    debugPrint('getProjectTags → ${resp.statusCode}: $respBody');
+  final url = Uri.parse('$baseUrl/api/project-tag');
+  final resp = await http.get(
+    url,
+    headers: {
+      'Authorization': 'Bearer $token',
+      'Accept': 'application/json; charset=utf-8',
+    },
+  );
+  final respBody = utf8.decode(resp.bodyBytes);
+  debugPrint('getProjectTags → ${resp.statusCode}: $respBody');
 
-    if (resp.statusCode < 200 || resp.statusCode >= 300) {
-      throw Exception('Failed to load project tags [${resp.statusCode}]: $respBody');
-    }
-
-    final List<dynamic> data = jsonDecode(respBody);
-    final categories = data.map<String>((e) {
-      final raw = (e as Map<String, dynamic>)['projectTagName'] as String;
-      return Task.rawToUi[raw] ?? raw;
-    }).toList();
-
-    Task.allCategories = categories;
-    return categories;
+  if (resp.statusCode < 200 || resp.statusCode >= 300) {
+    throw Exception('Failed to load project tags [${resp.statusCode}]: $respBody');
   }
+
+  // 1) Decode JSON array of {projectTagId, projectTagName}
+  final List<dynamic> data = jsonDecode(respBody);
+
+  // 2) Build your ProjectTag objects and save into Task.rawList
+  Task.rawList = data.map((e) {
+    final m = e as Map<String, dynamic>;
+    return ProjectTag(
+      id: m['projectTagId'] as int,
+      rawName: Task.rawToUi[m['projectTagName'] as String] ?? m['projectTagName'] as String,
+    );
+  }).toList();
+
+  // 3) Extract just the names for UI and save into allCategories
+  Task.allCategories = Task.rawList.map((tag) => tag.rawName).toList();
+
+  // 4) Return the UI names so any callers still get List<String>
+  return Task.allCategories;
+}
 
   /// 하위작업 완료
   Future<void> setSubtaskDone(int subTaskId) async {
@@ -546,8 +579,8 @@ class TaskService {
     if (token == null) throw Exception('Not logged in');
 
     final url = Uri.parse('$baseUrl/api/project-tag');
+
     final body = jsonEncode({
-      // adjust field name if your backend expects something else
       'projectTagName': uiTag,
     });
 
@@ -561,8 +594,18 @@ class TaskService {
       body: body,
     );
 
-    if (resp.statusCode < 200 || resp.statusCode >= 300) {
-      throw Exception('Failed to create project tag [${resp.statusCode}]: ${resp.body}');
+    // Decode using utf8 and try to parse JSON safely
+    final raw = utf8.decode(resp.bodyBytes);
+    try {
+      final data = jsonDecode(raw);
+      if (resp.statusCode < 200 || resp.statusCode >= 300) {
+        throw Exception('API error: $data');
+      }
+    } catch (_) {
+      // Handle non-JSON response (plain text message)
+      if (resp.statusCode < 200 || resp.statusCode >= 300) {
+        throw Exception('API error: $raw');
+      }
     }
   }
   

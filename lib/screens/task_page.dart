@@ -178,20 +178,91 @@ class TaskPageState extends State<TaskPage> {
                             ),
                           ),
                           trailing: IconButton(
-                            icon: const Icon(Icons.delete_outline),
-                            color: Colors.grey[500],
-                            onPressed: () {
-                              setState(() {
-                                Task.allCategories.removeAt(idx);
-                                if (selectedCategory == cat) {
-                                  selectedCategory = Task.allCategories.first;
-                                  currentTask.category = selectedCategory;
-                                }
-                              });
-                              Navigator.pop(context);
-                              _showCategoryPicker();
-                            },
-                          ),
+  icon: const Icon(Icons.delete_outline),
+  color: Colors.grey[500],
+  onPressed: () async {
+    final rawIdx = Task.allCategories.indexOf(cat);
+    if (rawIdx < 0) return;
+
+    final toDelete = Task.rawList[rawIdx];
+
+    try {
+      await TaskService().deleteProjectTag(toDelete.id);
+
+      setState(() {
+        Task.rawList.removeAt(rawIdx);
+        Task.allCategories.removeAt(rawIdx);
+        if (selectedCategory == cat && Task.allCategories.isNotEmpty) {
+          selectedCategory = Task.allCategories.first;
+          currentTask.category = selectedCategory;
+        }
+      });
+
+      Navigator.pop(context);
+      _showCategoryPicker();
+    } catch (e) {
+      // 삭제 실패: 팝업 띄우기
+      await showDialog<void>(
+        context: context,
+        barrierColor: Colors.black26,
+        builder: (_) => Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          backgroundColor: Colors.white,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 30, vertical: 200),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.error_outline,
+                  size: 48,
+                  color: Color(0xFFC78E48),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  '삭제할 수 없습니다',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  '해당 태그를 사용하는 프로젝트가 존재합니다.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 15),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFC78E48),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    child: const Text(
+                      '확인',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+  },
+),
+
                           onTap: () {
                             setState(() {
                               selectedCategory = cat;

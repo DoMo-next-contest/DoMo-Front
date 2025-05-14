@@ -72,6 +72,8 @@ void initState() {
 
   // 3️⃣ Load most recently equipped item or fallback
   _loadInitialModel();
+
+  Task.loadCategories();
 }
 
 
