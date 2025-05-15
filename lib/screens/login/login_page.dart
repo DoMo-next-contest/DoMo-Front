@@ -108,7 +108,7 @@ class _LoginPageState extends State<LoginPage> {
                       // 6) 하단: 회원가입 텍스트 + 로그인 버튼
                       SizedBox(
                         width: double.infinity,
-                        height: 40,
+                        height: 48,
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
