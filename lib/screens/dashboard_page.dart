@@ -8,6 +8,7 @@ import 'package:domo/services/task_service.dart';
 import 'package:domo/services/profile_service.dart';
 import 'package:domo/models/profile.dart';
 import 'package:domo/models/item.dart';
+import 'dart:math' as math;
 
 const IconData _viewInAr = IconData(0xf497, fontFamily: 'MaterialIcons');
 
@@ -134,7 +135,7 @@ void initState() {
 
                   //ar
                   Positioned(
-                    top: 500,
+                    top: 520,
                     left: 0,
                     right: 35,
                     child: Align(
@@ -182,7 +183,7 @@ void initState() {
                       }
                       if (snap.hasError) {
                         return Positioned(
-                          top: 150,
+                          top: 130,
                           left: 0,
                           right: 0,
                           child: Center(child: Text('Error: \${snap.error}')),
@@ -190,7 +191,7 @@ void initState() {
                       }
                       final profile = snap.data!;
                       return Positioned(
-                        top: 140,
+                        top: 130,
                         left: 0,
                         right: 0,
                         child: Text(
