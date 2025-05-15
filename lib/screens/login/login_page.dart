@@ -16,11 +16,17 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _idCtrl = TextEditingController();
   final _pwCtrl = TextEditingController();
+  final _idFocus = FocusNode();               // ← NEW
+  final _pwFocus = FocusNode();
+  bool _isHoveringSignUp = false;
+  String? _loginError;
 
   @override
   void dispose() {
     _idCtrl.dispose();
     _pwCtrl.dispose();
+    _idFocus.dispose();                       // ← NEW
+    _pwFocus.dispose();
     super.dispose();
   }
 
@@ -29,16 +35,13 @@ class _LoginPageState extends State<LoginPage> {
     final auth = AuthService();
     final tokens = await auth.login(_idCtrl.text, _pwCtrl.text);
 
-    // Save them somewhere (secure storage, provider, etc.)
-    debugPrint('▶ access token:  ${tokens.accessToken}');
-    debugPrint('▶ refresh token: ${tokens.refreshToken}');
+
 
     // Now navigate
     Navigator.pushReplacementNamed(context, '/dashboard');
   } on AuthException catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(e.message)),
-    );
+    setState(() => _loginError = '존재하지 않는 아이디입니다');
+      _idFocus.requestFocus();
   }
 }
 
@@ -90,6 +93,10 @@ class _LoginPageState extends State<LoginPage> {
                         label: 'ID',
                         placeholder: '아이디를 입력하세요',
                         controller: _idCtrl,
+                        textInputAction: TextInputAction.next,
+                        focusNode: _idFocus,
+                        onSubmitted: (_) => _pwFocus.requestFocus(),
+                        errorText: _loginError,
                       ),
 
                       // 4) 간격
@@ -100,7 +107,10 @@ class _LoginPageState extends State<LoginPage> {
                         label: '패스워드',
                         placeholder: '********',
                         controller: _pwCtrl,
+                        focusNode: _pwFocus,
                         obscureText: true,
+                        textInputAction: TextInputAction.done,  // “Done” button
+                        onSubmitted: (_) => _onLogin(),
                       ),
 
                       const SizedBox(height: 50),
@@ -113,26 +123,27 @@ class _LoginPageState extends State<LoginPage> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             // 회원가입 링크
-                            GestureDetector(
-                              onTap: () {
-                                // 직접 SignupPage로 네비게이트
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => const SignupStep1(),
+                            MouseRegion(
+                              cursor: SystemMouseCursors.click,            // ↳ 커서가 ‘손가락’ 모양으로
+                              onEnter: (_) => setState(() => _isHoveringSignUp = true),
+                              onExit:  (_) => setState(() => _isHoveringSignUp = false),
+                              child: GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => const SignupStep1()),
+                                  );
+                                },
+                                child: Text(
+                                  '회원가입하기',
+                                  style: TextStyle(
+                                    color: _isHoveringSignUp
+                                        ? const Color(0xFFD27A3D)  // hover 시 색 변환
+                                        : const Color(0xFFAB4E18),
+                                    decoration: TextDecoration.underline,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w400,
                                   ),
-                                );
-                              },
-                              child: const Text(
-                                '회원가입하기',
-                                style: TextStyle(
-                                  color: Color(0xFFAB4E18),
-                                  fontSize: 16,
-                                  fontFamily: 'Roboto',
-                                  fontWeight: FontWeight.w400,
-                                  decoration: TextDecoration.underline,
-                                  height: 1.25,
-                                  letterSpacing: 0.10,
                                 ),
                               ),
                             ),

@@ -18,7 +18,27 @@ class _SignupStep1State extends State<SignupStep1> {
   final _idCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _pwCtrl = TextEditingController();
+
+  final _nameFocus  = FocusNode();
+  final _idFocus    = FocusNode();
+  final _emailFocus = FocusNode();
+  final _pwFocus    = FocusNode();
+
   bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _idCtrl.dispose();
+    _emailCtrl.dispose();
+    _pwCtrl.dispose();
+    // ← NEW: dispose focus nodes
+    _nameFocus.dispose();
+    _idFocus.dispose();
+    _emailFocus.dispose();
+    _pwFocus.dispose();
+    super.dispose();
+  }
 
   Future<void> _onNext() async {
     final name = _nameCtrl.text.trim();
@@ -96,18 +116,24 @@ class _SignupStep1State extends State<SignupStep1> {
                         label: '이름',
                         placeholder: '홍길동',
                         controller: _nameCtrl,
+                        focusNode: _nameFocus,                       // ← NEW
+                        onSubmitted: (_) => _idFocus.requestFocus(),
                       ),
                       const SizedBox(height: 28),
                       LabeledInput(
                         label: 'ID',
                         placeholder: 'userid',
                         controller: _idCtrl,
+                        focusNode: _idFocus,                         // ← NEW
+                        onSubmitted: (_) => _emailFocus.requestFocus(),
                       ),
                       const SizedBox(height: 28),
                       LabeledInput(
                         label: '이메일',
                         placeholder: 'example@gmail.com',
                         controller: _emailCtrl,
+                        focusNode: _emailFocus,                      // ← NEW
+                        onSubmitted: (_) => _pwFocus.requestFocus(),
                       ),
                       const SizedBox(height: 28),
                       LabeledInput(
@@ -115,6 +141,8 @@ class _SignupStep1State extends State<SignupStep1> {
                         placeholder: '********',
                         controller: _pwCtrl,
                         obscureText: true,
+                        focusNode: _pwFocus,                         // ← NEW
+                        onSubmitted: (_) => _onNext(), 
                       ),
                       const Spacer(),
 
