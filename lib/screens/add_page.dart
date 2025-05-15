@@ -594,7 +594,7 @@ Future<void> _editSubtask(Subtask sub, int index) async {
                                 child: Container(
                                   child: TextField(
                                     controller: _detailsController,
-                                    keyboardType: TextInputType.multiline,
+                                    //keyboardType: TextInputType.multiline,
                                     maxLines: null,  // 필요한 만큼 줄을 늘림
                                     decoration: const InputDecoration.collapsed(
                                       hintText: '프로젝트 설명',

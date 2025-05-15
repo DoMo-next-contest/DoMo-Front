@@ -959,52 +959,64 @@ bool _areAllSubtasksComplete(Task task) {
                   ),
 
                   Positioned(
-                    top: 120,
-                    left: 20,
-                    right: 20,
-                    child: _isEditing
-                      ? SizedBox(
-                          height: 32,
-                          child: TextField(
-                            controller: _descController,
-                            maxLines: 1,
-                            textAlignVertical: TextAlignVertical.center,
-                            decoration: const InputDecoration(
-                              hintText: '설명을 입력하세요',
-                              border: InputBorder.none,
-                              isDense: true,
-                              contentPadding: EdgeInsets.zero,
-                            ),
-                            style: const TextStyle(
-                              color: Color(0xFF767E8C),
-                              fontSize: 13.5,
-                              fontFamily: 'Barlow',
-                              fontWeight: FontWeight.w400,
-                              height: 1.25,
-                            ),
-                            onChanged: (v) => currentTask.description = v,
-                          ),
-                        )
-                      : Container(
-                          height: 32,
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            currentTask.description,
-                            style: const TextStyle(
-                              color: Color(0xFF767E8C),
-                              fontSize: 12,
-                              fontFamily: 'Barlow',
-                              fontWeight: FontWeight.w400,
-                              height: 1.25,
-                            ),
-                          ),
-                        ),
-                  ),
+  top: 120,
+  left: 20,
+  right: 90,
+  bottom: 695,  // leave room for your calendar below
+  child: SingleChildScrollView(
+    padding: EdgeInsets.zero,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (_isEditing)
+          TextField(
+            controller: _descController,
+            maxLines: null,
+            keyboardType: TextInputType.multiline,
+            decoration: const InputDecoration(
+              hintText: '설명을 입력하세요',
+              border: InputBorder.none,
+              isDense: true,
+              contentPadding: EdgeInsets.zero,
+            ),
+            style: const TextStyle(
+              color: Color(0xFF767E8C),
+              fontSize: 13.5,
+              height: 1.25,
+            ),
+            onChanged: (v) => currentTask.description = v,
+          )
+        else
+          Text(
+            // show placeholder if empty
+            currentTask.description.isEmpty
+              ? '설명을 입력하세요'
+              : currentTask.description,
+            softWrap: true,
+            style: TextStyle(
+              color: currentTask.description.isEmpty
+                ? Colors.grey    // placeholder color
+                : const Color(0xFF767E8C),
+              fontSize: 12,
+              height: 1.5,
+              fontStyle: currentTask.description.isEmpty
+                ? FontStyle.normal
+                : FontStyle.normal,
+            ),
+          ),
 
+       
+      ],
+    ),
+  ),
+),
+
+
+                  
 
                   // deadline
                   Positioned(
-                    top: 160,
+                    top: 170,
                     left: 16,
                     right: 16,
                     child: InkWell(
@@ -1046,7 +1058,7 @@ bool _areAllSubtasksComplete(Task task) {
 
                   // subtasks
                   Positioned(
-                    top: 220,
+                    top: 225,
                     left: 0,
                     right: 0,
                     bottom: 135,
