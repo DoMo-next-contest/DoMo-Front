@@ -132,7 +132,7 @@ void _showCategoryPicker() {
       insetPadding: const EdgeInsets.symmetric(horizontal: 30, vertical: 80),
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.51,
+          maxHeight: 405,
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
@@ -389,6 +389,8 @@ Future<String?> _showAddCategoryDialog() async {
                     child: const Text('취소'),
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: Color(0xFFB1B1B1)),
+                     
+                      foregroundColor: Colors.black,   // ← makes the text black
                     ),
                   ),
                 ),
@@ -405,6 +407,8 @@ Future<String?> _showAddCategoryDialog() async {
                     child: const Text('추가'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFF2AC57),
+                      
+                      foregroundColor: Colors.white,   // ← makes the text black
                     ),
                   ),
                 ),

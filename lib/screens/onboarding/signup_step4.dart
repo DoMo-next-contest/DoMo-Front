@@ -288,6 +288,7 @@ List<String> _mapTags(List<String>? rawTags) {
                                                   side: const BorderSide(color: Color(0xFFB1B1B1)),
                                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                                   padding: const EdgeInsets.symmetric(vertical: 14),
+                                                  foregroundColor: Colors.black,  
                                                 ),
                                                 child: const Text('취소', style: TextStyle(color: Colors.black87)),
                                               ),
@@ -306,6 +307,7 @@ List<String> _mapTags(List<String>? rawTags) {
                                                   backgroundColor: const Color(0xFFF2AC57),
                                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                                   padding: const EdgeInsets.symmetric(vertical: 14),
+                                                  foregroundColor: Colors.white,  
                                                 ),
                                                 child: const Text('추가', style: TextStyle(color: Colors.white)),
                                               ),
@@ -336,38 +338,38 @@ List<String> _mapTags(List<String>? rawTags) {
                               }
                             },
                             child: Container(
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-    decoration: ShapeDecoration(
-      color: const Color(0xFFF2AC57),  // <-- 변경: 반투명에서 실색으로
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      shadows: const [
-        BoxShadow(
-          color: Color(0x19000000),
-          blurRadius: 16,
-          offset: Offset(0, 2),
-        ),
-      ],
-    ),
-    child: const Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(Icons.add, size: 16, color: Colors.white),  // 아이콘 색도 조정
-        SizedBox(width: 6),
-        Text(
-          '카테고리 추가',
-          style: TextStyle(
-            color: Colors.white,  // 텍스트 색도 흰색으로
-            fontSize: 14,
-            fontWeight: FontWeight.w400,
-            height: 1,
-          ),
-        ),
-      ],
-    ),
-  ),
-),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            decoration: ShapeDecoration(
+                              color: const Color(0xFFF2AC57),  // <-- 변경: 반투명에서 실색으로
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              shadows: const [
+                                BoxShadow(
+                                  color: Color(0x19000000),
+                                  blurRadius: 16,
+                                  offset: Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.add, size: 16, color: Colors.white),  // 아이콘 색도 조정
+                                SizedBox(width: 6),
+                                Text(
+                                  '카테고리 추가',
+                                  style: TextStyle(
+                                    color: Colors.white,  // 텍스트 색도 흰색으로
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w400,
+                                    height: 1,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
 
                         ],
                       ),
