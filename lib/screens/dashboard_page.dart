@@ -328,6 +328,7 @@ void initState() {
                                       child: Text(
                                         recent.category,
                                         style: const TextStyle(
+                                          fontFamily: 'Inter',
                                           color: Color(0xFFF5F5F5),
                                           fontSize: 10,
                                           fontWeight: FontWeight.w400,
