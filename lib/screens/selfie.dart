@@ -31,6 +31,11 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/rendering.dart';
+import 'dart:async';
+import 'dart:html' as html; // Only used for web
+import 'dart:js_util' as js_util;
+import 'dart:io' as io; // only used for native
+
 
 
 
@@ -85,12 +90,29 @@ class _SelfiePageState extends State<SelfiePage> {
   @override
   void initState() {
     super.initState();
+
+
+
+    
     if (kIsWeb) {
       _initWebcam();
     } else {
       _initCamera();
     }
     _loadModel();
+
+    const flagKey = 'selfiePageHasReloaded';
+
+    if (kIsWeb) {
+      final hasReloaded = html.window.sessionStorage[flagKey] == 'true';
+      if (!hasReloaded) {
+        html.window.sessionStorage[flagKey] = 'true';
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          html.window.location.reload();
+        });
+      }
+    }
+
   }
 
   Future<void> _loadModel() async {
@@ -158,27 +180,27 @@ class _SelfiePageState extends State<SelfiePage> {
     } else {
       _cameraController?.dispose();
     }
+    if (kIsWeb) {
+    html.window.sessionStorage.remove('hasReloaded');
+    }
     super.dispose();
   }
 
 Future<void> _onSharePressed() async {
-  // ── NATIVE (Android/iOS) ────────────────────────────────────
   if (!kIsWeb) {
+    // ── Native Android/iOS ───────────────────────────────────
     try {
       final boundary = _previewContainerKey.currentContext!
           .findRenderObject() as RenderRepaintBoundary;
       final image = await boundary.toImage(
         pixelRatio: ui.window.devicePixelRatio,
       );
-      final bytes = (await image.toByteData(
-        format: ui.ImageByteFormat.png,
-      ))!
-          .buffer
-          .asUint8List();
+      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      final bytes = byteData!.buffer.asUint8List();
 
       final tmpDir = await getTemporaryDirectory();
       final fname = 'ar_selfie_${DateTime.now().millisecondsSinceEpoch}.png';
-      final file = File('${tmpDir.path}/$fname');
+      final file = io.File('${tmpDir.path}/$fname');
       await file.writeAsBytes(bytes);
 
       await Share.shareXFiles(
@@ -186,30 +208,26 @@ Future<void> _onSharePressed() async {
         text: 'My Domo AR Selfie!',
         subject: fname,
       );
-      return;
     } catch (e) {
       debugPrint('Native share failed: $e');
       await Share.share('Check out my AR selfie from Domo!');
-      return;
     }
+    return;
   }
 
-  // ── WEB (Chrome on Android / Safari on iOS) ────────────────────
-  // 1) Grab your <video> element and its on‐screen CSS size
-  final videoEl = _webVideo!; // set in _initWebcam()
+  // ── Web (Chrome/Safari) ───────────────────────────────────
+  final videoEl = _webVideo!;
   final rect = videoEl.getBoundingClientRect();
   final cssW = rect.width;
   final cssH = rect.height;
   final dpr = html.window.devicePixelRatio;
 
-  // 2) Create a high-res canvas and scale to CSS pixels
   final canvas = html.CanvasElement(
     width: (cssW * dpr).round(),
     height: (cssH * dpr).round(),
   );
   final ctx = canvas.context2D..scale(dpr, dpr);
 
-  // 3) Compute “cover”‐style cropping
   final rawW = videoEl.videoWidth!;
   final rawH = videoEl.videoHeight!;
   final scaleCover = math.max(cssW / rawW, cssH / rawH);
@@ -218,71 +236,71 @@ Future<void> _onSharePressed() async {
   final srcX = (rawW - srcW) / 2;
   final srcY = (rawH - srcH) / 2;
 
-  // 4) Mirror & draw the video
+  // Mirror & draw video
   ctx.save();
   ctx.translate(cssW, 0);
   ctx.scale(-1, 1);
-  ctx.drawImageScaledFromSource(
-    videoEl,
-    srcX, srcY, srcW, srcH,
-    0, 0, cssW, cssH,
-  );
+  ctx.drawImageScaledFromSource(videoEl, srcX, srcY, srcW, srcH, 0, 0, cssW, cssH);
   ctx.restore();
 
-  // 5) Snapshot & draw the <model-viewer> at your Flutter offset
+  // Draw model-viewer snapshot
   final modelEl = html.document.querySelector('model-viewer')!;
   final modelBlob = await js_util.promiseToFuture<html.Blob>(
-    js_util.callMethod(modelEl, 'toBlob', [
-      {'type': 'image/png'}
-    ]),
+    js_util.callMethod(modelEl, 'toBlob', [{'type': 'image/png'}]),
   );
   final modelUrl = html.Url.createObjectUrlFromBlob(modelBlob);
-  final img = html.ImageElement(src: modelUrl);
-  await img.onLoad.first;
-  // Compute exactly where Flutter put it:
-  final modelSize = size;
+  final img = html.ImageElement();
+  final loadCompleter = Completer<void>();
+  img.onLoad.listen((_) => loadCompleter.complete());
+  img.src = modelUrl;
+  await loadCompleter.future;
+
+  final modelSize = size; // size of the overlay square
   final modelLeft = (cssW - modelSize) / 2 + _modelOffset.dx;
   final modelTop = (cssH - modelSize) / 2 + _modelOffset.dy;
   ctx.drawImageScaled(img, modelLeft, modelTop, modelSize, modelSize);
   html.Url.revokeObjectUrl(modelUrl);
 
-  // 6) Export canvas → PNG bytes
-final dataUrl = canvas.toDataUrl('image/png');
-final pngBytes = base64.decode(dataUrl.split(',').last);
+  await html.window.animationFrame;
 
-// 7) Create the Blob & File
-final fname = 'ar_selfie_${DateTime.now().millisecondsSinceEpoch}.png';
-final blob = html.Blob([pngBytes], 'image/png');
-final url = html.Url.createObjectUrlFromBlob(blob);
+  // Export canvas to PNG
+  final dataUrl = canvas.toDataUrl('image/png');
+  final pngBytes = base64.decode(dataUrl.split(',').last);
 
-// 🔹 7a) Trigger download (must be inside gesture)
-final anchor = html.document.createElement('a') as html.AnchorElement
-  ..href = url
-  ..download = fname;
-html.document.body!.append(anchor);
-anchor.click();
-anchor.remove();
-html.Url.revokeObjectUrl(url);
+  // Create blob and file
+  final fname = 'ar_selfie_${DateTime.now().millisecondsSinceEpoch}.png';
+  final blob = html.Blob([pngBytes], 'image/png');
+  final url = html.Url.createObjectUrlFromBlob(blob);
 
-// 🔹 7b) Try to share immediately after
-try {
-  final file = html.File([blob], fname, {'type': 'image/png'});
-  final shareData = {
-    'files': [file],
-    'title': fname,
-    'text': 'Check out my AR Selfie from Domo!',
-  };
+  // Download
+  final anchor = html.document.createElement('a') as html.AnchorElement
+    ..href = url
+    ..download = fname;
+  html.document.body!.append(anchor);
+  anchor.click();
+  anchor.remove();
 
-  final nav = html.window.navigator;
-  final canShare = js_util.hasProperty(nav, 'canShare') &&
-      js_util.callMethod(nav, 'canShare', [shareData]) == true;
+  // Try to share
+  try {
+    final file = html.File([blob], fname, {'type': 'image/png'});
+    final shareData = {
+      'files': [file],
+      'title': fname,
+      'text': 'Check out my AR Selfie from Domo!',
+    };
 
-  if (canShare) {
-    await js_util.promiseToFuture(js_util.callMethod(nav, 'share', [shareData]));
+    final nav = html.window.navigator;
+    final canShare = js_util.hasProperty(nav, 'canShare') &&
+        js_util.callMethod(nav, 'canShare', [shareData]) == true;
+
+    if (canShare) {
+      await js_util.promiseToFuture(js_util.callMethod(nav, 'share', [shareData]));
+    }
+  } catch (e) {
+    debugPrint('Web share failed after download: $e');
   }
-} catch (e) {
-  debugPrint('Web share() failed after download: $e');
-}
+
+  html.Url.revokeObjectUrl(url);
 }
 
 
@@ -308,12 +326,18 @@ try {
       
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,  // ← make the bar itself white
-        elevation: 0,                   // optional: remove shadow if you want
+        backgroundColor: Colors.white,
+        elevation: 0,
         centerTitle: true,
         leading: Padding(
           padding: const EdgeInsets.only(top: 8.0),
-          child: const BackButton(),
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.black),
+            onPressed: () {
+              // When the user taps the AppBar back button, go to dashboard
+              Navigator.pushReplacementNamed(context, '/dashboard');
+            },
+          ),
         ),
         title: const Padding(
           padding: EdgeInsets.only(top: 8.0),

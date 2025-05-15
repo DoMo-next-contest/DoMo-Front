@@ -1002,6 +1002,7 @@ Future<void> _addSubtaskDialog() async {
 
   @override
   Widget build(BuildContext context) {
+    
     return VisibilityDetector(
       key: const Key('task-page-visibility'),
       onVisibilityChanged: (VisibilityInfo info) {
@@ -1192,7 +1193,7 @@ Future<void> _addSubtaskDialog() async {
                                 ),
                                 style: const TextStyle(
                                   color: Color(0xFF767E8C),
-                                  fontSize: 13.5,
+                                  fontSize: 16,
                                   height: 1.25,
                                 ),
                                 onChanged: (v) => currentTask.description = v,

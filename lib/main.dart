@@ -42,6 +42,7 @@ Future<void> main() async {
   if (savedCats != null && savedCats.isNotEmpty) {
     Task.allCategories = savedCats;
   }
+  
 
   runApp(MobileFrame(child: const MyApp()));
 }
@@ -52,7 +53,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'DoMo App',
+      title: 'DoMo',
       theme: ThemeData(primarySwatch: Colors.green, fontFamily: 'Inter',),
       debugShowCheckedModeBanner: false,
       initialRoute: '/',
