@@ -7,6 +7,7 @@ import 'package:domo/services/item_service.dart';
 import 'package:domo/services/task_service.dart';
 import 'package:domo/services/profile_service.dart';
 import 'package:domo/models/profile.dart';
+import 'package:domo/models/item.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -23,33 +24,58 @@ class DashboardPageState extends State<DashboardPage> {
   late Future<Task> _recentFuture;
   late Future<Profile> _profileFuture;
 
-  @override
-  void initState() {
-    super.initState();
-    _controller.onModelLoaded.addListener(() {
-      if (_controller.onModelLoaded.value) {
-        debugPrint('✅ Model loaded successfully');
-      }
+
+  Future<void> _loadInitialModel() async {
+  try {
+    // Try to fetch most recently equipped deco
+    final recentItem = await ItemService.fetchRecentEquippedItem();
+
+    // Equip and show it
+    await ItemService.equipItem(recentItem.id);
+    setState(() {
+      _modelSrc = recentItem.imageUrl;
+      _loadingModel = false;
     });
+  } catch (e) {
+    debugPrint('⚠️ Failed to load recent item, falling back to ID 9: $e');
 
-    // fetch recent task and profile
-    _recentFuture = _taskService.fetchRecent();
-    _profileFuture = ProfileService().fetchProfile();
-
-    // Equip default item (id: 9) and load its 3D model
-    ItemService.equipItem(9)
-      .then((_) => ItemService.getItemById(9))
-      .then((item) {
-        setState(() {
-          _modelSrc = item.imageUrl;
-          _loadingModel = false;
-        });
-      })
-      .catchError((err) {
-        debugPrint('❌ Error equipping/loading item: $err');
-        setState(() => _loadingModel = false);
+    // Fallback to default item (id: 9)
+    try {
+      await ItemService.equipItem(9);
+      final fallbackItem = await ItemService.getItemById(9);
+      setState(() {
+        _modelSrc = fallbackItem.imageUrl;
+        _loadingModel = false;
       });
+    } catch (e2) {
+      debugPrint('❌ Error loading fallback item: $e2');
+      setState(() => _loadingModel = false);
+    }
   }
+}
+
+
+  @override
+void initState() {
+  super.initState();
+
+  // 1️⃣ Listen to model load status
+  _controller.onModelLoaded.addListener(() {
+    if (_controller.onModelLoaded.value) {
+      debugPrint('✅ Model loaded successfully');
+    }
+  });
+
+  // 2️⃣ Fetch recent task and profile
+  _recentFuture = _taskService.fetchRecent();
+  _profileFuture = ProfileService().fetchProfile();
+
+  // 3️⃣ Load most recently equipped item or fallback
+  _loadInitialModel();
+
+  Task.loadCategories();
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -90,7 +116,7 @@ class DashboardPageState extends State<DashboardPage> {
                                   disableZoom: true,
                                   disablePan: true,
                                   backgroundColor: Colors.transparent,
-                                  poster: 'assets/png/cutie.png',
+                                  //poster: 'assets/png/cutie.png',
                                   loading: Loading.eager,
                                   reveal: Reveal.auto,
                                   shadowIntensity: 0.4,
@@ -155,68 +181,81 @@ class DashboardPageState extends State<DashboardPage> {
                           left: 30,
                           right: 30,
                           bottom: 140,
-                          child: Material(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            elevation: 4,
-                            clipBehavior: Clip.antiAlias,
-                            child: InkWell(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
                               borderRadius: BorderRadius.circular(16),
-                              onTap: () => Navigator.pushReplacementNamed(context, '/add'),
-                              child: Container(
-                                height: 80, // 카드 높이
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    // ① 한 줄 텍스트
-                                    Text(
-                                      '최근 접속한 프로젝트가 없습니다.',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        fontFamily: 'Inter',
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                        color: Color(0xFF1E1E1E),
-                                      ),
-                                    ),
-
-                                    const Spacer(), // 텍스트와 버튼 사이 공간
-
-                                    // ② 오른쪽 하단 버튼
-                                    Align(
-                                      alignment: Alignment.bottomRight,
-                                      child: TextButton(
-                                        onPressed: () => Navigator.pushReplacementNamed(context, '/add'),
-                                        style: TextButton.styleFrom(
-                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                          minimumSize: Size.zero,
-                                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Color(0x19000000), // subtle shadow
+                                  blurRadius: 8,
+                                  offset: Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Material(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              //elevation: 1,
+                              clipBehavior: Clip.antiAlias,
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(16),
+                                onTap: () => Navigator.pushReplacementNamed(context, '/add'),
+                                child: Container(
+                                  height: 80, // 카드 높이
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      // ① 한 줄 텍스트
+                                      Text(
+                                        '최근 접속한 프로젝트가 없습니다.',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontFamily: 'Inter',
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                          color: Color(0xFF1E1E1E),
                                         ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            const Text(
-                                              '새로운 프로젝트',
-                                              style: TextStyle(
-                                                fontFamily: 'Inter',
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w500,
+                                      ),
+
+                                      const Spacer(), // 텍스트와 버튼 사이 공간
+
+                                      // ② 오른쪽 하단 버튼
+                                      Align(
+                                        alignment: Alignment.bottomRight,
+                                        child: TextButton(
+                                          onPressed: () => Navigator.pushReplacementNamed(context, '/add'),
+                                          style: TextButton.styleFrom(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            minimumSize: Size.zero,
+                                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              const Text(
+                                                '새로운 프로젝트',
+                                                style: TextStyle(
+                                                  fontFamily: 'Inter',
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w500,
+                                                  color: Color(0xFFBF622C),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 4),
+                                              const Icon(
+                                                Icons.open_in_new,
+                                                size: 20,
                                                 color: Color(0xFFBF622C),
                                               ),
-                                            ),
-                                            const SizedBox(width: 4),
-                                            const Icon(
-                                              Icons.open_in_new,
-                                              size: 20,
-                                              color: Color(0xFFBF622C),
-                                            ),
-                                          ],
+                                            ],
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
@@ -271,7 +310,7 @@ class DashboardPageState extends State<DashboardPage> {
                                     ),
                                     const SizedBox(width: 12),
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                       decoration: ShapeDecoration(
                                         color: const Color(0xFFF2AC57),
                                         shape: RoundedRectangleBorder(

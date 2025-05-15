@@ -8,7 +8,14 @@ class ProjectTag {
     id: json['projectTagId'] as int,
     rawName: json['projectTagName'] as String,
   );
+
+
+  static List<ProjectTag> rawList = [];
+
 }
+
+
+
 
 class Subtask {
   final int id;
@@ -186,6 +193,8 @@ class Task {
 
   /// UI‐side list of categories
   static List<String> allCategories = [];
+
+  static List<ProjectTag> rawList = [];
 
   static const Map<String,String> rawToUi = {
     'WORK': '업무',

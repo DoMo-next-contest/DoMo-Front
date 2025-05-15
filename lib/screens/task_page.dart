@@ -7,6 +7,7 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:domo/models/task.dart';
 import 'package:domo/utils/mobile_frame.dart';
 import 'package:domo/services/task_service.dart';
+import 'package:domo/services/task_service.dart';
 
 class TaskPage extends StatefulWidget {
   const TaskPage({super.key});
@@ -48,6 +49,8 @@ class TaskPageState extends State<TaskPage> {
     // now you can read both id and name:
     debugPrint('currentTask.id = ${currentTask.id}');
     debugPrint('currentTask.name = ${currentTask.name}');
+
+    TaskService().markProjectAsAccessed(currentTask.id);
 
     selectedCategory = currentTask.category;
     _nameController.text = currentTask.name;
@@ -117,147 +120,309 @@ class TaskPageState extends State<TaskPage> {
     final s = _twoDigits(d.inSeconds.remainder(60));
     return '$h:$m:$s';
   }
+void _showCategoryPicker() {
+  showDialog(
+    context: context,
+    barrierColor: Colors.black26,
+    builder: (_) => Dialog(
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 30, vertical: 80),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: 405,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                '카테고리 관리',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Divider(height: 1),
 
-  void _showCategoryPicker() {
-    showDialog(
-      context: context,
-      barrierColor: Colors.black26,
-      builder:
-          (_) => Dialog(
-            backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            insetPadding: const EdgeInsets.symmetric(
-              horizontal: 24,
-              vertical: 80,
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    '카테고리 관리',
-                    style: const TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(maxHeight: 300),
-                    child: ListView.separated(
-                      shrinkWrap: true,
-                      itemCount: Task.allCategories.length,
-                      separatorBuilder: (_, __) => const Divider(height: 1),
-                      itemBuilder: (_, idx) {
-                        final cat = Task.allCategories[idx];
-                        final isSel = cat == selectedCategory;
-                        return ListTile(
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 4,
-                          ),
-                          leading:
-                              isSel
-                                  ? const Icon(
-                                    Icons.check,
-                                    color: Color(0xFFBF622C),
-                                  )
-                                  : const SizedBox(width: 24),
-                          title: Text(
-                            cat,
-                            style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 16,
-                              color: isSel ? Colors.black : Colors.grey[700],
-                            ),
-                          ),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.delete_outline),
-                            color: Colors.grey[500],
-                            onPressed: () {
+              // Scrollable list
+              Expanded(
+                child: ListView.separated(
+                  itemCount: Task.allCategories.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  itemBuilder: (_, idx) {
+                    final cat = Task.allCategories[idx];
+                    final isSel = cat == selectedCategory;
+                    return ListTile(
+                      contentPadding: const EdgeInsets.symmetric(vertical: 4),
+                      leading: isSel
+                          ? const Icon(Icons.check, color: Color(0xFFBF622C))
+                          : const SizedBox(width: 24),
+                      title: Text(
+                        cat,
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 16,
+                          color: isSel ? Colors.black : Colors.grey[700],
+                        ),
+                      ),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.delete_outline),
+                        color: Colors.grey[500],
+                        onPressed: () async {
+                            final rawIdx = Task.allCategories.indexOf(cat);
+                            if (rawIdx < 0) return;
+
+                            final toDelete = Task.rawList[rawIdx];
+
+                            try {
+                              await TaskService().deleteProjectTag(toDelete.id);
+
                               setState(() {
-                                Task.allCategories.removeAt(idx);
-                                if (selectedCategory == cat) {
+                                Task.rawList.removeAt(rawIdx);
+                                Task.allCategories.removeAt(rawIdx);
+                                if (selectedCategory == cat && Task.allCategories.isNotEmpty) {
                                   selectedCategory = Task.allCategories.first;
                                   currentTask.category = selectedCategory;
                                 }
                               });
+
                               Navigator.pop(context);
                               _showCategoryPicker();
-                            },
-                          ),
-                          onTap: () {
-                            setState(() {
-                              selectedCategory = cat;
-                              currentTask.category = cat;
-                            });
-                            Navigator.pop(context);
+                            } catch (e) {
+                              // 삭제 실패: 팝업 띄우기
+                              await showDialog<void>(
+                                context: context,
+                                barrierColor: Colors.black26,
+                                builder: (_) => Dialog(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  backgroundColor: Colors.white,
+                                  insetPadding: const EdgeInsets.symmetric(horizontal: 30, vertical: 200),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(
+                                          Icons.error_outline,
+                                          size: 48,
+                                          color: Color(0xFFC78E48),
+                                        ),
+                                        const SizedBox(height: 16),
+                                        const Text(
+                                          '삭제할 수 없습니다',
+                                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                                        ),
+                                        const SizedBox(height: 12),
+                                        const Text(
+                                          '해당 태그를 사용하는 프로젝트가 존재합니다.',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(fontSize: 15),
+                                        ),
+                                        const SizedBox(height: 24),
+                                        SizedBox(
+                                          width: double.infinity,
+                                          child: ElevatedButton(
+                                            onPressed: () => Navigator.pop(context),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: const Color(0xFFC78E48),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(12),
+                                              ),
+                                              padding: const EdgeInsets.symmetric(vertical: 14),
+                                            ),
+                                            child: const Text(
+                                              '확인',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.w500,
+                                                fontSize: 16,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }
                           },
-                        );
+                      ),
+                      onTap: () {
+                        setState(() {
+                          selectedCategory = cat;
+                          currentTask.category = cat;
+                        });
+                        Navigator.pop(context);
                       },
+                    );
+                  },
+                ),
+              ),
+
+              const Divider(height: 1),
+              const SizedBox(height: 12),
+
+              // “카테고리 추가” button
+              Align(
+                alignment: Alignment.centerRight,
+                child: GestureDetector(
+                  onTap: () async {
+                    final newCat = await _showAddCategoryDialog();
+                    if (newCat != null) {
+                      setState(() => _isLoading = true);
+                      try {
+                        await TaskService().createProjectTag(newCat);
+                        Task.allCategories.add(newCat);
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('카테고리 추가 실패: $e')),
+                        );
+                        return;
+                      } finally {
+                        if (mounted) setState(() => _isLoading = false);
+                      }
+                      Navigator.pop(context);
+                      _showCategoryPicker();
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: ShapeDecoration(
+                      color: const Color(0xFFF2AC57),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      shadows: const [
+                        BoxShadow(
+                          color: Color(0x19000000),
+                          blurRadius: 16,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  const Divider(height: 1),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _categoryController,
-                          decoration: const InputDecoration(
-                            hintText: '새 카테고리 추가',
-                            border: InputBorder.none,
-                            isDense: true,
-                            contentPadding: EdgeInsets.symmetric(vertical: 8),
-                          ),
-                          style: const TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 16,
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.add, size: 16, color: Colors.white),
+                        SizedBox(width: 6),
+                        Text(
+                          '카테고리 추가',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w400,
+                            height: 1,
                           ),
                         ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.add_circle_outline, size: 28),
-                        color: const Color(0xFFBF622C),
-                        onPressed: () async {
-                          final newCat = _categoryController.text.trim();
-                          if (newCat.isEmpty || Task.allCategories.contains(newCat)) return;
-
-                          Navigator.pop(context); // close dialog immediately
-
-                          try {
-                            // 1) send to server
-                            await TaskService().createProjectTag(newCat);
-
-                            // 2) on success, update local list
-                            setState(() {
-                              Task.allCategories.add(newCat);
-                            });
-                            _categoryController.clear();
-
-                            // 3) reopen the picker so the user sees it added
-                            _showCategoryPicker();
-                          } catch (e) {
-                            // if the API call failed, show an error
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('카테고리 생성에 실패했습니다: $e')),
-                            );
-                            // optionally reopen the dialog so they can retry
-                            _showCategoryPicker();
-                          }
-                        },
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+
+Future<String?> _showAddCategoryDialog() async {
+  final controller = TextEditingController();
+  String? newCategory;
+
+  await showDialog(
+    context: context,
+    barrierColor: Colors.black26,
+    builder: (_) => Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      backgroundColor: Colors.white,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 30, vertical: 200),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('새 카테고리 추가',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 16),
+            const Text('카테고리 이름',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+            const SizedBox(height: 6),
+            Container(
+              height: 40,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                border: Border.all(color: const Color(0xFFB1B1B1)),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: TextField(
+                  controller: controller,
+                  autofocus: true,
+                  decoration: const InputDecoration(
+                    hintText: '입력하세요',
+                    border: InputBorder.none,
+                    isCollapsed: true,
+                  ),
+                ),
               ),
             ),
-          ),
-    );
-  }
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('취소'),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFFB1B1B1)),
+                     
+                      foregroundColor: Colors.black,   // ← makes the text black
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      final t = controller.text.trim();
+                      if (t.isNotEmpty) {
+                        newCategory = t;
+                        Navigator.pop(context);
+                      }
+                    },
+                    child: const Text('추가'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFF2AC57),
+                      
+                      foregroundColor: Colors.white,   // ← makes the text black
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+
+  return newCategory;
+}
+
 
   /// Trendy calendar bottom sheet
   Future<void> _showCalendarPicker() async {
@@ -384,92 +549,92 @@ class TaskPageState extends State<TaskPage> {
             const SizedBox(height: 16),
 
             // 하위작업 이름
-Column(
-  crossAxisAlignment: CrossAxisAlignment.start,
-  children: [
-    const Text(
-      '하위작업 이름',
-      style: TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
-        color: Colors.black,
-      ),
-    ),
-    const SizedBox(height: 8),
-    TextField(
-      controller: titleCtrl,
-      decoration: InputDecoration(
-        labelText: '제목',
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      ),
-    ),
-  ],
-),
-const SizedBox(height: 16),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '하위작업 이름',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: titleCtrl,
+                  decoration: InputDecoration(
+                    labelText: '제목',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
 
-// 실제 소요시간
-Column(
-  crossAxisAlignment: CrossAxisAlignment.start,
-  children: [
-    const Text(
-      '실제 소요시간',
-      style: TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
-        color: Colors.black,
-      ),
-    ),
-    const SizedBox(height: 8),
-    Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('시간(시)', style: TextStyle(fontSize: 12, color: Colors.grey[700])),
-              const SizedBox(height: 4),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey[400]!),
-                  borderRadius: BorderRadius.circular(12),
+            // 실제 소요시간
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '실제 소요시간',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
+                  ),
                 ),
-                child: TextField(
-                  controller: hoursCtrl,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration.collapsed(hintText: ''),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('시간(시)', style: TextStyle(fontSize: 12, color: Colors.grey[700])),
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey[400]!),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: TextField(
+                              controller: hoursCtrl,
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration.collapsed(hintText: ''),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('분', style: TextStyle(fontSize: 12, color: Colors.grey[700])),
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey[400]!),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: TextField(
+                              controller: minutesCtrl,
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration.collapsed(hintText: ''),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('분', style: TextStyle(fontSize: 12, color: Colors.grey[700])),
-              const SizedBox(height: 4),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey[400]!),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: TextField(
-                  controller: minutesCtrl,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration.collapsed(hintText: ''),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    ),
-  ],
-),
+              ],
+            ),
             const SizedBox(height: 24),
 
             // 버튼
@@ -651,6 +816,11 @@ Future<void> _addSubtaskDialog() async {
     ),
   );
 }
+
+bool _areAllSubtasksComplete(Task task) {
+  return task.subtasks.every((s) => s.isDone == true); // ✅ CORRECT
+}
+
 
 
   @override
@@ -1283,6 +1453,125 @@ Future<void> _addSubtaskDialog() async {
                                   onTap: _isCompleting
                                       ? null
                                       : () async {
+
+                                          if (currentTask.completed) {
+                                            await showDialog<void>(
+                                              context: context,
+                                              barrierColor: Colors.black26,
+                                              builder: (_) => Dialog(
+                                                backgroundColor: Colors.white,
+                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                                insetPadding: const EdgeInsets.symmetric(horizontal: 30, vertical: 200),
+                                                child: Padding(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                                                  child: Column(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    children: [
+                                                      const Icon(Icons.info_outline, size: 48, color: Color(0xFFC78E48)),
+                                                      const SizedBox(height: 16),
+                                                      const Text(
+                                                        '이미 완료된 프로젝트입니다',
+                                                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                                                      ),
+                                                      const SizedBox(height: 12),
+                                                      const Text(
+                                                        '이 프로젝트는 이미 완료되었습니다.\n다시 완료할 수 없습니다.',
+                                                        textAlign: TextAlign.center,
+                                                        style: TextStyle(fontSize: 15),
+                                                      ),
+                                                      const SizedBox(height: 24),
+                                                      SizedBox(
+                                                        width: double.infinity,
+                                                        child: ElevatedButton(
+                                                          onPressed: () => Navigator.pop(context),
+                                                          style: ElevatedButton.styleFrom(
+                                                            backgroundColor: Color(0xFFC78E48),
+                                                            shape: RoundedRectangleBorder(
+                                                              borderRadius: BorderRadius.circular(12),
+                                                            ),
+                                                            padding: const EdgeInsets.symmetric(vertical: 14),
+                                                          ),
+                                                          child: const Text(
+                                                            '확인',
+                                                            style: TextStyle(
+                                                              color: Colors.white,
+                                                              fontWeight: FontWeight.w500,
+                                                              fontSize: 16,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                            );
+                                            return;
+                                          }
+                                          if (!_areAllSubtasksComplete(currentTask)) {
+                                            await showDialog<void>(
+                                              context: context,
+                                              barrierColor: Colors.black26,
+                                              builder: (_) => Dialog(
+                                                backgroundColor: Colors.white,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(20),
+                                                ),
+                                                insetPadding: const EdgeInsets.symmetric(horizontal: 30, vertical: 200),
+                                                child: Padding(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                                                  child: Column(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    children: [
+                                                      const Icon(
+                                                        Icons.warning_amber_rounded,
+                                                        size: 48,
+                                                        color: Color(0xFFC78E48),
+                                                      ),
+                                                      const SizedBox(height: 16),
+                                                      const Text(
+                                                        '하위작업 미완료',
+                                                        style: TextStyle(
+                                                          fontSize: 18,
+                                                          fontWeight: FontWeight.w600,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(height: 12),
+                                                      const Text(
+                                                        '모든 하위작업을 완료해야\n프로젝트를 마칠 수 있습니다.',
+                                                        textAlign: TextAlign.center,
+                                                        style: TextStyle(fontSize: 15),
+                                                      ),
+                                                      const SizedBox(height: 24),
+                                                      SizedBox(
+                                                        width: double.infinity,
+                                                        child: ElevatedButton(
+                                                          onPressed: () => Navigator.pop(context),
+                                                          style: ElevatedButton.styleFrom(
+                                                            backgroundColor: const Color(0xFFC78E48),
+                                                            shape: RoundedRectangleBorder(
+                                                              borderRadius: BorderRadius.circular(12),
+                                                            ),
+                                                            padding: const EdgeInsets.symmetric(vertical: 14),
+                                                          ),
+                                                          child: const Text(
+                                                            '확인',
+                                                            style: TextStyle(
+                                                              color: Colors.white,
+                                                              fontWeight: FontWeight.w500,
+                                                              fontSize: 16,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                            );
+                                            return;
+                                          }
+
                                           // 1) 확인 다이얼로그 띄우기
                                           final confirm = await showDialog<bool>(
                                             context: context,

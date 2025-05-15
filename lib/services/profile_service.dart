@@ -257,13 +257,16 @@ class ProfileService {
 
   /// Delete (withdraw) the user’s account
   Future<void> deleteAccount() async {
+    
     final token = await _bearerToken();
+    //print('Bearer token: $token');
     final uri   = Uri.parse('$baseUrl/api/user/delete');
     final resp  = await http.delete(
       uri,
       headers: {
         'Authorization': token,
         'Accept':        'application/json; charset=utf-8',
+        'Content-Type': 'application/json; charset=utf-8',
       },
     );
     if (resp.statusCode != 200) {

@@ -62,7 +62,8 @@ String _mapTimePref(String? value) {
 
 List<String> _mapTags(List<String>? rawTags) {
   if (rawTags == null) return [];
-  final mapping = {
+
+  const mapping = {
     '업무': 'WORK',
     '학업': 'STUDY',
     '운동': 'EXERCISE',
@@ -70,8 +71,14 @@ List<String> _mapTags(List<String>? rawTags) {
     '자기계발': 'SELF_IMPROVEMENT',
   };
 
-  return rawTags.map((k) => mapping.containsKey(k) ? mapping[k]! : k).toList();
+  // filter out those not accepted by backend
+  return rawTags
+      .map((k) => mapping[k])
+      .where((v) => v != null)
+      .cast<String>()
+      .toList();
 }
+
 
 
 
@@ -103,52 +110,6 @@ List<String> _mapTags(List<String>? rawTags) {
   }
 }
 
-Future<void> _showAddCategoryDialog() async {
-  String newCategory = '';
-  final controller = TextEditingController();
-
-  await showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: const Text('새 카테고리 추가'),
-      content: TextField(
-        controller: controller,
-        autofocus: true,
-        decoration: const InputDecoration(hintText: '카테고리 이름'),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('취소'),
-        ),
-        TextButton(
-          onPressed: () {
-            newCategory = controller.text.trim();
-            Navigator.pop(context);
-          },
-          child: const Text('추가'),
-        ),
-      ],
-    ),
-  );
-
-  if (newCategory.isNotEmpty) {
-    try {
-      setState(() => _isLoading = true);
-      await TaskService().createProjectTag(newCategory); // 🔗 Call backend API
-      setState(() {
-        _allCategories.add(newCategory);
-        _selected.add(newCategory);
-      });
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('카테고리 추가 실패: $e')),
-      );
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-}
 
 
   @override
@@ -267,31 +228,149 @@ Future<void> _showAddCategoryDialog() async {
 
                           // "카테고리 추가" button
                           GestureDetector(
-                            onTap: _showAddCategoryDialog,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 8),
-                              decoration: ShapeDecoration(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                  side: const BorderSide(
-                                    width: 1,
-                                    color: Color(0xFFB1B1B1),
+                            onTap: () async {
+                              final controller = TextEditingController();
+                              String? newCategory;
+
+                              await showDialog(
+                                context: context,
+                                barrierColor: Colors.black26,
+                                builder: (_) => Dialog(
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                  backgroundColor: Colors.white,
+                                  insetPadding: const EdgeInsets.symmetric(horizontal: 30, vertical: 200),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          '새 카테고리 추가',
+                                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                                        ),
+                                        const SizedBox(height: 16),
+
+                                        const Text(
+                                          '카테고리 이름',
+                                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                                        ),
+                                        const SizedBox(height: 6),
+
+                                        Container(
+                                          height: 40,
+                                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                                          decoration: BoxDecoration(
+                                            border: Border.all(color: const Color(0xFFB1B1B1)),
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: Center(
+                                            child: TextField(
+                                              controller: controller,
+                                              autofocus: true,
+                                              style: const TextStyle(fontSize: 14),
+                                              decoration: const InputDecoration(
+                                                hintText: '입력하세요',
+                                                border: InputBorder.none,
+                                                isCollapsed: true,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+
+                                        const SizedBox(height: 24),
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: OutlinedButton(
+                                                onPressed: () => Navigator.pop(context),
+                                                style: OutlinedButton.styleFrom(
+                                                  side: const BorderSide(color: Color(0xFFB1B1B1)),
+                                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                                  foregroundColor: Colors.black,  
+                                                ),
+                                                child: const Text('취소', style: TextStyle(color: Colors.black87)),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              child: ElevatedButton(
+                                                onPressed: () {
+                                                  final trimmed = controller.text.trim();
+                                                  if (trimmed.isNotEmpty) {
+                                                    newCategory = trimmed;
+                                                    Navigator.pop(context);
+                                                  }
+                                                },
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: const Color(0xFFF2AC57),
+                                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                                  foregroundColor: Colors.white,  
+                                                ),
+                                                child: const Text('추가', style: TextStyle(color: Colors.white)),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
+                              );
+
+                              if (newCategory != null && !_allCategories.contains(newCategory)) {
+                                setState(() => _isLoading = true);
+                                try {
+                                  await TaskService().createProjectTag(newCategory!);
+                                  setState(() {
+                                    _allCategories.add(newCategory!);
+                                    _selected.add(newCategory!);
+                                  });
+                                } catch (e) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('카테고리 추가 실패: $e')),
+                                  );
+                                } finally {
+                                  if (mounted) setState(() => _isLoading = false);
+                                }
+                              }
+                            },
+                            child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            decoration: ShapeDecoration(
+                              color: const Color(0xFFF2AC57),  // <-- 변경: 반투명에서 실색으로
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
                               ),
-                              child: const Text(
-                                '카테고리 추가',
-                                style: TextStyle(
-                                  color: Color(0xFF757575),
-                                  fontSize: 14,
-                                  fontFamily: 'Roboto',
-                                  fontWeight: FontWeight.w400,
-                                  height: 1,
+                              shadows: const [
+                                BoxShadow(
+                                  color: Color(0x19000000),
+                                  blurRadius: 16,
+                                  offset: Offset(0, 2),
                                 ),
-                              ),
+                              ],
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.add, size: 16, color: Colors.white),  // 아이콘 색도 조정
+                                SizedBox(width: 6),
+                                Text(
+                                  '카테고리 추가',
+                                  style: TextStyle(
+                                    color: Colors.white,  // 텍스트 색도 흰색으로
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w400,
+                                    height: 1,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
+                        ),
+
                         ],
                       ),
 

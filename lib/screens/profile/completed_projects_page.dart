@@ -46,10 +46,11 @@ class _CompletedProjectsPageState extends State<CompletedProjectsPage> {
     }
   }
 
+
   @override
-  Widget build(BuildContext context) {
-    // 필터 & 정렬 적용
-    final filtered = _tasks.where((t) => selectedCategories.contains(t.category)).toList();
+Widget build(BuildContext context) {
+
+  final filtered = _tasks.where((t) => selectedCategories.contains(t.category)).toList();
     switch (_selectedSort) {
       case '가나다순':
         filtered.sort((a, b) => a.name.compareTo(b.name));
@@ -59,12 +60,13 @@ class _CompletedProjectsPageState extends State<CompletedProjectsPage> {
         break;
     }
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: SafeArea(
-        child: Container(
-          color: Colors.white,
+  return Scaffold(
+    backgroundColor: Colors.transparent,
+    body: SafeArea(
+      child: Container(
+        color: Colors.white,
           child: Stack(
+            
             children: [
               // 1) 제목
               const Positioned(
@@ -269,8 +271,8 @@ class _CompletedProjectsPageState extends State<CompletedProjectsPage> {
               ),
             ],
           ),
-        ),
       ),
+    ),
     );
   }
 }
