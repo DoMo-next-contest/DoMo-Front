@@ -851,149 +851,150 @@ class TaskPageState extends State<TaskPage> with WidgetsBindingObserver {
 
     setState(() {}); // refresh list immediately
   }
+Future<void> _addSubtaskDialog() async {
+  final titleCtrl = TextEditingController();
+  final hoursCtrl = TextEditingController();
+  final minsCtrl = TextEditingController();
 
-  Future<void> _addSubtaskDialog() async {
-    final titleCtrl = TextEditingController();
-    final hoursCtrl = TextEditingController();
-    final minsCtrl = TextEditingController();
-
-    await showDialog(
-      context: context,
-      barrierColor: Colors.black26,
-      builder:
-          (_) => Dialog(
-            backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
+  // 1) Show dialog and await whether the user tapped “저장” (true) or “취소” (false)
+  final didSave = await showDialog<bool>(
+    context: context,
+    barrierColor: Colors.black26,
+    builder: (_) => Dialog(
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 200),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '새 하위작업 추가',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
             ),
-            insetPadding: const EdgeInsets.symmetric(
-              horizontal: 40,
-              vertical: 200,
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    '새 하위작업 추가',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 12),
+            const SizedBox(height: 16),
 
-                  // 제목 입력
-                  TextField(
-                    controller: titleCtrl,
-                    decoration: InputDecoration(
-                      labelText: '제목',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // 예상 시간 입력
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: hoursCtrl,
-                          keyboardType: TextInputType.number,
-                          decoration: InputDecoration(
-                            labelText: '시간 (H)',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: TextField(
-                          controller: minsCtrl,
-                          keyboardType: TextInputType.number,
-                          decoration: InputDecoration(
-                            labelText: '분 (M)',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-                  // 확인 버튼
-                  ElevatedButton(
-                    onPressed: () async {
-                      final title = titleCtrl.text.trim();
-                      final h = int.tryParse(hoursCtrl.text) ?? 0;
-                      final m = int.tryParse(minsCtrl.text) ?? 0;
-                      if (title.isEmpty) return;
-
-                      final newSub = Subtask(
-                        id: 0,
-                        order: currentTask.subtasks.length + 1,
-                        title: title,
-                        expectedDuration: Duration(hours: h, minutes: m),
-                        tag: 'DOCUMENTATION',
-                      );
-
-                      Navigator.pop(context);
-                      // 1) Optimistically insert locally
-                      setState(() {
-                        currentTask.subtasks.add(newSub);
-                        currentTask.touch();
-                        _listVersion++;
-                      });
-
-                      // 2) Send to server
-                      try {
-                        await TaskService().createSubtasks(
-                          currentTask.id,
-                          newSub,
-                        );
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('하위작업이 추가되었습니다')),
-                        );
-                        /*
-                  Navigator.pushReplacementNamed(
-                    context,
-                    '/task',
-                    arguments: currentTask,
-                  );
-                  */
-                      } catch (e) {
-                        ScaffoldMessenger.of(
-                          context,
-                        ).showSnackBar(SnackBar(content: Text('저장 실패: $e')));
-                      }
-                    },
-
-                    style: ElevatedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      backgroundColor: const Color(0xFFF2AC57),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      fixedSize: const Size(200, 48),
-                    ),
-                    child: const Text(
-                      '확인',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
+            // 제목 섹션
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                '하위작업 이름',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
               ),
             ),
-          ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: titleCtrl,
+              decoration: InputDecoration(
+                labelText: '제목',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // 예상 소요시간 섹션
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                '예상 소요시간',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: hoursCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: '시간 (H)',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: minsCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: '분 (M)',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            // Actions
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  style: TextButton.styleFrom(foregroundColor: Colors.black),
+                  child: const Text('취소'),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: () {
+                    if (titleCtrl.text.trim().isEmpty) return;
+                    Navigator.pop(context, true);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFF2AC57),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  ),
+                  child: const Text('저장', style: TextStyle(fontWeight: FontWeight.w600)),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ),
+  ) ?? false; // default to false if dialog dismissed
+
+  // 2) If the user tapped “저장,” update state and send to server
+  if (didSave) {
+    final title = titleCtrl.text.trim();
+    final h = int.tryParse(hoursCtrl.text) ?? 0;
+    final m = int.tryParse(minsCtrl.text) ?? 0;
+    final newSub = Subtask(
+      id: 0,
+      order: currentTask.subtasks.length + 1,
+      title: title,
+      expectedDuration: Duration(hours: h, minutes: m),
+      tag: 'DEFAULT',
     );
+
+    setState(() {
+      currentTask.subtasks.add(newSub);
+      currentTask.touch();
+      _listVersion++;
+    });
+    _reloadSubtasks();
+
+    try {
+      await TaskService().createSubtasks(currentTask.id, newSub);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('하위작업이 추가되었습니다')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('저장 실패: $e')),
+      );
+    }
   }
+  
+}
+
+
 
   bool _areAllSubtasksComplete(Task task) {
     return task.subtasks.every((s) => s.isDone == true); // ✅ CORRECT
@@ -1169,52 +1170,61 @@ class TaskPageState extends State<TaskPage> with WidgetsBindingObserver {
                     ),
 
                     Positioned(
-                      top: 120,
+                      top: 125,
                       left: 20,
-                      right: 20,
-                      child:
-                          _isEditing
-                              ? SizedBox(
-                                height: 32,
-                                child: TextField(
-                                  controller: _descController,
-                                  maxLines: 1,
-                                  textAlignVertical: TextAlignVertical.center,
-                                  decoration: const InputDecoration(
-                                    hintText: '설명을 입력하세요',
-                                    border: InputBorder.none,
-                                    isDense: true,
-                                    contentPadding: EdgeInsets.zero,
-                                  ),
-                                  style: const TextStyle(
-                                    color: Color(0xFF767E8C),
-                                    fontSize: 13.5,
-                                    fontFamily: 'Barlow',
-                                    fontWeight: FontWeight.w400,
-                                    height: 1.25,
-                                  ),
-                                  onChanged: (v) => currentTask.description = v,
+                      right: 80,
+                      bottom: 695,  // leave room for your calendar below
+                      child: SingleChildScrollView(
+                        padding: EdgeInsets.zero,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (_isEditing)
+                              TextField(
+                                controller: _descController,
+                                maxLines: null,
+                                keyboardType: TextInputType.multiline,
+                                decoration: const InputDecoration(
+                                  hintText: '설명을 입력하세요',
+                                  border: InputBorder.none,
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.zero,
                                 ),
+                                style: const TextStyle(
+                                  color: Color(0xFF767E8C),
+                                  fontSize: 13.5,
+                                  height: 1.25,
+                                ),
+                                onChanged: (v) => currentTask.description = v,
                               )
-                              : Container(
-                                height: 32,
-                                alignment: Alignment.centerLeft,
-                                child: Text(
-                                  currentTask.description,
-                                  style: const TextStyle(
-                                    color: Color(0xFF767E8C),
-                                    fontSize: 12,
-                                    fontFamily: 'Barlow',
-                                    fontWeight: FontWeight.w400,
-                                    height: 1.25,
-                                  ),
+                            else
+                              Text(
+                                // show placeholder if empty
+                                currentTask.description.isEmpty
+                                  ? '설명을 입력하세요'
+                                  : currentTask.description,
+                                softWrap: true,
+                                style: TextStyle(
+                                  color: currentTask.description.isEmpty
+                                    ? Colors.grey    // placeholder color
+                                    : const Color(0xFF767E8C),
+                                  fontSize: 12,
+                                  height: 1.5,
+                                  fontStyle: currentTask.description.isEmpty
+                                    ? FontStyle.normal
+                                    : FontStyle.normal,
                                 ),
                               ),
+
+                          
+                          ],
+                        ),
+                      ),
                     ),
 
                     // deadline
                     Positioned(
-                      top: 160,
+                      top: 175,
                       left: 16,
                       right: 16,
                       child: InkWell(
@@ -1256,7 +1266,7 @@ class TaskPageState extends State<TaskPage> with WidgetsBindingObserver {
 
                     // subtasks
                     Positioned(
-                      top: 220,
+                      top: 230,
                       left: 0,
                       right: 0,
                       bottom: 135,
@@ -1608,21 +1618,35 @@ class TaskPageState extends State<TaskPage> with WidgetsBindingObserver {
                                               },
                                             ),
                                           ] else ...[
-                                            IconButton(
-                                              icon: Icon(isRunning ? Icons.pause : Icons.play_arrow),
-                                              onPressed: () async {
-                                                if (isRunning) {
-                                                  sub.pause();
-                                                  // immediately persist the newly‐paused time
-                                                  await _saveSubtaskState(sub);
-                                                } else {
-                                                  sub.start();
-                                                  // (optionally) persist the new start timestamp as well
-                                                  await _saveSubtaskState(sub);
-                                                }
-                                                setState(() {});
-                                              },
-                                            ),
+                                            sub.isDone
+                                              // 1) If it’s done, show the play icon in grey and disable taps:
+                                              ? IconButton(
+                                                  icon: const Icon(Icons.play_arrow),
+                                                  color: Colors.grey[400],
+                                                  onPressed: null,
+                                                )
+                                              // 2) Otherwise show your normal start/pause control:
+                                              : IconButton(
+                                                  icon: Icon(isRunning ? Icons.pause : Icons.play_arrow),
+                                                  onPressed: () async {
+                                                    if (isRunning) {
+                                                      _pauseSubtask(sub);
+                                                      try {
+                                                        await TaskService().updateSubtaskActualTime(
+                                                          sub.id,
+                                                          sub.elapsed.inMinutes,
+                                                        );
+                                                      } catch (e) {
+                                                        ScaffoldMessenger.of(context).showSnackBar(
+                                                          SnackBar(content: Text('실제 시간 업데이트 실패: $e')),
+                                                        );
+                                                      }
+                                                      setState(() {});
+                                                    } else {
+                                                      _startSubtask(sub);
+                                                    }
+                                                  },
+                                                ),
 
                                           ],
                                         ],
@@ -1756,7 +1780,8 @@ class TaskPageState extends State<TaskPage> with WidgetsBindingObserver {
                                                                 ),
                                                           ),
                                                         ),
-                                                        child: const Text('취소'),
+                                                        child: const Text('취소', style: TextStyle(color: Colors.black)),
+                                                        
                                                       ),
                                                       ElevatedButton(
                                                         onPressed: () async {
@@ -2144,7 +2169,7 @@ class TaskPageState extends State<TaskPage> with WidgetsBindingObserver {
                                                                   ),
                                                                   child:
                                                                       const Text(
-                                                                        '취소',
+                                                                        '취소', style: TextStyle(color: Colors.black)
                                                                       ),
                                                                 ),
                                                                 ElevatedButton(
