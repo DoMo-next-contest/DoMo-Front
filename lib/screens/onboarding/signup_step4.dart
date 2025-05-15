@@ -133,7 +133,6 @@ List<String> _mapTags(List<String>? rawTags) {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      const SizedBox(height: 55),
                       const StepProgress(currentStep: 4, totalSteps: 4),
                       const SizedBox(height: 200),
 
@@ -393,7 +392,9 @@ List<String> _mapTags(List<String>? rawTags) {
                                   const SizedBox(width: 16),
                                   CustomButton(
                                     text: '완료',
-                                    onPressed: _onDone,
+                                    onPressed: _selected.isNotEmpty
+                                      ? () { _onDone(); }  // ← 여기서 async 함수 호출, 람다는 void 리턴
+                                      : null,
                                   ),
                                 ],
                               ),

@@ -4,13 +4,14 @@ enum ButtonType { primary, secondary }
 
 class CustomButton extends StatelessWidget {
   final String text;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final ButtonType type;
+  
 
   const CustomButton({
     super.key,
     required this.text,
-    required this.onPressed,
+    this.onPressed,
     this.type = ButtonType.primary,
   });
 

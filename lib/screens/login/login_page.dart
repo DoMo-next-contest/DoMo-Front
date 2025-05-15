@@ -18,6 +18,7 @@ class _LoginPageState extends State<LoginPage> {
   final _pwCtrl = TextEditingController();
   final _idFocus = FocusNode();               // ← NEW
   final _pwFocus = FocusNode();
+  bool _isHoveringSignUp = false;
   String? _loginError;
 
   @override
@@ -122,26 +123,27 @@ class _LoginPageState extends State<LoginPage> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             // 회원가입 링크
-                            GestureDetector(
-                              onTap: () {
-                                // 직접 SignupPage로 네비게이트
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => const SignupStep1(),
+                            MouseRegion(
+                              cursor: SystemMouseCursors.click,            // ↳ 커서가 ‘손가락’ 모양으로
+                              onEnter: (_) => setState(() => _isHoveringSignUp = true),
+                              onExit:  (_) => setState(() => _isHoveringSignUp = false),
+                              child: GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => const SignupStep1()),
+                                  );
+                                },
+                                child: Text(
+                                  '회원가입하기',
+                                  style: TextStyle(
+                                    color: _isHoveringSignUp
+                                        ? const Color(0xFFD27A3D)  // hover 시 색 변환
+                                        : const Color(0xFFAB4E18),
+                                    decoration: TextDecoration.underline,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w400,
                                   ),
-                                );
-                              },
-                              child: const Text(
-                                '회원가입하기',
-                                style: TextStyle(
-                                  color: Color(0xFFAB4E18),
-                                  fontSize: 16,
-                                  fontFamily: 'Roboto',
-                                  fontWeight: FontWeight.w400,
-                                  decoration: TextDecoration.underline,
-                                  height: 1.25,
-                                  letterSpacing: 0.10,
                                 ),
                               ),
                             ),

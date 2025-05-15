@@ -1503,13 +1503,13 @@ class TaskPageState extends State<TaskPage> with WidgetsBindingObserver {
                                                         ),
                                                       ),
                                                       child: Text(
-                                                        _formatDuration(
-                                                          display,
-                                                        ),
-                                                        style: const TextStyle(
+                                                        _formatDuration(display),
+                                                        style: TextStyle(
                                                           fontSize: 12,
-                                                          fontWeight:
-                                                              FontWeight.w600,
+                                                          fontWeight: FontWeight.w600,
+                                                          color: isRunning 
+                                                              ? Colors.black     // 타이머 작동 중일 때
+                                                              : Colors.grey[600] // 타이머 멈췄을 때
                                                         ),
                                                       ),
                                                     ),
