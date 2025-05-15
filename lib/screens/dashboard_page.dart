@@ -8,6 +8,9 @@ import 'package:domo/services/task_service.dart';
 import 'package:domo/services/profile_service.dart';
 import 'package:domo/models/profile.dart';
 import 'package:domo/models/item.dart';
+import 'dart:math' as math;
+
+const IconData _viewInAr = IconData(0xf497, fontFamily: 'MaterialIcons');
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -55,6 +58,8 @@ class DashboardPageState extends State<DashboardPage> {
 }
 
 
+
+
   @override
 void initState() {
   super.initState();
@@ -74,6 +79,8 @@ void initState() {
   _loadInitialModel();
 
   Task.loadCategories();
+
+  
 }
 
 
@@ -97,7 +104,7 @@ void initState() {
                 children: [
                   // 3D 캐릭터
                   Positioned(
-                    top: 220,
+                    top: 200,
                     left: 0,
                     right: 0,
                     child: Center(
@@ -126,13 +133,49 @@ void initState() {
                     ),
                   ),
 
+                  //ar
+                  Positioned(
+                    top: 520,
+                    left: 0,
+                    right: 35,
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Play with Domo',
+                             style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,  // ← make it bold
+                              color: Colors.grey[700],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          // 1) Define it yourself
+                          // 2) Use it just like any other icon
+                          IconButton(
+                            icon: const Icon(
+                              Icons.pets,
+                              size: 30,
+                            ),
+                            color: Theme.of(context).iconTheme.color,
+                            onPressed: () => Navigator.pushNamed(context, '/camera'),
+                          ),
+
+                        ],
+                      ),
+                    ),
+                  ),
+
                   // 인사말
                   FutureBuilder<Profile>(
                     future: _profileFuture,
                     builder: (ctx, snap) {
                       if (snap.connectionState != ConnectionState.done) {
                         return const Positioned(
-                          top: 150,
+                          top: 130,
                           left: 0,
                           right: 0,
                           child: Center(child: CircularProgressIndicator()),
@@ -140,7 +183,7 @@ void initState() {
                       }
                       if (snap.hasError) {
                         return Positioned(
-                          top: 150,
+                          top: 130,
                           left: 0,
                           right: 0,
                           child: Center(child: Text('Error: \${snap.error}')),
@@ -148,7 +191,7 @@ void initState() {
                       }
                       final profile = snap.data!;
                       return Positioned(
-                        top: 150,
+                        top: 130,
                         left: 0,
                         right: 0,
                         child: Text(
@@ -158,6 +201,7 @@ void initState() {
                             fontFamily: 'Inter',
                             color: Color(0xFF1E1E1E),
                             fontSize: 32,
+                            fontWeight: FontWeight.bold, 
                           ),
                         ),
                       );

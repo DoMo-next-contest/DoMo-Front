@@ -20,6 +20,7 @@ import 'screens/onboarding/signup_step2.dart';
 import 'screens/onboarding/signup_step3.dart';
 import 'screens/onboarding/signup_step4.dart';
 import 'screens/profile/completed_projects_page.dart';
+import 'screens/selfie.dart';
 
 /// A built-in “demo” profile, used if you don’t explicitly pass one.
 final _defaultProfile = Profile(
@@ -65,6 +66,7 @@ class MyApp extends StatelessWidget {
         '/add': (ctx) => const AddPage(),
         '/project': (ctx) => const ProjectPage(),
         '/task': (ctx) => const TaskPage(),
+        '/camera': (context) => const SelfiePage(),
       },
 
       onGenerateRoute: (settings) {
