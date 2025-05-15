@@ -1315,33 +1315,35 @@ bool _areAllSubtasksComplete(Task task) {
                                             },
                                           ),
                                         ] else ...[
-                                          IconButton(
-                                            icon: Icon(isRunning ? Icons.pause : Icons.play_arrow),
-                                            onPressed: () async {
-                                              if (isRunning) {
-                                                // 1) Stop the timer
-                                                _pauseSubtask(sub);
-
-                                                // 2) Save actual time to server (in minutes)
-                                                try {
-                                                  await TaskService().updateSubtaskActualTime(
-                                                    sub.id,
-                                                    sub.elapsed.inMinutes,
-                                                  );
-                                                } catch (e) {
-                                                  ScaffoldMessenger.of(context).showSnackBar(
-                                                    SnackBar(content: Text('실제 시간 업데이트 실패: $e')),
-                                                  );
-                                                }
-
-                                                // 3) Refresh UI if needed
-                                                setState(() {});
-                                              } else {
-                                                // 4) Start the timer
-                                                setState(() => _startSubtask(sub));
-                                              }
-                                            },
-                                          ),
+                                            sub.isDone
+                                              // 1) If it’s done, show the play icon in grey and disable taps:
+                                              ? IconButton(
+                                                  icon: const Icon(Icons.play_arrow),
+                                                  color: Colors.grey[400],
+                                                  onPressed: null,
+                                                )
+                                              // 2) Otherwise show your normal start/pause control:
+                                              : IconButton(
+                                                  icon: Icon(isRunning ? Icons.pause : Icons.play_arrow),
+                                                  onPressed: () async {
+                                                    if (isRunning) {
+                                                      _pauseSubtask(sub);
+                                                      try {
+                                                        await TaskService().updateSubtaskActualTime(
+                                                          sub.id,
+                                                          sub.elapsed.inMinutes,
+                                                        );
+                                                      } catch (e) {
+                                                        ScaffoldMessenger.of(context).showSnackBar(
+                                                          SnackBar(content: Text('실제 시간 업데이트 실패: $e')),
+                                                        );
+                                                      }
+                                                      setState(() {});
+                                                    } else {
+                                                      _startSubtask(sub);
+                                                    }
+                                                  },
+                                                ),
                                         ],
                                       ],
                                     ),
