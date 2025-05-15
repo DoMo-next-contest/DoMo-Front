@@ -3,19 +3,14 @@ import 'package:domo/services/task_service.dart'; // for baseUrl
 class ProjectTag {
   final int id;
   final String rawName;
-  ProjectTag({ required this.id, required this.rawName });
+  ProjectTag({required this.id, required this.rawName});
   factory ProjectTag.fromJson(Map<String, dynamic> json) => ProjectTag(
     id: json['projectTagId'] as int,
     rawName: json['projectTagName'] as String,
   );
 
-
   static List<ProjectTag> rawList = [];
-
 }
-
-
-
 
 class Subtask {
   final int id;
@@ -25,9 +20,10 @@ class Subtask {
   Duration expectedDuration;
   Duration actualDuration;
   String tag;
-  
-
+  int? startMs; // 타이머 켠 순간 (ms since epoch)
+  int accumulatedMs = 0; // pause 될 때까지 누적된 ms
   DateTime? runningSince;
+  
 
   Subtask({
     required this.id,
@@ -45,24 +41,26 @@ class Subtask {
       order: json['subTaskOrder'] as int,
       title: json['subTaskName'] as String? ?? '',
       isDone: json['subTaskIsDone'] as bool? ?? false,
-      expectedDuration:
-          Duration(seconds: json['subTaskExpectedTime']*60 as int? ?? 0),
-      actualDuration:
-          Duration(seconds: json['subTaskActualTime']*60 as int? ?? 0),
+      expectedDuration: Duration(
+        seconds: json['subTaskExpectedTime'] * 60 as int? ?? 0,
+      ),
+      actualDuration: Duration(
+        seconds: json['subTaskActualTime'] * 60 as int? ?? 0,
+      ),
       tag: json['subTaskTag'] as String? ?? '',
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'subTaskId': id,
-        'subTaskOrder': order,
-        'subTaskName': title,
-        'subTaskIsDone': isDone,
-        'subTaskExpectedTime': expectedDuration*60,
-        'subTaskActualTime': actualDuration*60,
-        'subTaskTag': tag,
-      };
-  
+    'subTaskId': id,
+    'subTaskOrder': order,
+    'subTaskName': title,
+    'subTaskIsDone': isDone,
+    'subTaskExpectedTime': expectedDuration * 60,
+    'subTaskActualTime': actualDuration * 60,
+    'subTaskTag': tag,
+  };
+
   /// current total elapsed
   Duration get elapsed =>
       actualDuration +
@@ -70,16 +68,29 @@ class Subtask {
           ? DateTime.now().difference(runningSince!)
           : Duration.zero);
 
+  /// start 호출
   void start() {
-    runningSince ??= DateTime.now();
-  }
-
-  void pause() {
-    if (runningSince != null) {
-      actualDuration = elapsed;
-      runningSince = null;
+    if (startMs == null) {
+      startMs = DateTime.now().millisecondsSinceEpoch;
     }
   }
+
+  /// pause 호출
+  void pause() {
+    if (startMs != null) {
+      accumulatedMs += DateTime.now().millisecondsSinceEpoch - startMs!;
+      startMs = null;
+    }
+  }
+
+  /// 전체 경과 ms
+  int get elapsedMs {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    return accumulatedMs + (startMs != null ? now - startMs! : 0);
+  }
+
+  /// convenience: Duration 변환
+  Duration get subelapsed => Duration(milliseconds: elapsedMs);
 }
 /*
 class Subtask {
@@ -88,7 +99,7 @@ class Subtask {
 
   /// How long you expect this subtask to take.
   Duration expectedDuration;
-
+  
   /// How long it actually took.
   Duration actualDuration;
   DateTime? runningSince;
@@ -155,12 +166,11 @@ extension TaskProgressExt on Task {
   }
 }
 
-
 // ✅ Task model with dynamic (user-defined) category
 /// A task with dynamic (user-defined) categories and optional subtasks.
 /// A Task whose database‑assigned id may be null until saved.
 class Task {
-  final int id;            // ← nullable
+  final int id; // ← nullable
   String name;
   DateTime deadline;
   String description;
@@ -190,13 +200,12 @@ class Task {
   ];
   */
 
-
   /// UI‐side list of categories
   static List<String> allCategories = [];
 
   static List<ProjectTag> rawList = [];
 
-  static const Map<String,String> rawToUi = {
+  static const Map<String, String> rawToUi = {
     'WORK': '업무',
     'STUDY': '학업',
     'LIFE': '일상',
@@ -209,17 +218,17 @@ class Task {
     return rawToUi.entries
         .firstWhere(
           (kv) => kv.value == ui,
-          orElse: () => MapEntry(ui, ui),  // fallback to itself
+          orElse: () => MapEntry(ui, ui), // fallback to itself
         )
         .key;
   }
 
   static Future<void> loadCategories() async {
-    final rawList = await TaskService().getProjectTags();  // List<String>
+    final rawList = await TaskService().getProjectTags(); // List<String>
   }
 
   //double get progressRate =>
-    //  subtasks.isEmpty ? 0.0 : subtasks.where((s) => s.isDone).length / subtasks.length;
+  //  subtasks.isEmpty ? 0.0 : subtasks.where((s) => s.isDone).length / subtasks.length;
 
   void touch() => lastActivity = DateTime.now();
 
@@ -235,21 +244,25 @@ class Task {
     final category = tagMap[rawTag] ?? rawTag;
 
     return Task(
-      id: json['projectId'] as int,
-      name: json['projectName'] as String? ?? '',
-      deadline: DateTime.parse(json['projectDeadline'] as String),
-      category: category,
-      progress: ((json['projectProgressRate'] as num?)?.toDouble() ?? 0.0) / 100.0,
-      description: json['projectDescription'] as String? ?? '',
-      requirements: json['projectRequirements'] as String? ?? '',
-      completed: json['completed'],
-      subtasks: (json['subtasks'] as List<dynamic>?)
-              ?.map((e) => Subtask.fromJson(e as Map<String, dynamic>))
-              .toList() ??
-          [],
-    )..lastActivity = json['lastActivity'] != null
-        ? DateTime.parse(json['lastActivity'] as String)
-        : DateTime.now();
+        id: json['projectId'] as int,
+        name: json['projectName'] as String? ?? '',
+        deadline: DateTime.parse(json['projectDeadline'] as String),
+        category: category,
+        progress:
+            ((json['projectProgressRate'] as num?)?.toDouble() ?? 0.0) / 100.0,
+        description: json['projectDescription'] as String? ?? '',
+        requirements: json['projectRequirements'] as String? ?? '',
+        completed: json['completed'],
+        subtasks:
+            (json['subtasks'] as List<dynamic>?)
+                ?.map((e) => Subtask.fromJson(e as Map<String, dynamic>))
+                .toList() ??
+            [],
+      )
+      ..lastActivity =
+          json['lastActivity'] != null
+              ? DateTime.parse(json['lastActivity'] as String)
+              : DateTime.now();
   }
 
   Map<String, dynamic> toJson() {
@@ -264,6 +277,7 @@ class Task {
     };
     return m;
   }
+
   /*
   static String categoryToRawTag(String uiCategory) {
     const reverseMap = {
@@ -296,19 +310,19 @@ class Task {
     return Task(
       id: json['projectId'] as int,
       name: json['projectName'] as String,
-      deadline: DateTime.parse(json['projectDeadline'] as String),      // or some sensible default
-      category: uiCategory,          // <- here
+      deadline: DateTime.parse(
+        json['projectDeadline'] as String,
+      ), // or some sensible default
+      category: uiCategory, // <- here
       description: json['projectDescription'],
       requirements: '',
       subtasks: const [],
-      progress: ((json['projectProgressRate'] as num?)?.toDouble() ?? 0.0) / 100.0,
+      progress:
+          ((json['projectProgressRate'] as num?)?.toDouble() ?? 0.0) / 100.0,
       completed: json['completed'],
     )..lastActivity = DateTime.now();
   }
-  
-  
 }
-
 
 List<Task> globalTaskList = [
   Task(
@@ -321,18 +335,20 @@ List<Task> globalTaskList = [
     completed: true,
     subtasks: [
       Subtask(
-        order:0,
+        order: 0,
         id: 0,
         title: 'Design UI',
         expectedDuration: Duration(hours: 2, minutes: 15),
       ),
-      Subtask(order:0,
-        id: 0,title: 'Implement backend', expectedDuration: Duration(hours: 3)),
+      Subtask(
+        order: 0,
+        id: 0,
+        title: 'Implement backend',
+        expectedDuration: Duration(hours: 3),
+      ),
     ],
-  )
+  ),
 ];
-
-
 
 extension TaskJson on Task {
   Map<String, dynamic> toJson() => {
@@ -351,10 +367,9 @@ extension TaskJson on Task {
     requirements: '',
     description: '',
     completed: json['completed'],
-    
-    subtasks: (json['subtasks'] as List)
-      .map((s) => SubtaskJson.fromJson(s))
-      .toList(),
+
+    subtasks:
+        (json['subtasks'] as List).map((s) => SubtaskJson.fromJson(s)).toList(),
   )..lastActivity = DateTime.parse(json['lastActivity']);
 }
 
@@ -362,19 +377,21 @@ extension SubtaskJson on Subtask {
   Map<String, dynamic> toJson() => {
     'title': title,
     'isDone': isDone,
-    'expectedDuration': expectedDuration*60,
-    'actualDuration': actualDuration*60,
+    'expectedDuration': expectedDuration * 60,
+    'actualDuration': actualDuration * 60,
   };
 
   static Subtask fromJson(Map<String, dynamic> json) => Subtask(
     id: json['subTaskId'] as int,
-      order: json['subTaskOrder'] as int,
-      title: json['subTaskName'] as String? ?? '',
-      isDone: json['subTaskIsDone'] as bool? ?? false,
-      expectedDuration:
-          Duration(seconds: json['subTaskExpectedTime'*60] as int? ?? 0),
-      actualDuration:
-          Duration(seconds: json['subTaskActualTime']*60 as int? ?? 0),
-      tag: json['subTaskTag'] as String? ?? '',
+    order: json['subTaskOrder'] as int,
+    title: json['subTaskName'] as String? ?? '',
+    isDone: json['subTaskIsDone'] as bool? ?? false,
+    expectedDuration: Duration(
+      seconds: json['subTaskExpectedTime' * 60] as int? ?? 0,
+    ),
+    actualDuration: Duration(
+      seconds: json['subTaskActualTime'] * 60 as int? ?? 0,
+    ),
+    tag: json['subTaskTag'] as String? ?? '',
   );
 }

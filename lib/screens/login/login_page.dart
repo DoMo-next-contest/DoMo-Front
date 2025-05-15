@@ -16,11 +16,16 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _idCtrl = TextEditingController();
   final _pwCtrl = TextEditingController();
+  final _idFocus = FocusNode();               // ← NEW
+  final _pwFocus = FocusNode();
+  String? _loginError;
 
   @override
   void dispose() {
     _idCtrl.dispose();
     _pwCtrl.dispose();
+    _idFocus.dispose();                       // ← NEW
+    _pwFocus.dispose();
     super.dispose();
   }
 
@@ -29,16 +34,13 @@ class _LoginPageState extends State<LoginPage> {
     final auth = AuthService();
     final tokens = await auth.login(_idCtrl.text, _pwCtrl.text);
 
-    // Save them somewhere (secure storage, provider, etc.)
-    debugPrint('▶ access token:  ${tokens.accessToken}');
-    debugPrint('▶ refresh token: ${tokens.refreshToken}');
+
 
     // Now navigate
     Navigator.pushReplacementNamed(context, '/dashboard');
   } on AuthException catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(e.message)),
-    );
+    setState(() => _loginError = '존재하지 않는 아이디입니다');
+      _idFocus.requestFocus();
   }
 }
 
@@ -90,6 +92,10 @@ class _LoginPageState extends State<LoginPage> {
                         label: 'ID',
                         placeholder: '아이디를 입력하세요',
                         controller: _idCtrl,
+                        textInputAction: TextInputAction.next,
+                        focusNode: _idFocus,
+                        onSubmitted: (_) => _pwFocus.requestFocus(),
+                        errorText: _loginError,
                       ),
 
                       // 4) 간격
@@ -100,7 +106,10 @@ class _LoginPageState extends State<LoginPage> {
                         label: '패스워드',
                         placeholder: '********',
                         controller: _pwCtrl,
+                        focusNode: _pwFocus,
                         obscureText: true,
+                        textInputAction: TextInputAction.done,  // “Done” button
+                        onSubmitted: (_) => _onLogin(),
                       ),
 
                       const SizedBox(height: 50),
