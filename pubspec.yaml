@@ -45,6 +45,8 @@ dependencies:
   path_provider: ^2.0.11
   image_gallery_saver: ^1.7.1
   permission_handler: ^10.2.0
+  camera: ^0.9.4+5
+  
 
 dev_dependencies:
   flutter_test:
@@ -77,6 +79,7 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
 
   # To add assets to your application, add an assets section, like this:
   # assets:
