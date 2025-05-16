@@ -103,7 +103,7 @@ class _SelfiePageState extends State<SelfiePage> {
 
     const flagKey = 'selfiePageHasReloaded';
 
-    if (kIsWeb) {
+    
       final hasReloaded = html.window.sessionStorage[flagKey] == 'true';
       if (!hasReloaded) {
         html.window.sessionStorage[flagKey] = 'true';
@@ -111,7 +111,7 @@ class _SelfiePageState extends State<SelfiePage> {
           html.window.location.reload();
         });
       }
-    }
+    
 
   }
 
@@ -180,9 +180,8 @@ class _SelfiePageState extends State<SelfiePage> {
     } else {
       _cameraController?.dispose();
     }
-    if (kIsWeb) {
+    
     html.window.sessionStorage.remove('hasReloaded');
-    }
     super.dispose();
   }
 
@@ -217,30 +216,40 @@ Future<void> _onSharePressed() async {
 
   // ── Web (Chrome/Safari) ───────────────────────────────────
   final videoEl = _webVideo!;
-  final rect = videoEl.getBoundingClientRect();
-  final cssW = rect.width;
-  final cssH = rect.height;
+  final box = _previewContainerKey.currentContext!.findRenderObject() as RenderBox;
+  final logicalSize = box.size;
   final dpr = html.window.devicePixelRatio;
+  final width = (logicalSize.width * dpr).round();
+  final height = (logicalSize.height * dpr).round();
 
-  final canvas = html.CanvasElement(
-    width: (cssW * dpr).round(),
-    height: (cssH * dpr).round(),
-  );
+  final canvas = html.CanvasElement(width: width, height: height);
   final ctx = canvas.context2D..scale(dpr, dpr);
 
+  // Webcam video resolution
   final rawW = videoEl.videoWidth!;
   final rawH = videoEl.videoHeight!;
-  final scaleCover = math.max(cssW / rawW, cssH / rawH);
-  final srcW = cssW / scaleCover;
-  final srcH = cssH / scaleCover;
-  final srcX = (rawW - srcW) / 2;
-  final srcY = (rawH - srcH) / 2;
 
-  // Mirror & draw video
+  // Compute scale to cover the canvas (object-fit: cover)
+  final scale = math.max(
+    logicalSize.width / rawW,
+    logicalSize.height / rawH,
+  );
+  final drawW = rawW * scale;
+  final drawH = rawH * scale;
+  final dx = (drawW - logicalSize.width) / 2;
+  final dy = (drawH - logicalSize.height) / 2;
+
+  // Mirror and draw the video
   ctx.save();
-  ctx.translate(cssW, 0);
-  ctx.scale(-1, 1);
-  ctx.drawImageScaledFromSource(videoEl, srcX, srcY, srcW, srcH, 0, 0, cssW, cssH);
+  ctx.translate(logicalSize.width, 0);
+  ctx.scale(-1, 1); // mirror
+  ctx.drawImageScaled(
+    videoEl,
+    -dx,
+    -dy,
+    drawW,
+    drawH,
+  );
   ctx.restore();
 
   // Draw model-viewer snapshot
@@ -255,24 +264,22 @@ Future<void> _onSharePressed() async {
   img.src = modelUrl;
   await loadCompleter.future;
 
-  final modelSize = size; // size of the overlay square
-  final modelLeft = (cssW - modelSize) / 2 + _modelOffset.dx;
-  final modelTop = (cssH - modelSize) / 2 + _modelOffset.dy;
-  ctx.drawImageScaled(img, modelLeft, modelTop, modelSize, modelSize);
+  final modelLeft = (logicalSize.width - size) / 2 + _modelOffset.dx;
+  final modelTop = (logicalSize.height - size) / 2 + _modelOffset.dy;
+  ctx.drawImageScaled(img, modelLeft, modelTop, size, size);
   html.Url.revokeObjectUrl(modelUrl);
 
   await html.window.animationFrame;
 
-  // Export canvas to PNG
+  // Export PNG
   final dataUrl = canvas.toDataUrl('image/png');
   final pngBytes = base64.decode(dataUrl.split(',').last);
 
-  // Create blob and file
   final fname = 'ar_selfie_${DateTime.now().millisecondsSinceEpoch}.png';
   final blob = html.Blob([pngBytes], 'image/png');
   final url = html.Url.createObjectUrlFromBlob(blob);
 
-  // Download
+  // Trigger download
   final anchor = html.document.createElement('a') as html.AnchorElement
     ..href = url
     ..download = fname;
@@ -280,7 +287,51 @@ Future<void> _onSharePressed() async {
   anchor.click();
   anchor.remove();
 
-  // Try to share
+  // Optional: Show popup/toast
+  if (mounted) {
+    showDialog<void>(
+      context: context,
+      barrierColor: Colors.black26,
+      builder: (_) => Dialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 200),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.download_done, size: 48, color: Color(0xFFF2AC57)),
+              const SizedBox(height: 16),
+              const Text(
+                '이미지가 다운로드되었습니다.\n공유를 위해 앨범에서 확인하세요.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFF2AC57),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    minimumSize: const Size.fromHeight(48),
+                  ),
+                  child: const Text(
+                    '확인',
+                    style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Try to share (Android Chrome only)
   try {
     final file = html.File([blob], fname, {'type': 'image/png'});
     final shareData = {
@@ -302,6 +353,7 @@ Future<void> _onSharePressed() async {
 
   html.Url.revokeObjectUrl(url);
 }
+
 
 
 
