@@ -6,6 +6,8 @@ import 'package:domo/widgets/custom_button.dart';
 import 'package:domo/models/profile.dart';
 import 'package:domo/services/profile_service.dart';
 import 'package:domo/services/task_service.dart';
+import 'package:dotted_border/dotted_border.dart';
+
 
 class SignupStep4 extends StatefulWidget {
   final Profile profile;
@@ -279,40 +281,38 @@ List<String> _mapTags(List<String>? rawTags) {
 
                                         const SizedBox(height: 24),
                                         Row(
+                                          mainAxisAlignment: MainAxisAlignment.end, // Align to the right
                                           children: [
-                                            Expanded(
-                                              child: OutlinedButton(
-                                                onPressed: () => Navigator.pop(context),
-                                                style: OutlinedButton.styleFrom(
-                                                  side: const BorderSide(color: Color(0xFFB1B1B1)),
-                                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                                  padding: const EdgeInsets.symmetric(vertical: 14),
-                                                  foregroundColor: Colors.black,  
-                                                ),
-                                                child: const Text('취소', style: TextStyle(color: Colors.black87)),
+                                            OutlinedButton(
+                                              onPressed: () => Navigator.pop(context),
+                                              style: OutlinedButton.styleFrom(
+                                                side: const BorderSide(color: Color(0xFFB1B1B1)),
+                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                                padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+                                                foregroundColor: Colors.black,
                                               ),
+                                              child: const Text('취소', style: TextStyle(color: Colors.black87)),
                                             ),
                                             const SizedBox(width: 12),
-                                            Expanded(
-                                              child: ElevatedButton(
-                                                onPressed: () {
-                                                  final trimmed = controller.text.trim();
-                                                  if (trimmed.isNotEmpty) {
-                                                    newCategory = trimmed;
-                                                    Navigator.pop(context);
-                                                  }
-                                                },
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor: const Color(0xFFF2AC57),
-                                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                                  padding: const EdgeInsets.symmetric(vertical: 14),
-                                                  foregroundColor: Colors.white,  
-                                                ),
-                                                child: const Text('추가', style: TextStyle(color: Colors.white)),
+                                            ElevatedButton(
+                                              onPressed: () {
+                                                final trimmed = controller.text.trim();
+                                                if (trimmed.isNotEmpty) {
+                                                  newCategory = trimmed;
+                                                  Navigator.pop(context);
+                                                }
+                                              },
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: const Color(0xFFF2AC57),
+                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                                padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+                                                foregroundColor: Colors.white,
                                               ),
+                                              child: const Text('추가', style: TextStyle(color: Colors.white)),
                                             ),
                                           ],
                                         ),
+
                                       ],
                                     ),
                                   ),
@@ -336,38 +336,33 @@ List<String> _mapTags(List<String>? rawTags) {
                                 }
                               }
                             },
-                            child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            decoration: ShapeDecoration(
-                              color: const Color(0xFFF2AC57),  // <-- 변경: 반투명에서 실색으로
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              shadows: const [
-                                BoxShadow(
-                                  color: Color(0x19000000),
-                                  blurRadius: 16,
-                                  offset: Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.add, size: 16, color: Colors.white),  // 아이콘 색도 조정
-                                SizedBox(width: 6),
-                                Text(
-                                  '카테고리 추가',
-                                  style: TextStyle(
-                                    color: Colors.white,  // 텍스트 색도 흰색으로
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w400,
-                                    height: 1,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                            child: DottedBorder(
+  color: Color(0xFF757575),
+  strokeWidth: 1.5,
+  borderType: BorderType.RRect,
+  radius: const Radius.circular(16),
+  dashPattern: [6, 3], // [dash length, gap length]
+  child: Container(
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+    color: Colors.transparent,
+    child: const Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.add, size: 16, color: Color(0xFFF2AC57)),
+        SizedBox(width: 6),
+        Text(
+          '카테고리 추가',
+          style: TextStyle(
+            color: Color(0xFF757575),
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            height: 1,
+          ),
+        ),
+      ],
+    ),
+  ),
+),
                         ),
 
                         ],

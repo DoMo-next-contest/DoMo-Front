@@ -474,40 +474,34 @@ class TaskPageState extends State<TaskPage> with WidgetsBindingObserver {
                   ),
                   const SizedBox(height: 24),
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.end, // Align buttons to the right
                     children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('취소'),
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Color(0xFFB1B1B1)),
-
-                            foregroundColor:
-                                Colors.black, // ← makes the text black
-                          ),
+                      OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('취소'),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Color(0xFFB1B1B1)),
+                          foregroundColor: Colors.black,
                         ),
                       ),
                       const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            final t = controller.text.trim();
-                            if (t.isNotEmpty) {
-                              newCategory = t;
-                              Navigator.pop(context);
-                            }
-                          },
-                          child: const Text('추가'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFF2AC57),
-
-                            foregroundColor:
-                                Colors.white, // ← makes the text black
-                          ),
+                      ElevatedButton(
+                        onPressed: () {
+                          final t = controller.text.trim();
+                          if (t.isNotEmpty) {
+                            newCategory = t;
+                            Navigator.pop(context);
+                          }
+                        },
+                        child: const Text('추가'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFF2AC57),
+                          foregroundColor: Colors.white,
                         ),
                       ),
                     ],
                   ),
+
                 ],
               ),
             ),
