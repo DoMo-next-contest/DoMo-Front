@@ -98,7 +98,7 @@ List<String> _mapTags(List<String>? rawTags) {
     // Navigate to dashboard
     Navigator.pushNamedAndRemoveUntil(
       context,
-      '/dashboard',
+      '/login',
       (route) => false,
     );
   } catch (e) {
