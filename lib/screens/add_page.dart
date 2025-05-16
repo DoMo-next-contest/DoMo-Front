@@ -21,13 +21,6 @@ class AddPage extends StatefulWidget {
 
 class AddPageState extends State<AddPage> {
 
-final _nameFocus        = FocusNode();
-final _detailsFocus     = FocusNode();
-final _requirementFocus = FocusNode();
-final _calendarFocus    = FocusNode();
-// one FocusNode per category chip:
-late List<FocusNode> _chipFocusNodes;
-
 Future<void> _showStyledDialog({
   required String title,
   required String message,
@@ -102,7 +95,6 @@ Future<void> _showStyledDialog({
     }).catchError((_) {
       // optional: swallow errors or show a snackbar
     });
-    _chipFocusNodes = List.generate(_categories.length, (_) => FocusNode());
   }
 
   DateTime? _selectedDeadline;
@@ -123,10 +115,6 @@ Future<void> _showStyledDialog({
       // fire-and-forget, no UI blocking
       TaskService().deleteProject(_projectId!);
     }
-    for (final f in [
-      _nameFocus, _detailsFocus, _requirementFocus, _calendarFocus,
-      ..._chipFocusNodes,
-    ]) f.dispose();
     super.dispose();
   }
 
@@ -223,7 +211,7 @@ Future<void> _showStyledDialog({
     return GestureDetector(
       onTap: () {
         setState(() {
-          _selectedCategory = isSelected ? '기타' : label;
+          _selectedCategory = label;
         });
       },
       child: Container(
@@ -421,6 +409,18 @@ Future<void> _editSubtask(Subtask sub, int index) async {
               ),
             ),
             const SizedBox(height: 16),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: const Text(
+                '하위작업 이름',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
             TextField(
               controller: titleCtrl,
               decoration: InputDecoration(
@@ -432,6 +432,20 @@ Future<void> _editSubtask(Subtask sub, int index) async {
               ),
             ),
             const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: const Text(
+                '실제 소요시간',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(
@@ -584,10 +598,7 @@ Future<void> _editSubtask(Subtask sub, int index) async {
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               TextField(
-                                focusNode: _nameFocus,
                                 controller: _nameController,
-                                textInputAction: TextInputAction.next,
-                                onSubmitted: (_) => FocusScope.of(context).requestFocus(_detailsFocus),
                                 decoration: const InputDecoration(
                                   isDense: true,
                                   contentPadding: EdgeInsets.zero,
@@ -608,10 +619,7 @@ Future<void> _editSubtask(Subtask sub, int index) async {
                               Expanded(
                                 child: Container(
                                   child: TextField(
-                                    focusNode: _detailsFocus,
                                     controller: _detailsController,
-                                    textInputAction: TextInputAction.next,
-                                    onSubmitted: (_) => FocusScope.of(context).requestFocus(_requirementFocus),
                                     keyboardType: TextInputType.multiline,
                                     maxLines: null,  // 필요한 만큼 줄을 늘림
                                     decoration: const InputDecoration.collapsed(
@@ -711,10 +719,7 @@ Future<void> _editSubtask(Subtask sub, int index) async {
                             ],
                           ),
                           child: TextField(
-                            focusNode: _requirementFocus,
                             controller: _requirementController,
-                            textInputAction: TextInputAction.next,
-                            onSubmitted: (_) => FocusScope.of(context).requestFocus(_calendarFocus),
                             maxLines: null,
                             decoration: const InputDecoration.collapsed(
                                 hintText: '예) 데모 영상 촬영을 포함하기, 개발 시간 넉넉하게 잡기',
@@ -981,11 +986,6 @@ Future<void> _editSubtask(Subtask sub, int index) async {
               IconButton(
                 icon: const Icon(Icons.delete_outline, size: 24),
                 onPressed: () => setState(() => _generatedSubtasks.removeAt(i)),
-              ),
-              IconButton(
-                focusNode: _calendarFocus,
-                icon: const Icon(Icons.edit, size: 20),
-                onPressed: _selectDeadlineDate,
               ),
             ],
           ),
