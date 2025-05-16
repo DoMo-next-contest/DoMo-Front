@@ -342,57 +342,99 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
       );
 
-  void _confirmDelete() {
-    showDialog<bool>(
-      context: context,
-      barrierColor: Colors.black26,
-      builder: (_) => Dialog(
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        insetPadding:
-            const EdgeInsets.symmetric(horizontal: 30, vertical: 200),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('회원탈퇴',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-              const SizedBox(height: 12),
-              const Text('정말 탈퇴하시겠습니까?'),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  OutlinedButton(
-                    onPressed: () => Navigator.pop(context, false),
-                    child: const Text('취소'),
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: Colors.grey[400]!),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                    ),
-                  ),
-                  ElevatedButton(
-                    onPressed: () async {
-                      Navigator.pop(context, true);
-                      await ProfileService().deleteAccount();
-                      Navigator.pushReplacementNamed(context, '/login');
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFC78E48),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child:
-                        const Text('탈퇴', style: TextStyle(color: Colors.white)),
+      void _confirmDelete() {
+        showDialog<bool>(
+          context: context,
+          barrierColor: Colors.black26,
+          builder: (_) => Dialog(
+            backgroundColor: Colors.transparent,
+            insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 200),
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x22000000),
+                    blurRadius: 16,
+                    offset: Offset(0, 4),
                   ),
                 ],
               ),
-            ],
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Center(
+                    child: Text(
+                      '회원탈퇴',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFFF2AC57),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
+                      child: Text(
+                        '정말 탈퇴하시겠습니까?',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 16,                  // larger size
+                          fontWeight: FontWeight.bold,   // bold
+                          color: Colors.black,    // eye-catching color
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text(
+                          '취소',
+                          style: TextStyle(
+                            color: Colors.black87,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        onPressed: () async {
+                          Navigator.pop(context, true);
+                          await ProfileService().deleteAccount();
+                          Navigator.pushReplacementNamed(context, '/login');
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFF2AC57),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 12,
+                          ),
+                        ),
+                        child: const Text(
+                          '탈퇴',
+                          style: TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
-    );
-  }
+        );
+      }
 }

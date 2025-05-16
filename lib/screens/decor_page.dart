@@ -86,7 +86,7 @@ class DecorPageState extends State<DecorPage> {
               ),
               const SizedBox(height: 12),
               const Text(
-                '데코를 뽑기 위해서는 최소 50코인이 필요합니다.',
+                '프로젝트를 완료하고 보상을 받아보세요.',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 15),
               ),

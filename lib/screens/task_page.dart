@@ -613,7 +613,7 @@ class TaskPageState extends State<TaskPage> with WidgetsBindingObserver {
     );
   }
 
-  Future<void> _editSubtask(Subtask sub) async {
+  Future<bool> _editSubtask(Subtask sub) async {
     final titleCtrl = TextEditingController(text: sub.title);
     final hoursCtrl = TextEditingController(
       text: sub.actualDuration.inHours.toString(),
@@ -622,7 +622,7 @@ class TaskPageState extends State<TaskPage> with WidgetsBindingObserver {
       text: sub.actualDuration.inMinutes.remainder(60).toString(),
     );
 
-    await showDialog(
+    final saved = await showDialog(
       context: context,
       barrierColor: Colors.black26,
       builder:
@@ -804,6 +804,7 @@ class TaskPageState extends State<TaskPage> with WidgetsBindingObserver {
                           });
                           Navigator.pop(context);
 
+
                           try {
                             await TaskService().updateSubtask(sub.id, {
                               'subTaskName': sub.title,
@@ -819,6 +820,7 @@ class TaskPageState extends State<TaskPage> with WidgetsBindingObserver {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text('하위작업이 저장되었습니다')),
                             );
+                            
                           } catch (e) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(content: Text('저장 실패: $e')),
@@ -850,6 +852,7 @@ class TaskPageState extends State<TaskPage> with WidgetsBindingObserver {
     );
 
     setState(() {}); // refresh list immediately
+    return saved == true;
   }
 Future<void> _addSubtaskDialog() async {
   final titleCtrl = TextEditingController();
@@ -1326,10 +1329,11 @@ Future<void> _addSubtaskDialog() async {
                                   final sub = currentTask.subtasks[i];
                                   final elapsed = sub.actualDuration;
                                   final isRunning = sub.startMs != null;
-                                  final display = Duration(
-                                    milliseconds: sub.elapsedMs,
-                                  );
 
+                                  // instead of just using sub.elapsedMs:
+                                  final display = Duration(
+                                    milliseconds: sub.actualDuration.inMilliseconds + sub.elapsedMs,
+                                  );
                                   return Padding(
                                     key: ValueKey(sub.id),
                                     padding: const EdgeInsets.only(bottom: 12),
@@ -1536,7 +1540,10 @@ Future<void> _addSubtaskDialog() async {
                                                 Icons.edit_outlined,
                                               ),
                                               onPressed: () async {
-                                                await _editSubtask(sub);
+                                                final updated = await _editSubtask(sub);
+                                                if (updated) {
+                                                  setState(() {}); // Rebuilds the task/subtask list
+                                                }
                                                 _reloadSubtasks(); // ← updates the Future and triggers a rebuild
                                               },
                                             ),
@@ -1628,26 +1635,73 @@ Future<void> _addSubtaskDialog() async {
                                                 )
                                               // 2) Otherwise show your normal start/pause control:
                                               : IconButton(
-                                                  icon: Icon(isRunning ? Icons.pause : Icons.play_arrow),
-                                                  onPressed: () async {
-                                                    if (isRunning) {
-                                                      _pauseSubtask(sub);
-                                                      try {
-                                                        await TaskService().updateSubtaskActualTime(
-                                                          sub.id,
-                                                          sub.elapsed.inMinutes,
-                                                        );
-                                                      } catch (e) {
-                                                        ScaffoldMessenger.of(context).showSnackBar(
-                                                          SnackBar(content: Text('실제 시간 업데이트 실패: $e')),
-                                                        );
-                                                      }
-                                                      setState(() {});
-                                                    } else {
-                                                      _startSubtask(sub);
-                                                    }
-                                                  },
-                                                ),
+  icon: Icon(isRunning ? Icons.pause : Icons.play_arrow),
+  onPressed: () async {
+    if (isRunning) {
+      // — Pause & persist the tapped one (same as before) —
+      sub.pause();
+      final sessionMs = sub.accumulatedMs;
+      final totalDur  = sub.actualDuration + Duration(milliseconds: sessionMs);
+      final totalMins = (totalDur.inSeconds + 59) ~/ 60;
+
+      try {
+        await TaskService().updateSubtaskActualTime(sub.id, totalMins);
+        setState(() {
+          sub.actualDuration = Duration(minutes: totalMins);
+          sub.accumulatedMs   = 0;
+          sub.startMs         = null;
+        });
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('실제 시간 업데이트 실패: $e')),
+        );
+      }
+    } else {
+      // — Pause & persist *all* the others first —
+      for (final other in currentTask.subtasks) {
+        if (other != sub && other.startMs != null) {
+          // locally pause
+          other.pause();
+
+          // compute their total
+          final oTotalMs   = other.accumulatedMs;
+          final oTotalDur  = other.actualDuration + Duration(milliseconds: oTotalMs);
+          final oTotalMins = (oTotalDur.inSeconds + 59) ~/ 60;
+
+          try {
+            await TaskService().updateSubtaskActualTime(other.id, oTotalMins);
+            setState(() {
+              other.actualDuration = Duration(minutes: oTotalMins);
+              other.accumulatedMs   = 0;
+              other.startMs         = null;
+            });
+          } catch (e) {
+            // you might batch errors or show one per‐failure
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Subtask ${other.id} 업데이트 실패: $e')),
+            );
+          }
+
+          // cancel its UI timer
+          _timers[other]?.cancel();
+          _timers[other] = null;
+        }
+      }
+
+      // — Now start the tapped one —
+      sub.start();
+      _timers[sub]?.cancel();
+      _timers[sub] = Timer.periodic(
+        const Duration(seconds: 1),
+        (_) => setState(() {}),
+      );
+
+      setState(() {}); // swap play→pause icon
+    }
+  },
+),
+
+
 
                                           ],
                                         ],
