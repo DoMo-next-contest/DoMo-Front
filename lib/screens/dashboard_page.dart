@@ -144,7 +144,7 @@ void initState() {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            'Play with Domo',
+                            'Play with DoMo',
                              style: TextStyle(
                               fontFamily: 'Inter',
                               fontSize: 16,

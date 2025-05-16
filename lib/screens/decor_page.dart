@@ -215,16 +215,52 @@ class DecorPageState extends State<DecorPage> {
       ),
     );
 
-  } catch (e) {
-    debugPrint('❌ Draw error: $e');
-    // Optional: show fallback toast
-    // final msg = e.toString().replaceFirst('Exception: ', '');
-    // ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  } catch (e) { 
+      await showDialog<void>(
+        context: context,
+        barrierColor: Colors.black26,
+        builder: (_) => Dialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 30, vertical: 200),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.check_circle_outline, size: 48, color: Color(0xFFF2AC57)),
+                const SizedBox(height: 16),
+                const Text(
+                  '축하드립니다!\n보유 가능한 아이템을 전부 획득하셨습니다. 다음 아이템은 추후에 만나보실 수 있습니다.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFF2AC57),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    child: const Text(
+                      '확인',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500, fontSize: 16),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
   } finally {
+    // ALWAYS runs, even after `await showDialog`
     setState(() => _isSpinning = false);
   }
 }
-
 
   Future<void> _onEquipTapped(int itemId) async {
     if (!_ownedItemIds.contains(itemId)) return;
