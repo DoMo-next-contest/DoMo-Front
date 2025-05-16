@@ -101,16 +101,20 @@ class _SelfiePageState extends State<SelfiePage> {
     }
     _loadModel();
 
-    const flagKey = 'selfiePageHasReloaded';
-
-    
+    if (kIsWeb) {
+      const flagKey = 'selfiePageHasReloaded';
       final hasReloaded = html.window.sessionStorage[flagKey] == 'true';
+
       if (!hasReloaded) {
         html.window.sessionStorage[flagKey] = 'true';
+
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          html.window.location.reload();
+          Future.delayed(const Duration(milliseconds: 50), () {
+            html.window.location.reload();
+          });
         });
       }
+    }
     
 
   }
@@ -180,8 +184,9 @@ class _SelfiePageState extends State<SelfiePage> {
     } else {
       _cameraController?.dispose();
     }
-    
+    if (kIsWeb) {
     html.window.sessionStorage.remove('hasReloaded');
+    }
     super.dispose();
   }
 
