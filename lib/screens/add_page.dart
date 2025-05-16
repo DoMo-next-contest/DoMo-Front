@@ -435,7 +435,7 @@ Future<void> _editSubtask(Subtask sub, int index) async {
             Align(
               alignment: Alignment.centerLeft,
               child: const Text(
-                '실제 소요시간',
+                '예상 소요시간',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
